@@ -1,0 +1,114 @@
+Message Mapping in SAP CPI
+Source: SAP Help Portal - Message Mapping, SAP Community
+
+Message Mapping is used to transform the structure and content of messages between source and target formats. It is one of the most frequently used steps in integration flows.
+
+Types of Mapping in CPI:
+
+1. Message Mapping (Graphical)
+A visual, drag-and-drop mapper that transforms XML-to-XML structures.
+
+How to create:
+- Add a Message Mapping step to your iFlow
+- Define source and target message structures (XSD or WSDL)
+- Draw lines between source and target fields
+- Use standard functions for transformations
+
+Features:
+- Graphical drag-and-drop interface
+- Source and target structure defined via XSD schemas
+- Built-in standard functions (string, arithmetic, date, boolean, node)
+- Custom functions using Groovy scripting
+- Test tab for validating mappings with sample data
+- Supports 1:1, 1:N, and N:1 field mappings
+
+Standard Functions Available:
+- String: concat, substring, replace, toUpperCase, toLowerCase, trim, length
+- Arithmetic: add, subtract, multiply, divide, round
+- Date: currentDate, dateTransform, addDays
+- Boolean: equals, notEquals, greaterThan, lessThan, if-then-else
+- Node: exists, count, index, sort, removeContext, splitByValue
+- Constants: constant value, sender, receiver
+
+2. XSLT Mapping
+For complex XML transformations that are hard to express graphically.
+
+How to use:
+- Add an XSLT Mapping step or use a Content Modifier with XSLT
+- Upload the .xsl file to the iFlow Resources
+- Reference the XSLT file in the mapping step
+
+When to use XSLT over Message Mapping:
+- Complex conditional logic
+- Recursive transformations
+- Namespace-heavy transformations
+- When you already have existing XSLT from PI/PO migration
+
+3. Groovy Script Mapping
+For non-XML transformations or when programmatic control is needed.
+
+Common use cases:
+- JSON-to-JSON transformation
+- CSV-to-XML or XML-to-CSV conversion
+- Flat file parsing
+- Complex business logic during transformation
+
+Example — JSON transformation in Groovy:
+import com.sap.gateway.ip.core.customdev.util.Message
+import groovy.json.JsonSlurper
+import groovy.json.JsonBuilder
+
+def Message processData(Message message) {
+    def body = message.getBody(String)
+    def input = new JsonSlurper().parseText(body)
+
+    def output = [
+        orderId: input.order_number,
+        customer: [
+            name: "${input.first_name} ${input.last_name}",
+            email: input.contact_email
+        ],
+        items: input.line_items.collect { item ->
+            [
+                product: item.product_name,
+                quantity: item.qty,
+                price: item.unit_price
+            ]
+        },
+        total: input.line_items.sum { it.qty * it.unit_price }
+    ]
+
+    message.setBody(new JsonBuilder(output).toPrettyString())
+    return message
+}
+
+4. Content Modifier
+For simple mappings and transformations without a full mapping step.
+
+Capabilities:
+- Set message body from expression or constant
+- Set/delete headers and properties
+- Use dynamic expressions: ${header.name}, ${property.name}, ${xpath.expression}
+
+Example expressions:
+- ${header.CamelHttpUri} — access an HTTP header
+- ${property.orderId} — access an exchange property
+- ${xpath./Order/OrderId/text()} — extract value from XML body
+
+Mapping Migration from SAP PI/PO:
+When migrating from SAP PI/PO to CPI:
+- Operation Mappings become Message Mapping steps
+- Graphical mappings can be imported directly (with limitations)
+- Java mappings need to be rewritten as Groovy scripts
+- XSLT mappings can typically be reused as-is
+- ABAP mappings must be rewritten entirely
+
+Best Practices:
+1. Use Message Mapping for standard XML-to-XML transformations — it is visual and maintainable.
+2. Use XSLT for complex XML transformations that are hard to express graphically.
+3. Use Groovy scripts for JSON transformations or non-XML formats.
+4. Use Content Modifier for simple value assignments and expressions.
+5. Always test mappings with realistic sample data before deployment.
+6. Handle optional/missing fields gracefully — use existence checks.
+7. Document complex mapping logic with comments in XSLT or Groovy scripts.
+8. Keep mapping logic separate from business logic — use different steps.

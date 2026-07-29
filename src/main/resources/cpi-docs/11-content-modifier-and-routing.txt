@@ -1,0 +1,109 @@
+Content Modifier and Message Routing in SAP CPI
+Source: SAP Help Portal - Content Modifier, Router
+
+Content Modifier:
+The Content Modifier is one of the most frequently used flow steps in CPI. It allows you to set, modify, or delete message headers, exchange properties, and the message body without writing scripts.
+
+Content Modifier Tabs:
+
+Message Header Tab:
+- Add, modify, or delete HTTP headers
+- Set headers from constants, expressions, or XPath
+- Headers are exchanged with external systems via adapters
+
+Exchange Property Tab:
+- Add, modify, or delete exchange properties
+- Properties are internal to the iFlow (not sent externally)
+- Use properties for intermediate data storage
+
+Message Body Tab:
+- Replace the entire message body
+- Set from constant text, expression, or XPath
+- Useful for constructing request payloads
+
+Expression Types:
+- Constant: a fixed value
+- Header: ${header.headerName}
+- Property: ${property.propertyName}
+- XPath: ${xpath./root/element/text()}
+- Expression: combine multiple dynamic values
+
+Examples:
+Setting a dynamic URL:
+Header: CamelHttpUri
+Type: Expression
+Value: https://api.example.com/orders/${property.orderId}
+
+Extracting from XML body:
+Property: customerName
+Type: XPath
+Value: /Order/Customer/Name/text()
+
+Message Router:
+The Router step directs messages along different processing paths based on conditions.
+
+Router Types:
+
+1. Content-Based Router:
+Routes based on message content (body, headers, or properties).
+
+Condition types:
+- XML Condition: XPath expression evaluates to true/false
+  Example: /Order/Priority = 'HIGH'
+- Non-XML Condition: Expression-based
+  Example: ${header.CamelHttpMethod} = 'POST'
+- Header Condition: ${header.name} = 'value'
+- Property Condition: ${property.name} = 'value'
+
+Route configuration:
+- Each route has a condition and a processing branch
+- Default Route: executed when no other condition matches (always configure this!)
+- Routes are evaluated top-to-bottom; first match wins
+
+2. Multicast:
+Sends the message to ALL branches simultaneously.
+- Sequential: branches execute one after another
+- Parallel: branches execute concurrently
+- Aggregation Strategy: how to combine results from all branches
+
+3. Splitter:
+Splits a message into multiple individual messages.
+
+Splitter types:
+- General Splitter: splits by XPath expression (e.g., /Orders/Order splits into individual Order messages)
+- Iterating Splitter: splits large messages in streaming mode (memory-efficient)
+- IDoc Splitter: splits bundled IDocs
+- EDI Splitter: splits EDI interchanges into individual messages
+- PKCS7/CMS Splitter: splits signed/encrypted content
+
+Splitter + Gather pattern:
+1. Splitter divides message into parts
+2. Each part is processed individually
+3. Gather (Join) step combines results back into a single message
+
+4. Filter:
+Extracts a subset of a message using XPath.
+- Unlike Router, Filter does not create branches
+- It removes parts of the message that don't match the XPath
+
+Combining Steps — Common Patterns:
+
+Pattern: Conditional Processing
+Content Modifier (set properties) -> Router (branch by property) -> Different processing per branch
+
+Pattern: Batch Processing
+Splitter (split batch into items) -> Process each item -> Gather (combine results)
+
+Pattern: Enrichment
+Content Modifier (save original) -> Request-Reply (call external service) -> Content Modifier (merge response into original)
+
+Pattern: Dynamic Dispatch
+Content Modifier (extract target from body) -> Router (route by target) -> Different adapters per route
+
+Best Practices:
+1. Always define a Default Route in routers to handle unexpected conditions.
+2. Use exchange properties (not headers) for internal routing decisions.
+3. Keep router conditions simple — complex logic belongs in a preceding script step.
+4. Use Iterating Splitter for large messages to avoid memory issues.
+5. Be careful with Parallel Multicast — it can overwhelm target systems.
+6. Log routing decisions (which branch was taken) for troubleshooting.

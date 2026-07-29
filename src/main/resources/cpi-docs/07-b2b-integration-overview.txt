@@ -1,0 +1,84 @@
+B2B Integration in SAP CPI
+Source: SAP Help Portal - Trading Partner Management, B2B Capabilities
+
+SAP CPI provides comprehensive B2B (Business-to-Business) integration capabilities for exchanging electronic documents between trading partners. B2B integration enables companies to automate the exchange of purchase orders, invoices, shipping notices, and other business documents with suppliers, customers, and logistics providers.
+
+Key B2B Concepts:
+
+Trading Partner:
+A trading partner is an external business entity (supplier, customer, logistics provider) with whom you exchange electronic documents. Each partner has specific communication preferences, document formats, and security requirements.
+
+Trading Partner Management (TPM):
+TPM is a capability within SAP Integration Suite that centralizes the management of trading partner profiles, agreements, and communication channels.
+
+Features of TPM:
+- Partner Profile management (contact info, identifiers, communication channels)
+- Agreement templates and partner-specific agreements
+- B2B message processing with automatic partner detection
+- Activity monitoring for B2B messages
+- Support for multiple B2B standards (AS2, EDIFACT, X12, cXML)
+
+Partner Directory:
+The Partner Directory in CPI stores partner-specific configuration data:
+- Partner ID: unique identifier for each partner
+- Parameters: key-value pairs (e.g., endpoint URLs, file paths)
+- Binary Parameters: certificates, keys, or other binary data
+- Alternative Partners: mapping between different ID types
+- Authorized Users: users allowed to send messages on behalf of a partner
+
+How to use Partner Directory in iFlows:
+- Access via script: def pd = ITApiFactory.getApi(PartnerDirectoryService.class, context)
+- Access via header: ${partnerDirectory.parameterId}
+- Lookup partner parameters dynamically at runtime
+
+B2B Document Standards:
+
+1. EDIFACT (UN/EDIFACT):
+- International standard for electronic data interchange
+- Widely used in Europe and globally
+- Message types: ORDERS (Purchase Order), INVOIC (Invoice), DESADV (Despatch Advice), ORDRSP (Order Response)
+- Structure: UNA (Service String) -> UNB (Interchange Header) -> UNH (Message Header) -> Segments -> UNT (Message Trailer) -> UNZ (Interchange Trailer)
+- Versions: D.96A, D.01B, D.03A, etc.
+
+2. ANSI X12:
+- North American EDI standard
+- Common in US B2B commerce
+- Transaction sets: 850 (Purchase Order), 810 (Invoice), 856 (Advance Ship Notice), 855 (Purchase Order Acknowledgment)
+- Structure: ISA (Interchange Header) -> GS (Functional Group Header) -> ST (Transaction Set Header) -> Segments -> SE -> GE -> IEA
+
+3. cXML (Commerce XML):
+- XML-based standard for B2B procurement
+- Used by Ariba Network and procurement platforms
+- Document types: PunchOutSetupRequest, OrderRequest, InvoiceDetailRequest, ShipNoticeRequest, ConfirmationRequest
+
+4. SAP IDoc:
+- SAP proprietary format for B2B with SAP systems
+- Used in EDI scenarios with SAP ECC/S4HANA
+- Converted to/from EDI standards via mapping
+
+B2B Processing Flow in CPI:
+
+Inbound (Receiving from Partner):
+1. Partner sends document via AS2, SFTP, or HTTP
+2. CPI receives the message through sender adapter
+3. Partner identification (based on sender ID, certificate, etc.)
+4. Message validation (structure, schema, business rules)
+5. EDI-to-XML conversion (for EDI formats)
+6. Mapping to internal format (IDoc, OData, custom XML)
+7. Delivery to backend system (SAP, database, etc.)
+8. Acknowledgment sent back to partner (997, CONTRL, MDN)
+
+Outbound (Sending to Partner):
+1. Backend system sends document (IDoc, XML, etc.)
+2. CPI receives from backend via sender adapter
+3. Mapping to partner's required format
+4. XML-to-EDI conversion (for EDI formats)
+5. Partner lookup for communication preferences
+6. Message sent via receiver adapter (AS2, SFTP, etc.)
+7. Acknowledgment received and processed
+
+B2B Monitoring:
+- B2B Monitor in Integration Suite shows partner-level message tracking
+- Track interchange, functional group, and transaction set levels
+- View acknowledgment status
+- Filter by partner, date, status, document type

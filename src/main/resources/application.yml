@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: cpi-assistant
+
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: http://localhost:1234/v1
+      api-key: lm-studio
+      model-name: meta-llama-3.1-8b-instruct
+      log-requests: true
+      log-responses: true

@@ -1,0 +1,36 @@
+SAP Cloud Platform Integration (CPI) Overview
+Source: SAP Help Portal - Cloud Integration
+
+SAP Cloud Integration (formerly SAP Cloud Platform Integration, commonly called CPI) is a cloud-based integration platform that enables you to connect cloud and on-premise applications. It is part of the SAP Integration Suite.
+
+Key Concepts:
+
+Integration Flow (iFlow):
+An integration flow defines how messages are processed between a sender and a receiver. It is the central artifact in CPI. An iFlow consists of steps that define message processing, including routing, mapping, and transformation. iFlows are designed in the Web UI using a graphical editor and are deployed to a runtime (tenant) for execution.
+
+Integration Package:
+An integration package is a container for one or more integration flows and related artifacts (value mappings, scripts, etc.). Packages help organize integration content and can be transported between tenants.
+
+Tenant:
+A tenant is a runtime environment where integration flows are deployed and executed. Each customer gets their own tenant, which provides isolation. There are typically separate tenants for development, test, and production.
+
+Message Processing Pipeline:
+When a message enters an iFlow, it passes through a series of processing steps:
+1. Sender adapter receives the message
+2. Message enters the integration process
+3. Processing steps execute (mapping, routing, scripting, etc.)
+4. Receiver adapter sends the message to the target system
+
+Adapters:
+Adapters are the connectors that enable communication with external systems. CPI provides adapters for various protocols and systems including HTTP, SOAP, SFTP, JDBC, OData, SAP RFC, AMQP, Kafka, and many more. Each adapter has specific configuration parameters.
+
+Message Headers and Properties:
+- Headers: Metadata attached to a message (e.g., Content-Type, custom headers). Headers can be exchanged between sender/receiver systems.
+- Exchange Properties: Internal variables within an iFlow. They are NOT sent to external systems. Use properties for intermediate data storage during message processing.
+
+Monitoring:
+CPI provides monitoring capabilities to track:
+- Message processing logs (completed, failed, retry messages)
+- Integration content status (deployed artifacts)
+- System logs and trace information
+- Message store entries and data store entries

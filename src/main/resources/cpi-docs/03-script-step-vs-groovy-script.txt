@@ -1,0 +1,104 @@
+Script Step vs Groovy Script in SAP CPI
+Source: SAP Help Portal - Define Script, SAP Community
+
+SAP CPI provides scripting capabilities to implement custom logic within integration flows. There are two main ways to use scripts: the Script step (inline) and the Groovy Script (external file).
+
+Script Step (Inline Script):
+The Script step is a flow step that you drag into the integration flow. It contains the script code directly within the iFlow artifact. You write the code using the built-in editor in the CPI Web UI.
+
+Supported languages for Script step:
+- Groovy Script (recommended, full support)
+- JavaScript (limited support, deprecated in newer versions)
+
+How to add a Script step:
+1. Open the integration flow in edit mode
+2. From the palette, drag "Script" -> "Groovy Script" into the flow
+3. Click on the step and open the script editor
+4. Write your script code
+5. The script must implement a processData(Message message) method
+
+Example Script step code:
+import com.sap.gateway.ip.core.customdev.util.Message
+
+def Message processData(Message message) {
+    def body = message.getBody(String)
+    def headers = message.getHeaders()
+    def properties = message.getProperties()
+
+    // Custom logic here
+    body = body.replaceAll("old_value", "new_value")
+
+    message.setBody(body)
+    message.setHeader("X-Custom-Header", "myValue")
+    message.setProperty("myProperty", "myValue")
+
+    return message
+}
+
+Groovy Script (External Script File):
+An external Groovy script is a .groovy file stored in the Resources section of the integration flow. It is referenced by the Script step but maintained as a separate file.
+
+How to use an external script:
+1. In the integration flow, go to Resources tab
+2. Click Add -> Script -> Groovy Script
+3. Write the script in the external file
+4. In the Script step, select "Script Function" and reference the external file
+
+Key Differences:
+
+| Aspect | Script Step (Inline) | External Groovy Script |
+|--------|---------------------|----------------------|
+| Code location | Embedded in the iFlow | Separate .groovy file in Resources |
+| Reusability | Cannot be shared across iFlows | Can be copied between iFlows (not truly shared) |
+| Version control | Part of iFlow version | Part of iFlow version (but as separate file) |
+| Editing | In-place editor in flow designer | Separate editor, also in web UI |
+| Readability | Hard to read in complex flows | Cleaner separation of concerns |
+| Testing | Must deploy to test | Must deploy to test (same limitation) |
+| Multiple methods | Single processData method | Can define helper methods and classes |
+
+When to use Script step (inline):
+- Simple transformations (string manipulation, header setting)
+- Quick property assignments
+- Short logic (under 20-30 lines)
+- One-time use, specific to a single flow step
+
+When to use external Groovy Script:
+- Complex business logic
+- Code that benefits from multiple helper methods
+- Scripts longer than 30 lines
+- Logic that you want to organize separately from the flow design
+- When you want cleaner iFlow diagrams
+
+Common Script Use Cases in CPI:
+1. Setting headers and properties dynamically
+2. Transforming message body format
+3. Parsing and constructing XML or JSON
+4. Implementing conditional logic
+5. Logging and debugging (log.info, log.error)
+6. Accessing secure parameters (SecureStoreService)
+7. Constructing dynamic URLs or endpoints
+8. Data type conversions
+
+Available APIs in Scripts:
+- message.getBody(Class) — get message body as specific type
+- message.setBody(Object) — set message body
+- message.getHeaders() — get all headers as Map
+- message.setHeader(String, Object) — set a header
+- message.getProperties() — get all exchange properties as Map
+- message.setProperty(String, Object) — set a property
+
+Logging in Scripts:
+import org.slf4j.LoggerFactory
+def log = LoggerFactory.getLogger("myScript")
+log.info("Processing message with ID: " + message.getHeaders().get("SAP_MessageProcessingLogID"))
+
+Important: Use log levels appropriately. Excessive logging at INFO level in production impacts performance. Use DEBUG or TRACE for detailed logging and enable it only when troubleshooting.
+
+Best Practices:
+1. Keep scripts focused — one responsibility per script step.
+2. Avoid putting business logic in scripts when a standard CPI step exists (use Content Modifier, Router, etc.).
+3. Always handle null values to prevent NullPointerException.
+4. Use try-catch blocks for error-prone operations.
+5. Prefer external scripts for anything over 20-30 lines.
+6. Document complex scripts with comments.
+7. Test scripts with different message formats before deploying to production.
