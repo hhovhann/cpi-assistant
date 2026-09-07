@@ -6,11 +6,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class ChatController {
+public class LangChain4jChatController {
 
     private final ChatModel chatModel;
 
-    public ChatController(ChatModel chatModel) {
+    public LangChain4jChatController(ChatModel chatModel) {
         this.chatModel = chatModel;
     }
 

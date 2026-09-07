@@ -2,6 +2,17 @@ spring:
   application:
     name: cpi-assistant
 
+  # Track B — Spring AI. Note the base-url has no /v1 suffix: Spring AI
+  # appends /v1/chat/completions itself, unlike LangChain4j below.
+  ai:
+    openai:
+      base-url: http://localhost:1234
+      api-key: lm-studio
+      chat:
+        model: meta-llama-3.1-8b-instruct
+
+# Track A — LangChain4j. Same LM Studio server, full /v1 base URL.
+# Consumed by LangChain4jConfig, not by an auto-configuration.
 langchain4j:
   open-ai:
     chat-model:
