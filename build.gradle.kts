@@ -20,6 +20,9 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
 
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+
     // --- Track A: LangChain4j (core only, all GA) ---------------------------
     // Deliberately NOT langchain4j-spring-boot-starter: those starters are
     // built against Spring Boot 3.5 and blow up on Boot 4 with

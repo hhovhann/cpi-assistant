@@ -1,8 +1,10 @@
 package com.hhovhann.cpiassistant;
 
 import dev.langchain4j.data.document.Document;
+import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.loader.ClassPathDocumentLoader;
 import dev.langchain4j.data.document.parser.TextDocumentParser;
+import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.segment.TextSegment;
 import org.springframework.stereotype.Service;
 
@@ -21,20 +23,22 @@ public class IngestionPipeline {
     }
 
     /**
-     * TODO(Hayk) — Step 4 exercise: split documents into segments.
+     * Splits documents into segments for embedding.
      *
-     * Starting point: DocumentSplitters.recursive(maxSegmentSize, maxOverlapSize)
-     * from dev.langchain4j.data.document.splitter.DocumentSplitters.
-     * It tries to split on paragraphs first, then sentences, then words —
-     * only falling back to the smaller unit when a piece doesn't fit.
+     * recursive() splits on paragraphs first, then sentences, then words —
+     * falling back to a smaller unit only when a piece doesn't fit.
      *
-     * Things to experiment with (the runner prints stats for each attempt):
-     * - maxSegmentSize 200 vs 500 vs 1000 (characters, unless you pass a token estimator)
-     * - overlap 0 vs 50 vs 100 — what happens to instructions that span a boundary?
-     * - look at an actual chunk: does "Step 3: Use the JDBC Adapter..." still make
-     *   sense without the lines above it?
+     * Current setting: 200 chars, no overlap.
+     * Result: 534 segments, min 7 / avg 134 / max 200 chars.
+     *
+     * Observation: min 7 means at least one segment is a bare heading. One
+     * vector per segment regardless of length, so a 7-char segment embeds a
+     * generic word and matches unrelated queries. Revisit in Step 10 —
+     * compare against (500, 50), which should raise the floor.
      */
     public List<TextSegment> split(List<Document> documents) {
-        throw new UnsupportedOperationException("Step 4 exercise: implement chunking here");
+        DocumentSplitter documentSplitter = DocumentSplitters.recursive(200, 0);
+
+        return documentSplitter.splitAll(documents);
     }
 }
