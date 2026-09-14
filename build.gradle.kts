@@ -32,6 +32,10 @@ dependencies {
     implementation(platform("dev.langchain4j:langchain4j-bom:1.20.0"))
     implementation("dev.langchain4j:langchain4j")
     implementation("dev.langchain4j:langchain4j-open-ai")
+    // Pulled in transitively at runtime anyway, but declared so LangChain4jConfig
+    // can compile against JdkHttpClientBuilder to force HTTP/1.1 — see the
+    // comment on the HttpClientBuilder bean.
+    implementation("dev.langchain4j:langchain4j-http-client-jdk")
 
     // --- Track B: Spring AI (native Boot 4) ---------------------------------
     implementation(platform("org.springframework.ai:spring-ai-bom:2.0.1"))
