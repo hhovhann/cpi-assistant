@@ -11,6 +11,13 @@ spring:
       chat:
         model: meta-llama-3.1-8b-instruct
 
+# Step 4 — chunking knobs. Override per run without editing source:
+#   ./gradlew bootRun --args="--cpi.ingestion.max-segment-size=500 --cpi.ingestion.max-overlap-size=50"
+cpi:
+  ingestion:
+    max-segment-size: 200
+    max-overlap-size: 0
+
 # Track A — LangChain4j. Same LM Studio server, full /v1 base URL.
 # Consumed by LangChain4jConfig, not by an auto-configuration.
 langchain4j:

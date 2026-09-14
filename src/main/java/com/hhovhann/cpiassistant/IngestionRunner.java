@@ -20,9 +20,11 @@ import static java.lang.String.format;
 public class IngestionRunner implements CommandLineRunner {
 
     private final IngestionPipeline pipeline;
+    private final IngestionProperties properties;
 
-    public IngestionRunner(IngestionPipeline pipeline) {
+    public IngestionRunner(IngestionPipeline pipeline, IngestionProperties properties) {
         this.pipeline = pipeline;
+        this.properties = properties;
     }
 
     @Override
@@ -38,6 +40,9 @@ public class IngestionRunner implements CommandLineRunner {
             log.error("=== Chunking not implemented yet: {} ===", e.getMessage());
             return;
         }
+
+        log.info("=== Chunking: maxSegmentSize={} maxOverlapSize={} ===",
+                properties.maxSegmentSize(), properties.maxOverlapSize());
 
         var sizes = segments.stream().map(s -> s.text().length()).toList();
         log.info("=== Split into {} segments ===", segments.size());

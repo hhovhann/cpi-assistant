@@ -13,6 +13,12 @@ import java.util.List;
 @Service
 public class IngestionPipeline {
 
+    private final IngestionProperties properties;
+
+    public IngestionPipeline(IngestionProperties properties) {
+        this.properties = properties;
+    }
+
     /**
      * Loads all CPI docs from src/main/resources/cpi-docs.
      * Each Document carries metadata (e.g. "file_name") — we'll use that
@@ -28,8 +34,9 @@ public class IngestionPipeline {
      * recursive() splits on paragraphs first, then sentences, then words —
      * falling back to a smaller unit only when a piece doesn't fit.
      *
-     * Current setting: 200 chars, no overlap.
-     * Result: 534 segments, min 7 / avg 134 / max 200 chars.
+     * Sizes come from cpi.ingestion.* so Step 10 can sweep them without a
+     * source change. At the default (200, 0): 534 segments,
+     * min 7 / avg 134 / max 200 chars.
      *
      * Observation: min 7 means at least one segment is a bare heading. One
      * vector per segment regardless of length, so a 7-char segment embeds a
@@ -37,7 +44,8 @@ public class IngestionPipeline {
      * compare against (500, 50), which should raise the floor.
      */
     public List<TextSegment> split(List<Document> documents) {
-        DocumentSplitter documentSplitter = DocumentSplitters.recursive(200, 0);
+        DocumentSplitter documentSplitter = DocumentSplitters.recursive(
+                properties.maxSegmentSize(), properties.maxOverlapSize());
 
         return documentSplitter.splitAll(documents);
     }
