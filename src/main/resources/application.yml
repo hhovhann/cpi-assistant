@@ -20,6 +20,11 @@ cpi:
   ingestion:
     max-segment-size: 200
     max-overlap-size: 0
+  # Step 5 — relevance floor, on the store's (cosine + 1) / 2 scale, not raw
+  # cosine. 0.80 sits between off-topic noise (<= 0.79) and real hits (>= 0.86)
+  # as measured at (500, 50) with nomic task prefixes. Model-specific.
+  retrieval:
+    min-score: 0.80
 
 # Track A — LangChain4j. Same LM Studio server, full /v1 base URL.
 # Consumed by LangChain4jConfig, not by an auto-configuration.
@@ -32,3 +37,15 @@ langchain4j:
       log-requests: true
       log-responses: true
 
+    # Step 5 — a separate model, same LM Studio server. It returns vectors,
+    # not text. nomic-embed-text-v1.5 produces 768 dimensions.
+    # Request logging stays off here: 207 segments of payload is unreadable.
+    embedding-model:
+      base-url: http://localhost:1234/v1
+      api-key: lm-studio
+      model-name: text-embedding-nomic-embed-text-v1.5
+      # nomic is trained with asymmetric task prefixes: questions and documents
+      # are embedded differently. Model-specific — an OpenAI embedding model
+      # wants both empty, which is why they live here and not in code.
+      query-prefix: "search_query: "
+      document-prefix: "search_document: "

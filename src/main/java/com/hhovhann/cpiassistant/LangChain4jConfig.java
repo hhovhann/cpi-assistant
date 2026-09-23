@@ -1,9 +1,14 @@
 package com.hhovhann.cpiassistant;
 
+import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
+import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -67,4 +72,42 @@ public class LangChain4jConfig {
                 .build();
     }
 
+    /**
+     * Step 5 — the embedding model. A different model from the chat model, and
+     * a different job: it does not generate text, it converts text into a
+     * fixed-length vector. LM Studio serves it on the same OpenAI-compatible
+     * endpoint, so the only thing that changes is the model name.
+     *
+     * The same bean must embed both the documents and, later, the questions.
+     * Two different embedding models produce vectors in unrelated coordinate
+     * systems, and cosine similarity between them is meaningless.
+     */
+    @Bean
+    EmbeddingModel embeddingModel(
+            HttpClientBuilder httpClientBuilder,
+            @Value("${langchain4j.open-ai.embedding-model.base-url}") String baseUrl,
+            @Value("${langchain4j.open-ai.embedding-model.api-key}") String apiKey,
+            @Value("${langchain4j.open-ai.embedding-model.model-name}") String modelName,
+            @Value("${langchain4j.open-ai.embedding-model.log-requests:false}") boolean logRequests) {
+        return OpenAiEmbeddingModel.builder()
+                .httpClientBuilder(httpClientBuilder)
+                .baseUrl(baseUrl)
+                .apiKey(apiKey)
+                .modelName(modelName)
+                .logRequests(logRequests)
+                .build();
+    }
+
+    /**
+     * Step 5 — the vector store, in memory for now.
+     *
+     * InMemoryEmbeddingStore keeps every vector in a list and, on search,
+     * compares the query against all of them one by one. At 207 segments that
+     * is nothing. Step 7 swaps this for pgvector, which is the same interface
+     * with an index behind it — the rest of the code will not change.
+     */
+    @Bean
+    EmbeddingStore<TextSegment> embeddingStore() {
+        return new InMemoryEmbeddingStore<>();
+    }
 }

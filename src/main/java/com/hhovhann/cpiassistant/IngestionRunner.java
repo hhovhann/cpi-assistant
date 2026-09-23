@@ -1,7 +1,9 @@
 package com.hhovhann.cpiassistant;
 
 import dev.langchain4j.data.document.Document;
+import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -19,12 +21,25 @@ import static java.lang.String.format;
 @Component
 public class IngestionRunner implements CommandLineRunner {
 
+    /** Probe questions for Step 5 — deliberately worded to avoid the obvious keywords. */
+    private static final List<String> SAMPLE_QUERIES = List.of(
+            "How do I connect to a database from an iFlow?",
+            "AS2",
+            "What is the capital of France?");
+
     private final IngestionPipeline pipeline;
     private final IngestionProperties properties;
+    private final RetrievalService retrievalService;
+    private final EmbeddingModel embeddingModel;
 
-    public IngestionRunner(IngestionPipeline pipeline, IngestionProperties properties) {
+    public IngestionRunner(IngestionPipeline pipeline,
+                           IngestionProperties properties,
+                           RetrievalService retrievalService,
+                           EmbeddingModel embeddingModel) {
         this.pipeline = pipeline;
         this.properties = properties;
+        this.retrievalService = retrievalService;
+        this.embeddingModel = embeddingModel;
     }
 
     @Override
@@ -53,5 +68,45 @@ public class IngestionRunner implements CommandLineRunner {
 
         int sample = segments.size() / 2;
         log.info("--- Sample segment (#{}) ---{}{}{}------------------------", sample, System.lineSeparator(), segments.get(sample).text(), System.lineSeparator());
+
+        embedAndSearch(segments);
+    }
+
+    /** Step 5: embed every segment, then probe the store with a few questions. */
+    private void embedAndSearch(List<TextSegment> segments) {
+        List<Embedding> embeddings;
+        long start = System.currentTimeMillis();
+        try {
+            embeddings = pipeline.embed(segments);
+        } catch (UnsupportedOperationException e) {
+            log.warn("=== Embedding not implemented yet: {} ===", e.getMessage());
+            return;
+        }
+        log.info("=== Embedded {} segments in {} ms, {} dimensions each (model reports {}) ===",
+                embeddings.size(), System.currentTimeMillis() - start,
+                embeddings.isEmpty() ? 0 : embeddings.getFirst().vector().length,
+                embeddingModel.dimension());
+
+        for (String query : SAMPLE_QUERIES) {
+            try {
+                log.info("--- Query: \"{}\"", query);
+                var matches = retrievalService.search(query, 3);
+                if (matches.isEmpty()) {
+                    log.info("    (no matches above the score floor)");
+                }
+                matches.forEach(m -> log.info("    {}",
+                        format("%.4f  [%s]  %s", m.score(),
+                                m.embedded().metadata().getString("file_name"),
+                                preview(m.embedded().text()))));
+            } catch (UnsupportedOperationException e) {
+                log.warn("=== Search not implemented yet: {} ===", e.getMessage());
+                return;
+            }
+        }
+    }
+
+    private static String preview(String text) {
+        String flat = text.replaceAll("\\s+", " ").trim();
+        return flat.length() <= 90 ? flat : flat.substring(0, 90) + "...";
     }
 }
