@@ -51,6 +51,22 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+tasks.test {
+    useJUnitPlatform {
+        excludeTags("eval")
+    }
+}
+
+// Evaluations need LM Studio running, so they stay out of `test`.
+//   ./gradlew eval
+tasks.register<Test>("eval") {
+    description = "Runs the evaluations tagged 'eval' against the live models."
+    group = "verification"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    useJUnitPlatform {
+        includeTags("eval")
+    }
+    testLogging.showStandardStreams = true
+    outputs.upToDateWhen { false }
 }

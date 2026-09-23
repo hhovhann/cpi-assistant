@@ -21,8 +21,11 @@ cpi:
     max-segment-size: 500
     max-overlap-size: 50
   # Relevance floor, on the store's (cosine + 1) / 2 scale, not raw
-  # cosine. 0.80 sits between off-topic noise (<= 0.79) and real hits (>= 0.86)
-  # as measured at (500, 50) with nomic task prefixes. Model-specific.
+  # cosine. A trade-off, not a clean gap: across the evaluation set
+  # (./gradlew eval) off-topic questions reach 0.82 ("tune JVM garbage
+  # collection") and some correct chunks score just under 0.80. It stops
+  # everyday noise; the prompt's "answer only from the context" rule has to
+  # catch the rest. Model-specific (nomic with task prefixes).
   retrieval:
     min-score: 0.80
 

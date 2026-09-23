@@ -52,7 +52,10 @@ public class RetrievalService {
      *   best "capital of France" junk   0.7511 -> 0.7873
      *   weakest real hit (AS2)               -> 0.8661
      * The gap between a right answer and noise widened a little (0.065 -> 0.077),
-     * so the floor (cpi.retrieval.min-score) sits at 0.80, in that gap.
+     * so the floor (cpi.retrieval.min-score) was set at 0.80. The larger
+     * evaluation set (RetrievalEvaluation) later showed there is no clean gap:
+     * a technical off-topic question scores up to 0.82, and some correct chunks
+     * land just under 0.80. The floor filters everyday noise, not everything.
      *
      * Still unsolved: the Partner Directory chunk (0.8714) outranks JDBC
      * (0.8642) for "How do I connect to a database from an iFlow?". The
@@ -61,13 +64,32 @@ public class RetrievalService {
      * RagService; fixing the order needs hybrid keyword search or a reranker.
      */
     public List<EmbeddingMatch<TextSegment>> search(String query, int maxResults) {
-        Embedding queryEmbedding = embeddingModel.embed(queryPrefix + query).content();
+        return search(embedQuery(query), maxResults, embeddingStore, minScore);
+    }
+
+    /** Embeds a question the way search does, with the query prefix. */
+    Embedding embedQuery(String query) {
+        return embeddingModel.embed(queryPrefix + query).content();
+    }
+
+    /**
+     * Search a given store by an already-embedded question, with a given
+     * floor. The evaluation embeds each question once and searches one store
+     * per chunk-size configuration, with floor 0 to see every score.
+     */
+    List<EmbeddingMatch<TextSegment>> search(Embedding queryEmbedding, int maxResults,
+                                             EmbeddingStore<TextSegment> store, double minScore) {
         EmbeddingSearchRequest embeddingSearchRequest =
             EmbeddingSearchRequest.builder()
                 .queryEmbedding(queryEmbedding)
                 .maxResults(maxResults)
                 .minScore(minScore)
                 .build();
-        return embeddingStore.search(embeddingSearchRequest).matches();
+        return store.search(embeddingSearchRequest).matches();
+    }
+
+    /** The configured relevance floor. */
+    double minScore() {
+        return minScore;
     }
 }

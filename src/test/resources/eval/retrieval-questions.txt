@@ -1,0 +1,61 @@
+# Retrieval evaluation set.
+#
+# Format:  question | accepted file, accepted file
+#   - A retrieval "hit" means at least one accepted file is in the top results.
+#   - Empty right-hand side = off-topic question: the right behaviour is to
+#     retrieve nothing above the score floor.
+#
+# Questions are worded the way a user would ask, avoiding the doc's own
+# keywords where possible — "database", not "JDBC". That is the hard case
+# for semantic search, and the one that matters.
+#
+# Edit freely: more questions make the numbers more trustworthy.
+
+# --- JDBC / databases
+How do I read rows from an Oracle table inside an integration flow? | 02-jdbc-adapter.txt, 05-adapters-overview.txt
+How do I connect to a database from an iFlow? | 02-jdbc-adapter.txt, 05-adapters-overview.txt
+
+# --- Scripting
+When should I put code inline instead of in a separate script file? | 03-script-step-vs-groovy-script.txt
+What method does my Groovy code have to implement? | 03-script-step-vs-groovy-script.txt
+
+# --- Error handling
+How do I send an alert email when a message fails? | 04-error-handling-in-iflows.txt
+How can an integration flow deliberately finish with a failed status? | 04-error-handling-in-iflows.txt
+
+# --- Adapters
+Which adapter do I use to expose a REST endpoint? | 05-adapters-overview.txt
+How do I pick up files from a remote file server? | 05-adapters-overview.txt
+
+# --- Mapping
+How do I transform one XML structure into another with drag and drop? | 06-message-mapping.txt
+When is a stylesheet transformation better than the graphical mapper? | 06-message-mapping.txt
+
+# --- B2B, AS2, EDI, cXML
+What is a trading partner agreement? | 07-b2b-integration-overview.txt, 15-b2b-scenarios-and-patterns.txt
+How do I get a receipt proving my partner received the message? | 08-as2-adapter-b2b.txt
+How is an EDIFACT interchange structured? | 09-edi-processing.txt
+How do I break a batch of EDI documents into single messages? | 09-edi-processing.txt, 15-b2b-scenarios-and-patterns.txt
+How does a buyer shop in a supplier's catalog from their procurement system? | 14-cxml-b2b.txt
+What is the end-to-end flow for receiving a purchase order from a partner over EDI? | 15-b2b-scenarios-and-patterns.txt
+
+# --- Partner Directory
+Where do I store a partner-specific endpoint URL? | 10-partner-directory.txt, 07-b2b-integration-overview.txt
+
+# --- Content modifier and routing
+How do I set an HTTP header to a dynamic value? | 11-content-modifier-and-routing.txt
+How do I send a message to different receivers depending on its content? | 11-content-modifier-and-routing.txt
+
+# --- Security
+Where are certificates and private keys managed? | 12-security-in-cpi.txt
+
+# --- Data store
+How do I avoid processing the same message twice? | 13-data-store-and-variables.txt
+
+# --- Basics
+What is an iFlow made of? | 01-cpi-overview.txt
+
+# --- Off-topic: should retrieve nothing
+What is the capital of France? |
+How do I bake sourdough bread? |
+How do I tune garbage collection in the JVM? |

@@ -102,6 +102,11 @@ means "cosine ≥ 0" and filters almost nothing.
 Real hits start around 0.86, noise tops out around 0.79 → the floor
 `cpi.retrieval.min-score` is **0.80**, in that gap.
 
+*Later correction (Step 10a):* with 25 questions instead of 3, there is no
+clean gap — an off-topic technical question reaches 0.82 and some correct
+chunks score just under 0.80. Measurements on a handful of questions don't
+generalise.
+
 **Open problem:** for the database question, a Partner Directory chunk (0.8714)
 still ranks *above* the JDBC chunk (0.8642). JDBC is in the top 3, which is
 enough — but pure semantic search can't fix the order. See Step 10.
@@ -243,13 +248,78 @@ second column for comparison.
 JDBC adapter?"*. Then ask the database question and look at which source is
 tagged *retrieved, not cited* — or isn't, when the model blanket-cites.
 
-### Step 10: Tuning and evaluation — *next*
-Measure instead of guessing:
-- **Control group:** answer with *all* docs in the prompt (~20K tokens) and
-  compare cost, latency and accuracy against RAG.
-- **Chunk size sweep:** does (300, 30) or (800, 80) beat (500, 50)? Does it fix
-  the "Step 2" boundary problem?
-- **Citation quality:** does each cited chunk really support the claim?
+### Step 10: Tuning and evaluation — *in progress*
+Measure instead of guessing. Up to now every decision rested on two or three
+hand-picked questions. Step 10 replaces that with fixed question sets and
+numbers, in three parts:
+
+| Part | Question | Needs the chat model? |
+|---|---|---|
+| **10a** — retrieval eval + chunk sweep | Does the right doc land in the top 3? At which chunk size? | No — embeddings only, seconds |
+| **10b** — RAG vs all docs in the prompt | Is RAG better than giving the model all ~20K tokens? Cost, speed, correctness — and which chunk size gives the best *answers*? | Yes |
+| **10c** — citation check | Does a cited chunk really support the claim? | Yes |
+
+#### 10a: Retrieval evaluation and chunk-size sweep
+*`RetrievalEvaluation`, `src/test/resources/eval/retrieval-questions.txt` · run with `./gradlew eval`*
+
+**Built:** a question set — 22 CPI questions, each with the file(s) that
+answer it, plus 3 off-topic questions that should retrieve nothing. An
+evaluation that, for each chunk size, builds a fresh store through the app's
+own ingestion and retrieval code and scores every question. It needs LM
+Studio, so it is tagged `eval` and kept out of `./gradlew test`.
+
+**Ideas:**
+- **An evaluation set turns opinions into numbers.** Questions are worded
+  like a user would ask — "database", not "JDBC" — because that's the hard
+  case for semantic search.
+- **Metrics:**
+  - *Hit@k* — share of questions with a correct file in the top k. Hit@3 is
+    the one that matters: `/ask` sends the top 3 to the model.
+  - *MRR* (mean reciprocal rank) — 1 for a hit at rank 1, ½ at rank 2, …
+    0 for a miss. One number that rewards putting the right chunk first.
+- **Measure what the user gets.** The first version searched with no score
+  floor and counted chunks that `/ask` would have dropped — it reported 100%
+  where the truth was 95%. A code review caught it. The metrics now apply the
+  same 0.80 floor as `/ask`.
+- **Small samples mislead.** With 22 questions, one question moves Hit@k by
+  4.5 points. A 1–2 question difference is a hint, not a verdict. More
+  questions make the numbers firmer.
+
+**Measured** (22 on-topic, 3 off-topic, floor 0.80):
+
+| Chunks (size/overlap) | Segments | Hit@1 | Hit@3 | MRR@5 | Off-topic leaked |
+|---|---|---|---|---|---|
+| 200/20 | 539 | 64% | 82% | 0.723 | 1 |
+| **300/30** | 350 | 68% | **95%** | 0.811 | 1 |
+| 500/50 — current | 207 | 68% | 91% | 0.789 | 1 |
+| 800/80 | 117 | **73%** | 86% | **0.816** | 1 |
+| 1200/120 | 75 | 59% | 82% | 0.701 | 1 |
+| 2000/200 | 47 | 55% | 73% | 0.633 | 1 |
+
+**What this shows:**
+- **Too small and too large both lose.** Tiny chunks carry too little meaning
+  to match; huge chunks blend several topics into one vector. The sweet spot
+  is 300–800 characters.
+- **The score floor has no clean gap.** *"How do I tune garbage collection in
+  the JVM?"* scores 0.80–0.82 in every configuration — a technical question
+  looks close enough to the docs. Meanwhile some correct chunks score just
+  under 0.80. The Step 5 claim "real hits start around 0.86" held for three
+  questions, not for twenty-five. The floor stops everyday noise; the
+  prompt's "answer only from the context" rule has to catch the rest.
+- **Retrieval isn't the goal, answers are.** 300/30 retrieves best, but hands
+  the model shorter chunks — which may make the "configured in Step 2"
+  problem from Step 6 worse. **The chunk size is decided in 10b**, on answers.
+
+**Try:** add questions to `retrieval-questions.txt` from your own CPI
+experience and rerun `./gradlew eval`. The report is saved to
+`build/eval/retrieval-report.md`, including a per-question rank table.
+
+#### 10b, 10c and the rest — *next*
+- **10b — control group:** answer with *all* docs in the prompt (~20K tokens)
+  and compare cost, latency and accuracy against RAG, at 300/30 and 500/50.
+  Needs Llama reloaded in LM Studio with a context length of at least 32,768 —
+  LM Studio fixes the context size when it loads a model, often at 4,096.
+- **10c — citation quality:** does each cited chunk really support the claim?
   Does a stronger model stop blanket-citing?
 - **Ranking:** fix Partner Directory outranking JDBC — *hybrid search*
   (keywords + vectors) or a *reranker*.

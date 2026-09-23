@@ -60,8 +60,12 @@ public class IngestionPipeline {
      * a generic word and matches unrelated queries.
      */
     public List<TextSegment> split(List<Document> documents) {
-        DocumentSplitter documentSplitter = DocumentSplitters.recursive(
-                properties.maxSegmentSize(), properties.maxOverlapSize());
+        return split(documents, properties.maxSegmentSize(), properties.maxOverlapSize());
+    }
+
+    /** Same splitter with explicit sizes — the evaluation sweeps these. */
+    List<TextSegment> split(List<Document> documents, int maxSegmentSize, int maxOverlapSize) {
+        DocumentSplitter documentSplitter = DocumentSplitters.recursive(maxSegmentSize, maxOverlapSize);
 
         return documentSplitter.splitAll(documents);
     }
@@ -76,13 +80,25 @@ public class IngestionPipeline {
      * what retrieval hands to the LLM.
      */
     public List<Embedding> embed(List<TextSegment> segments) {
+        List<Embedding> embeddings = embedInto(segments, embeddingStore);
+        indexedSegments.addAndGet(embeddings.size());
+
+        return embeddings;
+    }
+
+    /**
+     * Embeds into a store of the caller's choosing. The evaluation builds a
+     * fresh store per chunk-size configuration, and still goes through the
+     * same prefixing and embedding code as the app. Package-private: it does
+     * not update indexedSegments, so it must never be used on the live store.
+     */
+    List<Embedding> embedInto(List<TextSegment> segments, EmbeddingStore<TextSegment> store) {
         List<TextSegment> prefixed = segments.stream()
                 .map(segment -> TextSegment.from(documentPrefix + segment.text(), segment.metadata()))
                 .toList();
         List<Embedding> embeddings = embeddingModel.embedAll(prefixed).content();
 
-        embeddingStore.addAll(embeddings, segments);
-        indexedSegments.addAndGet(embeddings.size());
+        store.addAll(embeddings, segments);
 
         return embeddings;
     }

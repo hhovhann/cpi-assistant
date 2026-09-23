@@ -136,6 +136,17 @@ curl -G localhost:8080/chat --data-urlencode "message=How do I connect to a data
 Tests use hand-written fakes for the models, so they run in seconds and do
 **not** need LM Studio.
 
+### 6. Evaluate (optional)
+
+```bash
+./gradlew eval
+```
+
+Runs the retrieval evaluation against LM Studio: 25 questions with known
+answers, across six chunk sizes. Prints a report and saves it to
+`build/eval/retrieval-report.md`. Edit the questions in
+`src/test/resources/eval/retrieval-questions.txt`.
+
 ## Endpoints
 
 | Method | Path | Parameter | Purpose |
@@ -193,7 +204,7 @@ Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 | ⬜ | 7 | Persistent vector store (pgvector) |
 | ✅ | 8 | Source references in answers |
 | ✅ | 9 | Web UI |
-| ⬜ | 10 | Tuning and evaluation |
+| 🔶 | 10 | Tuning and evaluation — 10a (retrieval eval, chunk sweep) done |
 
 Then: an agent with LangChain4j, and a production version with Spring AI.
 Details in [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

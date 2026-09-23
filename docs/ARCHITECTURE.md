@@ -78,7 +78,9 @@ looks like a parsing bug (`` `choices` is not set ``), not a 404.
 replacement, behind the same `EmbeddingStore` interface.
 
 **Retrieval scores are `(cosine + 1) / 2`,** not raw cosine. The `0.80` floor
-is on that scale, and is specific to nomic-embed-text with task prefixes.
+is on that scale, and is specific to nomic-embed-text with task prefixes. It is
+a trade-off, not a clean cut: the evaluation shows an off-topic technical
+question scoring 0.82 and some correct chunks just under 0.80.
 
 **The UI escapes everything the model writes.** LLM output is untrusted —
 it is built from documents and user input — so `index.html` escapes it before
@@ -98,9 +100,17 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 |---|---|---|
 | `RagServiceTest` | Prompt contents and numbering, citation parsing and its edge cases, answer mapping, empty retrieval, missing token usage | No — hand-written fakes |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | No — sets `cpi.ingestion.run-on-startup=false` |
+| `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
 
 Answer *quality* against a real model is not unit-tested — that belongs to
 evaluation (Step 10 in the [learning path](LEARNING-PATH.md)).
+
+The evaluation lives in the same package as the services so it can call
+package-private overloads — `IngestionPipeline.split(docs, size, overlap)`,
+`embedInto(segments, store)`, `RetrievalService.search(embedding, k, store, floor)`.
+They let it build a fresh store per chunk size while running the app's own
+code. `embedInto` does not update the `/status` counter, which is why it is
+not public: it must never be used on the live store.
 
 ## Gotchas when running
 
