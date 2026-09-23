@@ -54,7 +54,7 @@ rather than from what it remembers.
 
 | Tool | Version | Notes |
 |---|---|---|
-| JDK | **26** | Gradle's toolchain uses it. If your default `java` is older, run via `./gradlew`, not `java -jar`. |
+| JDK | **27** | Gradle's toolchain uses it. If your default `java` is older, run via `./gradlew`, not `java -jar`. With SDKMAN, `sdk env install` picks the version from `.sdkmanrc`. |
 | [LM Studio](https://lmstudio.ai) | any recent | Runs the models locally, free, behind an OpenAI-compatible API |
 
 No API key or cloud account is needed for development.
@@ -179,8 +179,8 @@ To add knowledge, drop a `.txt` file in that folder and restart.
 
 ## Tech stack
 
-Java 26 · Spring Boot 4.1 · LangChain4j 1.20 (core only) · Spring AI 2.0 ·
-Gradle 9.7 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
+Java 27 · Spring Boot 4.1.1 · LangChain4j 1.20.0 (core only) · Spring AI 2.0.1 ·
+Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 
 ## Project status
 

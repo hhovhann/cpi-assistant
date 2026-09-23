@@ -84,6 +84,10 @@ is on that scale, and is specific to nomic-embed-text with task prefixes.
 it is built from documents and user input — so `index.html` escapes it before
 adding its own markup. Never assign an answer to `innerHTML` unescaped.
 
+**Lombok is pinned above Spring Boot's version.** Boot 4.1.1 manages Lombok
+1.18.46, which breaks on Java 27; `build.gradle.kts` overrides it to 1.18.48.
+A new JDK often breaks Lombok first, because it hooks into compiler internals.
+
 **Prefixes are applied to the embedded text only.** `IngestionPipeline.embed()`
 embeds a prefixed copy but stores the original chunk, so the LLM never sees
 `search_document:`.
@@ -100,8 +104,9 @@ evaluation (Step 10 in the [learning path](LEARNING-PATH.md)).
 
 ## Gotchas when running
 
-- **JDK version.** The build targets Java 26. `java -jar` on an older default
-  JDK fails with `UnsupportedClassVersionError`; use `./gradlew bootRun`.
+- **JDK version.** The build targets Java 27. `java -jar` on an older default
+  JDK fails with `UnsupportedClassVersionError`; use `./gradlew bootRun`, or
+  run `sdk env` in the project folder to switch to the JDK in `.sdkmanrc`.
 - **Asking too early.** The HTTP server starts before ingestion finishes. A
   question asked before the `Embedded N segments` log line finds nothing and
   gets "I don't know". The web UI checks `/status` and waits; `curl` doesn't.

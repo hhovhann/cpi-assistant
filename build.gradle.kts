@@ -9,9 +9,15 @@ version = "0.0.1-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(26)
+        languageVersion = JavaLanguageVersion.of(27)
     }
 }
+
+// Spring Boot 4.1.1 manages Lombok 1.18.46, which fails on Java 27 at
+// compile time (ClassNotFoundException: com.sun.tools.javac.tree.EndPosTable —
+// the JDK removed an internal class Lombok hooks into). 1.18.48 supports 27.
+// Drop this override once Spring Boot's managed version catches up.
+extra["lombok.version"] = "1.18.48"
 
 repositories {
     mavenCentral()
