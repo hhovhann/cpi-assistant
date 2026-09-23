@@ -20,7 +20,7 @@ Ask the same question two ways:
 | Endpoint | What happens | Result for *"How do I connect to a database from an iFlow?"* |
 |---|---|---|
 | `GET /chat` | The question goes straight to the LLM | Long, confident, **wrong** — describes SAP PI menus that don't exist in CPI |
-| `GET /ask` | Relevant doc chunks are retrieved first, then sent with the question | Short, **correct** — JDBC adapter steps from the docs, with the source files listed |
+| `GET /ask` | Relevant doc chunks are retrieved first, then sent with the question | Short, **correct** — JDBC adapter steps from the docs, citing the chunks it used |
 
 And when the docs don't cover a question (*"What is the capital of France?"*),
 `/ask` answers **"I don't know"** instead of making something up.
@@ -40,7 +40,7 @@ flowchart LR
         V --> R
         R --> P[Prompt: rules + chunks + question]
         P --> L[LLM]
-        L --> A[Answer + sources + token counts]
+        L --> A[Answer + cited sources + token counts]
     end
 ```
 
@@ -103,13 +103,22 @@ curl -G localhost:8080/chat --data-urlencode "message=How do I connect to a data
 
 ```json
 {
-  "answer": "You can use the JDBC Adapter in your iFlow. ...",
-  "retrievedFrom": ["10-partner-directory.txt", "02-jdbc-adapter.txt", "07-b2b-integration-overview.txt"],
-  "inputTokens": 349,
-  "outputTokens": 89,
-  "millis": 2108
+  "answer": "To handle errors in an iFlow ... add an Exception Subprocess ([1]) ... use the \"On Error\" setting in the adapter ([2]) ...",
+  "sources": [
+    { "number": 1, "file": "04-error-handling-in-iflows.txt", "score": 0.87, "excerpt": "..." },
+    { "number": 2, "file": "02-jdbc-adapter.txt", "score": 0.86, "excerpt": "..." }
+  ],
+  "retrievedFrom": ["04-error-handling-in-iflows.txt", "02-jdbc-adapter.txt", "13-data-store-and-variables.txt"],
+  "inputTokens": 395,
+  "outputTokens": 162,
+  "millis": 2400
 }
 ```
+
+- `sources` — the chunks the answer **cites** (`[1]`, `[2]` in the text), with
+  a short excerpt so you can check the claim.
+- `retrievedFrom` — everything retrieval handed to the model. Here the data
+  store chunk was retrieved but not used, so it isn't a source.
 
 ### 5. Test
 
@@ -124,7 +133,7 @@ Tests use hand-written fakes for the models, so they run in seconds and do
 
 | Method | Path | Parameter | Purpose |
 |---|---|---|---|
-| GET | `/ask` | `question` | RAG answer with sources and token usage (LangChain4j) |
+| GET | `/ask` | `question` | RAG answer with cited sources and token usage (LangChain4j) |
 | GET | `/chat` | `message` | Plain LLM call, no retrieval — the baseline (LangChain4j) |
 | GET | `/springai/chat` | `message` | Plain LLM call through Spring AI, for comparing frameworks |
 
@@ -173,7 +182,7 @@ Gradle 9.7 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 | ✅ | 5 | Embeddings + semantic search |
 | ✅ | 6 | RAG: retrieve, then generate |
 | ⬜ | 7 | Persistent vector store (pgvector) |
-| ⬜ | 8 | Source references in answers |
+| ✅ | 8 | Source references in answers |
 | ⬜ | 9 | Web UI |
 | ⬜ | 10 | Tuning and evaluation |
 

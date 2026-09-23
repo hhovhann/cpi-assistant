@@ -84,12 +84,19 @@ class RagServiceTest {
         }
 
         @Test
-        void userMessageCarriesEveryRetrievedChunkLabelledWithItsFile() {
+        void systemMessageAsksForNumberedCitations() {
+            String system = ((SystemMessage) service.buildPrompt(QUESTION, TWO_MATCHES).getFirst()).text();
+
+            assertThat(system).containsIgnoringCase("cite").contains("[1]");
+        }
+
+        @Test
+        void userMessageNumbersEachChunkAndLabelsItsFile() {
             String user = userText(service.buildPrompt(QUESTION, TWO_MATCHES));
 
             assertThat(user)
-                    .contains("[02-jdbc-adapter.txt]\nAdd a receiver channel and select JDBC.")
-                    .contains("[10-partner-directory.txt]\nPartner Directory stores partner-specific values.");
+                    .contains("[1] 02-jdbc-adapter.txt\nAdd a receiver channel and select JDBC.")
+                    .contains("[2] 10-partner-directory.txt\nPartner Directory stores partner-specific values.");
         }
 
         @Test
@@ -97,7 +104,7 @@ class RagServiceTest {
             String user = userText(service.buildPrompt(QUESTION, TWO_MATCHES));
 
             assertThat(user).containsSubsequence(
-                    "[02-jdbc-adapter.txt]", "\n---\n", "[10-partner-directory.txt]");
+                    "[1] 02-jdbc-adapter.txt", "\n---\n", "[2] 10-partner-directory.txt");
         }
 
         @Test
@@ -129,6 +136,65 @@ class RagServiceTest {
     }
 
     @Nested
+    class ExtractSources {
+
+        private final RagService service = new RagService(retrievalReturning(List.of()),
+                new FakeChatModel(response("unused", null)));
+
+        private List<Integer> cited(String answer) {
+            return service.extractSources(answer, TWO_MATCHES).stream().map(RagService.Source::number).toList();
+        }
+
+        @Test
+        void mapsACitationBackToItsChunk() {
+            List<RagService.Source> sources = service.extractSources("Use the JDBC adapter [1].", TWO_MATCHES);
+
+            assertThat(sources).containsExactly(new RagService.Source(
+                    1, "02-jdbc-adapter.txt", 0.86, "Add a receiver channel and select JDBC."));
+        }
+
+        @Test
+        void keepsOrderOfFirstCitationWithoutDuplicates() {
+            assertThat(cited("Partners [2]. Then JDBC [1]. Partners again [2].")).containsExactly(2, 1);
+        }
+
+        @Test
+        void acceptsAdjacentCitations() {
+            assertThat(cited("Both apply [1][2].")).containsExactly(1, 2);
+        }
+
+        @Test
+        void acceptsGroupedCitations() {
+            assertThat(cited("Both apply [1, 2].")).containsExactly(1, 2);
+        }
+
+        @Test
+        void acceptsSpaceSeparatedCitations() {
+            assertThat(cited("Both apply [1 2].")).containsExactly(1, 2);
+        }
+
+        @Test
+        void survivesANumberTooLargeForAnInt() {
+            assertThat(cited("See [12345678901] and [1].")).containsExactly(1);
+        }
+
+        @Test
+        void ignoresNumbersWithNoChunkBehindThem() {
+            assertThat(cited("See [0] and [7] and [3].")).isEmpty();
+        }
+
+        @Test
+        void noCitationsMeansNoSources() {
+            assertThat(cited("I don't know.")).isEmpty();
+        }
+
+        @Test
+        void ignoresBracketsThatAreNotCitations() {
+            assertThat(cited("Set the header [SAP_ApplicationID] and see [1].")).containsExactly(1);
+        }
+    }
+
+    @Nested
     class Answer {
 
         @Test
@@ -139,11 +205,25 @@ class RagServiceTest {
             RagService.RagAnswer answer = service.answer(QUESTION);
 
             assertThat(answer.answer()).isEqualTo("Use the JDBC adapter.");
+            assertThat(answer.sources()).isEmpty();
             assertThat(answer.retrievedFrom())
                     .containsExactly("02-jdbc-adapter.txt", "10-partner-directory.txt");
             assertThat(answer.inputTokens()).isEqualTo(349);
             assertThat(answer.outputTokens()).isEqualTo(94);
             assertThat(answer.millis()).isNotNegative();
+        }
+
+        @Test
+        void sourcesAreWhatWasCitedNotEverythingRetrieved() {
+            var service = new RagService(retrievalReturning(TWO_MATCHES),
+                    new FakeChatModel(response("Use the JDBC adapter [1].", null)));
+
+            RagService.RagAnswer answer = service.answer(QUESTION);
+
+            assertThat(answer.sources()).extracting(RagService.Source::file)
+                    .containsExactly("02-jdbc-adapter.txt");
+            assertThat(answer.retrievedFrom())
+                    .containsExactly("02-jdbc-adapter.txt", "10-partner-directory.txt");
         }
 
         @Test

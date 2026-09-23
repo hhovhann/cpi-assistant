@@ -13,7 +13,7 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `IngestionPipeline` | Loads the docs, splits them into chunks, embeds and stores them | Once, at startup |
 | `IngestionRunner` | Drives the pipeline at startup and logs stats plus probe searches | Once, at startup |
 | `RetrievalService` | Embeds a question and returns the closest chunks above the score floor | Per question |
-| `RagService` | Retrieve → build prompt → call the LLM → answer with sources and tokens | Per question |
+| `RagService` | Retrieve → build a numbered prompt → call the LLM → parse the answer's `[n]` citations into sources | Per question |
 | `RagController` | `GET /ask` | Per question |
 | `LangChain4jChatController` | `GET /chat` — the LLM alone, no retrieval | Per question |
 | `SpringAiChatController` | `GET /springai/chat` — the same through Spring AI | Per question |
@@ -87,7 +87,7 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 
 | Test | What it checks | Needs LM Studio? |
 |---|---|---|
-| `RagServiceTest` | Prompt contents, answer mapping, empty retrieval, missing token usage | No — hand-written fakes |
+| `RagServiceTest` | Prompt contents and numbering, citation parsing and its edge cases, answer mapping, empty retrieval, missing token usage | No — hand-written fakes |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | No — sets `cpi.ingestion.run-on-startup=false` |
 
 Answer *quality* against a real model is not unit-tested — that belongs to

@@ -12,6 +12,8 @@ git log --oneline          # find the step
 git show <commit> --stat   # the files it touched
 ```
 
+Step 7 was skipped for now (optional for a demo), so Step 8 came before it.
+
 **Suggested way to learn:** read a step here, check out its commit, read the
 classes it names, then run the app and try the experiment listed.
 
@@ -157,7 +159,7 @@ rule from the system message and ask *"What is the capital of France?"*.
 
 ---
 
-### Step 7: Persistent vector store — *next*
+### Step 7: Persistent vector store — *skipped for now, optional for a demo*
 Swap `InMemoryEmbeddingStore` for **pgvector** (PostgreSQL). Same
 `EmbeddingStore` interface, so nothing else changes — but embeddings survive
 a restart, and search uses an index instead of comparing against every vector.
@@ -165,12 +167,48 @@ a restart, and search uses an index instead of comparing against every vector.
 matters. *Optional for a demo.*
 
 ### Step 8: Source references in answers
-Make the model cite its sources reliably, and return them in a structured way.
-**Idea:** traceability is what makes a RAG answer trustworthy. The file labels
-added in Step 6 are already half of it — the model sometimes cites them on
-its own.
+*`RagService.extractSources()`, `RagService.Source`*
 
-### Step 9: Web UI
+**Built:** the prompt numbers the chunks `[1]`, `[2]`, `[3]` and tells the
+model to cite the ones it uses. The answer's citations are parsed back into
+`sources` — file, score and a short excerpt — returned next to `retrievedFrom`.
+
+**Ideas:**
+- **Retrieved is not used.** Retrieval always hands over the top 3; often one
+  of them is noise. `retrievedFrom` shows what the model *saw*, `sources`
+  shows what it *relied on*. The difference is the noise.
+- **Numbers, not file names.** Several chunks can come from the same file, and
+  a number is short, unambiguous and easy to parse. `[n]` maps to the n-th
+  retrieved chunk.
+- **Show the format.** The rule includes an example — *"like [1] or [1, 2]"*.
+  Small models copy a format they are shown far better than one described.
+- **Parse defensively.** The model writes free text. The parser accepts
+  `[1]`, `[1][2]`, `[1, 2]` and `[1 2]`, ignores brackets that aren't
+  citations (`[SAP_ApplicationID]`), and drops numbers with no chunk behind
+  them (`[0]`, `[7]`) — a made-up source is worse than none.
+- **Tests first.** The spec for `extractSources` was written as failing tests
+  before the code. Two more crash cases (`[1 2]`, a number too big for an
+  `int`) were found by reading the code and added as tests.
+
+**Measured** with Llama 3.1 8B:
+
+| Question | Retrieved | Cited | |
+|---|---|---|---|
+| Error handling in an iFlow | error handling, JDBC, data store | error handling, JDBC | ✅ unused data-store chunk left out |
+| Script step vs Groovy Script | 3 chunks of the scripting doc | [1], [2] | ✅ each claim cited |
+| Connect to a database | Partner Directory, JDBC, B2B | **Partner Directory**, JDBC | ⚠️ opened with a blanket `[1, 2]` |
+| Capital of France | — | — | ✅ "I don't know" |
+
+**The lesson:** a citation is the model's **claim** about what it used, not
+proof. The parser records faithfully what the model wrote, so `sources` is
+only as honest as the model. Checking citations — does the cited chunk really
+contain the claim? — or a stronger model is Step 10 work.
+
+**Try:** ask the database question and compare `sources` with
+`retrievedFrom`. Then remove the example `like [1] or [1, 2]` from the rule
+and see whether the model still cites in a parseable format.
+
+### Step 9: Web UI — *next*
 A simple page to ask questions and see answers with sources. Makes it demo-able.
 
 ### Step 10: Tuning and evaluation
@@ -179,6 +217,8 @@ Measure instead of guessing:
   compare cost, latency and accuracy against RAG.
 - **Chunk size sweep:** does (300, 30) or (800, 80) beat (500, 50)? Does it fix
   the "Step 2" boundary problem?
+- **Citation quality:** does each cited chunk really support the claim?
+  Does a stronger model stop blanket-citing?
 - **Ranking:** fix Partner Directory outranking JDBC — *hybrid search*
   (keywords + vectors) or a *reranker*.
 - **Model choice:** Llama 3.1 8B locally vs OpenAI — quality and cost.
