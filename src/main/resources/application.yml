@@ -14,13 +14,13 @@ spring:
       chat:
         model: meta-llama-3.1-8b-instruct
 
-# Step 4 — chunking knobs. Override per run without editing source:
+# Chunking knobs. Override per run without editing source:
 #   ./gradlew bootRun --args="--cpi.ingestion.max-segment-size=500 --cpi.ingestion.max-overlap-size=50"
 cpi:
   ingestion:
-    max-segment-size: 200
-    max-overlap-size: 0
-  # Step 5 — relevance floor, on the store's (cosine + 1) / 2 scale, not raw
+    max-segment-size: 500
+    max-overlap-size: 50
+  # Relevance floor, on the store's (cosine + 1) / 2 scale, not raw
   # cosine. 0.80 sits between off-topic noise (<= 0.79) and real hits (>= 0.86)
   # as measured at (500, 50) with nomic task prefixes. Model-specific.
   retrieval:
@@ -37,7 +37,7 @@ langchain4j:
       log-requests: true
       log-responses: true
 
-    # Step 5 — a separate model, same LM Studio server. It returns vectors,
+    # Embedding model — a separate model, same LM Studio server. It returns vectors,
     # not text. nomic-embed-text-v1.5 produces 768 dimensions.
     # Request logging stays off here: 207 segments of payload is unreadable.
     embedding-model:

@@ -6,6 +6,7 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -16,12 +17,16 @@ import static java.lang.String.format;
 /**
  * Prints loading + chunking stats on startup so we can see the effect of
  * different splitting strategies without writing tests yet.
+ * <p>
+ * Needs LM Studio running. Tests switch it off with
+ * cpi.ingestion.run-on-startup=false so they don't depend on a live model.
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "cpi.ingestion.run-on-startup", havingValue = "true", matchIfMissing = true)
 public class IngestionRunner implements CommandLineRunner {
 
-    /** Probe questions for Step 5 — deliberately worded to avoid the obvious keywords. */
+    /** Retrieval probe questions — deliberately worded to avoid the obvious keywords. */
     private static final List<String> SAMPLE_QUERIES = List.of(
             "How do I connect to a database from an iFlow?",
             "AS2",
@@ -72,7 +77,7 @@ public class IngestionRunner implements CommandLineRunner {
         embedAndSearch(segments);
     }
 
-    /** Step 5: embed every segment, then probe the store with a few questions. */
+    /** Embeds every segment, then probe the store with a few questions. */
     private void embedAndSearch(List<TextSegment> segments) {
         List<Embedding> embeddings;
         long start = System.currentTimeMillis();

@@ -6,8 +6,8 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 /**
  * Chunking knobs, bound from {@code cpi.ingestion.*}.
  *
- * These live in configuration rather than in code because Step 10 is a tuning
- * exercise: every combination should be reachable without touching a source
+ * These live in configuration rather than in code because chunk size is a
+ * tuning knob: every combination should be reachable without touching a source
  * file, e.g.
  *
  * <pre>
@@ -21,6 +21,6 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  */
 @ConfigurationProperties("cpi.ingestion")
 public record IngestionProperties(
-        @DefaultValue("200") int maxSegmentSize,
-        @DefaultValue("0") int maxOverlapSize) {
+        @DefaultValue("500") int maxSegmentSize,
+        @DefaultValue("50") int maxOverlapSize) {
 }

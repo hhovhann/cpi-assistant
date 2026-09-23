@@ -58,8 +58,7 @@ public class RetrievalService {
      * (0.8642) for "How do I connect to a database from an iFlow?". The
      * question avoids the word "JDBC" on purpose, so pure semantic search
      * has little to go on. JDBC is still in the top 3, which is enough for
-     * Step 6 — fixing the order is a Step 10 job (hybrid keyword search or
-     * a reranker).
+     * RagService; fixing the order needs hybrid keyword search or a reranker.
      */
     public List<EmbeddingMatch<TextSegment>> search(String query, int maxResults) {
         Embedding queryEmbedding = embeddingModel.embed(queryPrefix + query).content();

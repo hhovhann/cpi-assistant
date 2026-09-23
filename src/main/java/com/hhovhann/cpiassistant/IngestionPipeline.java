@@ -34,8 +34,8 @@ public class IngestionPipeline {
 
     /**
      * Loads all CPI docs from src/main/resources/cpi-docs.
-     * Each Document carries metadata (e.g. "file_name") — we'll use that
-     * in Step 8 to show source references in answers.
+     * Each Document carries metadata (e.g. "file_name"), which travels with
+     * every segment and identifies the source of a retrieved chunk.
      */
     public List<Document> loadDocuments() {
         return ClassPathDocumentLoader.loadDocuments("cpi-docs", new TextDocumentParser());
@@ -47,14 +47,13 @@ public class IngestionPipeline {
      * recursive() splits on paragraphs first, then sentences, then words —
      * falling back to a smaller unit only when a piece doesn't fit.
      *
-     * Sizes come from cpi.ingestion.* so Step 10 can sweep them without a
-     * source change. At the default (200, 0): 534 segments,
+     * Sizes come from cpi.ingestion.* so they can be tuned without a source
+     * change. Default is (500, 50) → 207 segments. At (200, 0): 534 segments,
      * min 7 / avg 134 / max 200 chars.
      *
-     * Observation: min 7 means at least one segment is a bare heading. One
-     * vector per segment regardless of length, so a 7-char segment embeds a
-     * generic word and matches unrelated queries. Revisit in Step 10 —
-     * compare against (500, 50), which should raise the floor.
+     * Why not (200, 0): min 7 means at least one segment is a bare heading.
+     * One vector per segment regardless of length, so a 7-char segment embeds
+     * a generic word and matches unrelated queries.
      */
     public List<TextSegment> split(List<Document> documents) {
         DocumentSplitter documentSplitter = DocumentSplitters.recursive(
@@ -70,7 +69,7 @@ public class IngestionPipeline {
      *
      * The document prefix is applied to the text that gets embedded only.
      * The store keeps the original segment, so the prefix never leaks into
-     * what retrieval hands to the LLM in Step 6.
+     * what retrieval hands to the LLM.
      */
     public List<Embedding> embed(List<TextSegment> segments) {
         List<TextSegment> prefixed = segments.stream()

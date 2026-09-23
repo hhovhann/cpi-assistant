@@ -73,12 +73,12 @@ public class LangChain4jConfig {
     }
 
     /**
-     * Step 5 — the embedding model. A different model from the chat model, and
+     * The embedding model. A different model from the chat model, and
      * a different job: it does not generate text, it converts text into a
      * fixed-length vector. LM Studio serves it on the same OpenAI-compatible
      * endpoint, so the only thing that changes is the model name.
      *
-     * The same bean must embed both the documents and, later, the questions.
+     * The same bean must embed both the documents and the questions.
      * Two different embedding models produce vectors in unrelated coordinate
      * systems, and cosine similarity between them is meaningless.
      */
@@ -99,12 +99,12 @@ public class LangChain4jConfig {
     }
 
     /**
-     * Step 5 — the vector store, in memory for now.
+     * The vector store, in memory for now.
      *
      * InMemoryEmbeddingStore keeps every vector in a list and, on search,
      * compares the query against all of them one by one. At 207 segments that
-     * is nothing. Step 7 swaps this for pgvector, which is the same interface
-     * with an index behind it — the rest of the code will not change.
+     * is nothing. A persistent store such as pgvector implements the same
+     * interface with an index behind it — the rest of the code would not change.
      */
     @Bean
     EmbeddingStore<TextSegment> embeddingStore() {
