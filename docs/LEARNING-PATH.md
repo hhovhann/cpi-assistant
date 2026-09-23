@@ -208,10 +208,42 @@ contain the claim? — or a stronger model is Step 10 work.
 `retrievedFrom`. Then remove the example `like [1] or [1, 2]` from the rule
 and see whether the model still cites in a parseable format.
 
-### Step 9: Web UI — *next*
-A simple page to ask questions and see answers with sources. Makes it demo-able.
+### Step 9: Web UI
+*`src/main/resources/static/index.html`, `RagController.status()`*
 
-### Step 10: Tuning and evaluation
+**Built:** one static page at <http://localhost:8080> — plain HTML, CSS and
+JavaScript, no build step. Spring Boot serves anything in `static/`.
+It has an ask box, example questions, the answer with clickable `[1]`
+citation chips, source cards (cited ones with excerpt, retrieved-but-unused
+ones dashed), token and timing figures, and a toggle that runs `/chat` in a
+second column for comparison.
+
+**Ideas:**
+- **Model output is untrusted input.** The answer is text the LLM wrote from
+  your docs and the user's question. If either contains `<script>`, putting
+  the answer straight into the page's HTML runs it: prompt injection becomes
+  cross-site scripting. The page escapes the text first, and only then adds
+  its own markup (bold, citation chips). A chip is only created for a number
+  that is a real source, so `[7]` stays plain text.
+- **Readiness is a real state.** The HTTP server starts before ingestion
+  finishes; a question asked in that window finds an empty store and gets
+  "I don't know". `GET /status` reports how many segments are indexed, and the
+  page keeps the Ask button disabled until it is non-zero. The counter is an
+  `AtomicInteger` because the startup thread writes it while request threads
+  read it.
+- **Show the difference, don't describe it.** The side-by-side toggle and the
+  "retrieved, not cited" tags make Steps 6 and 8 visible to someone who has
+  never heard of RAG — which is what a demo needs.
+
+**Measured:** `/status` right after startup returned
+`{"ready":false,"indexedSegments":0}`, then `{"ready":true,"indexedSegments":207}`
+— the race is real.
+
+**Try:** tick *Compare with the model alone* and ask *"How do I configure a
+JDBC adapter?"*. Then ask the database question and look at which source is
+tagged *retrieved, not cited* — or isn't, when the model blanket-cites.
+
+### Step 10: Tuning and evaluation — *next*
 Measure instead of guessing:
 - **Control group:** answer with *all* docs in the prompt (~20K tokens) and
   compare cost, latency and accuracy against RAG.
@@ -222,6 +254,8 @@ Measure instead of guessing:
 - **Ranking:** fix Partner Directory outranking JDBC — *hybrid search*
   (keywords + vectors) or a *reranker*.
 - **Model choice:** Llama 3.1 8B locally vs OpenAI — quality and cost.
+  *Waits until the OpenAI account has credit; everything else here runs on
+  local Llama.*
 - **Demo questions:** JDBC adapter setup, Script step vs Groovy Script, error
   handling in an iFlow — each should get an accurate answer with sources.
 

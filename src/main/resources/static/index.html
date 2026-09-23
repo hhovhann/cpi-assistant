@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CPI Assistant</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --text: #1d232b;
+    --muted: #5f6b7a;
+    --border: #dde2e8;
+    --accent: #0b6bcb;
+    --accent-soft: #e3f0fc;
+    --warn: #9a5b00;
+    --warn-soft: #fff3de;
+    --danger: #b3261e;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161b;
+      --surface: #1b2129;
+      --text: #e4e8ee;
+      --muted: #97a3b3;
+      --border: #2d3642;
+      --accent: #5aa9f5;
+      --accent-soft: #1d3246;
+      --warn: #f0b35a;
+      --warn-soft: #3a2c16;
+      --danger: #f2837a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { margin: 0; font-size: 26px; }
+  header p { margin: 4px 0 0; color: var(--muted); }
+
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin-top: 12px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+  .dot.ready { background: #2e9e5b; }
+
+  form { display: flex; gap: 8px; margin-top: 20px; }
+  input[type=text] {
+    flex: 1; min-width: 0; padding: 12px 14px; font: inherit; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  button.primary {
+    padding: 0 20px; font: inherit; font-weight: 600; color: #fff; background: var(--accent);
+    border: 0; border-radius: var(--radius); cursor: pointer;
+  }
+  button.primary:disabled { opacity: .5; cursor: not-allowed; }
+
+  .options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 12px; font-size: 14px; }
+  .examples { display: flex; flex-wrap: wrap; gap: 8px; }
+  .example {
+    padding: 4px 10px; font: inherit; font-size: 13px; color: var(--accent); background: var(--accent-soft);
+    border: 0; border-radius: 999px; cursor: pointer;
+  }
+  label.compare { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); cursor: pointer; }
+
+  .results { display: grid; gap: 16px; margin-top: 24px; }
+  .results.two { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 800px) { .results.two { grid-template-columns: 1fr; } }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; min-width: 0; }
+  .card h2 { margin: 0 0 2px; font-size: 16px; }
+  .card .sub { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+  .answer { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .meta { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  .error { color: var(--danger); }
+  .loading { color: var(--muted); font-style: italic; }
+
+  .cite {
+    display: inline-block; min-width: 20px; padding: 0 5px; margin: 0 1px; font: inherit; font-size: 12px; font-weight: 600;
+    line-height: 18px; text-align: center; vertical-align: 1px; color: var(--accent); background: var(--accent-soft);
+    border: 0; border-radius: 5px; cursor: pointer;
+  }
+
+  .sources { margin-top: 16px; }
+  .sources h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .source { padding: 10px 12px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 8px; transition: box-shadow .2s; }
+  .source.flash { box-shadow: 0 0 0 2px var(--accent); }
+  .source .head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 14px; }
+  .source .file { font-weight: 600; overflow-wrap: anywhere; }
+  .source .score { font-size: 12px; color: var(--muted); }
+  .source .excerpt { margin-top: 4px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .source.unused { opacity: .6; border-style: dashed; }
+  .tag { font-size: 11px; padding: 1px 6px; border-radius: 4px; color: var(--warn); background: var(--warn-soft); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>CPI Assistant</h1>
+    <p>Answers SAP Cloud Integration questions from the documentation, with sources.</p>
+    <div class="status"><span class="dot" id="dot"></span><span id="status">Connecting…</span></div>
+  </header>
+
+  <form id="form">
+    <input type="text" id="question" placeholder="Ask about SAP CPI…" autocomplete="off" required>
+    <button class="primary" id="ask" type="submit" disabled>Ask</button>
+  </form>
+
+  <div class="options">
+    <div class="examples">
+      <button class="example" type="button">How do I configure a JDBC adapter?</button>
+      <button class="example" type="button">What is the difference between Script step and Groovy Script?</button>
+      <button class="example" type="button">How do I handle errors in an iFlow?</button>
+    </div>
+    <label class="compare"><input type="checkbox" id="compare"> Compare with the model alone (no docs)</label>
+  </div>
+
+  <section class="results" id="results"></section>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const form = $('form'), questionInput = $('question'), askButton = $('ask'), results = $('results');
+
+  // Everything the model writes is untrusted text. Escape it before it goes
+  // anywhere near innerHTML — a doc or a question could contain <script>.
+  function escapeHtml(text) {
+    return text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  }
+
+  // Runs on already-escaped text only. Adds **bold** and turns [1] / [1, 2]
+  // into clickable chips — but only for numbers that are real sources.
+  function renderAnswer(text, cardId, citedNumbers) {
+    let html = escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    if (citedNumbers) {
+      html = html.replace(/\[([\d,\s]+)]/g, (whole, inside) => {
+        const chips = inside.split(/[,\s]+/).filter(Boolean).map(n =>
+          citedNumbers.has(Number(n))
+            ? `<button class="cite" type="button" data-card="${cardId}" data-n="${n}" title="Show source ${n}">${n}</button>`
+            : null);
+        return chips.every(Boolean) ? chips.join('') : whole;
+      });
+    }
+    return html;
+  }
+
+  function card(id, title, subtitle) {
+    const el = document.createElement('article');
+    el.className = 'card';
+    el.id = id;
+    el.innerHTML = `<h2>${title}</h2><p class="sub">${subtitle}</p><div class="answer loading">Thinking…</div>`;
+    return el;
+  }
+
+  function showError(el, message) {
+    el.querySelector('.answer').className = 'answer error';
+    el.querySelector('.answer').textContent = message;
+  }
+
+  async function askRag(question, el) {
+    const started = performance.now();
+    try {
+      const response = await fetch('/ask?question=' + encodeURIComponent(question));
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const data = await response.json();
+      const cited = new Set(data.sources.map(s => s.number));
+
+      const answer = el.querySelector('.answer');
+      answer.className = 'answer';
+      answer.innerHTML = renderAnswer(data.answer, el.id, cited);
+
+      const sourcesEl = document.createElement('div');
+      sourcesEl.className = 'sources';
+      if (data.retrievedFrom.length === 0) {
+        sourcesEl.innerHTML = '<h3>Sources</h3><div class="source unused">No document was relevant enough to retrieve.</div>';
+      } else {
+        const bySourceNumber = new Map(data.sources.map(s => [s.number, s]));
+        sourcesEl.innerHTML = '<h3>Sources</h3>' + data.retrievedFrom.map((file, i) => {
+          const source = bySourceNumber.get(i + 1);
+          return source
+            ? `<div class="source" id="${el.id}-src-${source.number}">
+                 <div class="head"><span class="cite">${source.number}</span>
+                   <span class="file">${escapeHtml(source.file)}</span>
+                   <span class="score">relevance ${source.score.toFixed(3)}</span></div>
+                 <div class="excerpt">${escapeHtml(source.excerpt)}</div>
+               </div>`
+            : `<div class="source unused">
+                 <div class="head"><span class="file">${escapeHtml(file)}</span>
+                   <span class="tag">retrieved, not cited</span></div>
+               </div>`;
+        }).join('');
+      }
+      answer.after(sourcesEl);
+
+      const tokens = data.inputTokens == null ? '' : ` · ${data.inputTokens} tokens in / ${data.outputTokens} out`;
+      sourcesEl.insertAdjacentHTML('afterend',
+        `<div class="meta">${(data.millis / 1000).toFixed(1)} s model time${tokens} · ${((performance.now() - started) / 1000).toFixed(1)} s total</div>`);
+    } catch (e) {
+      showError(el, `Request failed (${e.message}). Is the app running, and LM Studio serving both models?`);
+    }
+  }
+
+  async function askPlain(question, el) {
+    const started = performance.now();
+    try {
+      const response = await fetch('/chat?message=' + encodeURIComponent(question));
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const text = await response.text();
+      const answer = el.querySelector('.answer');
+      answer.className = 'answer';
+      answer.innerHTML = renderAnswer(text, el.id, null);
+      answer.insertAdjacentHTML('afterend',
+        `<div class="meta">${((performance.now() - started) / 1000).toFixed(1)} s total · no sources — nothing to check it against</div>`);
+    } catch (e) {
+      showError(el, `Request failed (${e.message}).`);
+    }
+  }
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const question = questionInput.value.trim();
+    if (!question) return;
+
+    const compare = $('compare').checked;
+    results.className = 'results' + (compare ? ' two' : '');
+    results.replaceChildren();
+
+    const rag = card('rag', 'With the docs', 'Retrieves the most relevant chunks, answers only from them, cites them');
+    results.append(rag);
+    const jobs = [askRag(question, rag)];
+    if (compare) {
+      const plain = card('plain', 'Model alone', 'Same model, no documents — answers from memory');
+      results.append(plain);
+      jobs.push(askPlain(question, plain));
+    }
+
+    askButton.disabled = true;
+    await Promise.allSettled(jobs);
+    askButton.disabled = false;
+  });
+
+  // Clicking a citation chip highlights its source card.
+  results.addEventListener('click', event => {
+    const chip = event.target.closest('button.cite');
+    if (!chip) return;
+    const target = $(`${chip.dataset.card}-src-${chip.dataset.n}`);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    target.classList.add('flash');
+    setTimeout(() => target.classList.remove('flash'), 1200);
+  });
+
+  document.querySelectorAll('.example').forEach(button =>
+    button.addEventListener('click', () => {
+      questionInput.value = button.textContent;
+      if (!askButton.disabled) form.requestSubmit();
+    }));
+
+  // The server answers before the docs are indexed. Wait for them.
+  async function pollStatus() {
+    try {
+      const status = await (await fetch('/status')).json();
+      if (status.ready) {
+        $('dot').classList.add('ready');
+        $('status').textContent = `Ready · ${status.indexedSegments} doc chunks indexed`;
+        askButton.disabled = false;
+        return;
+      }
+      $('status').textContent = 'Indexing the documentation…';
+    } catch {
+      $('status').textContent = 'Server not reachable — retrying…';
+    }
+    setTimeout(pollStatus, 1000);
+  }
+  pollStatus();
+</script>
+</body>
+</html>

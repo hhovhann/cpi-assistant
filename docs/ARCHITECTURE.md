@@ -14,9 +14,10 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `IngestionRunner` | Drives the pipeline at startup and logs stats plus probe searches | Once, at startup |
 | `RetrievalService` | Embeds a question and returns the closest chunks above the score floor | Per question |
 | `RagService` | Retrieve → build a numbered prompt → call the LLM → parse the answer's `[n]` citations into sources | Per question |
-| `RagController` | `GET /ask` | Per question |
+| `RagController` | `GET /ask`, and `GET /status` for readiness | Per question |
 | `LangChain4jChatController` | `GET /chat` — the LLM alone, no retrieval | Per question |
 | `SpringAiChatController` | `GET /springai/chat` — the same through Spring AI | Per question |
+| `static/index.html` | Web UI: calls `/status`, `/ask` and optionally `/chat` | In the browser |
 
 ## Two halves: ingestion and retrieval
 
@@ -79,6 +80,10 @@ replacement, behind the same `EmbeddingStore` interface.
 **Retrieval scores are `(cosine + 1) / 2`,** not raw cosine. The `0.80` floor
 is on that scale, and is specific to nomic-embed-text with task prefixes.
 
+**The UI escapes everything the model writes.** LLM output is untrusted —
+it is built from documents and user input — so `index.html` escapes it before
+adding its own markup. Never assign an answer to `innerHTML` unescaped.
+
 **Prefixes are applied to the embedded text only.** `IngestionPipeline.embed()`
 embeds a prefixed copy but stores the original chunk, so the LLM never sees
 `search_document:`.
@@ -99,6 +104,6 @@ evaluation (Step 10 in the [learning path](LEARNING-PATH.md)).
   JDK fails with `UnsupportedClassVersionError`; use `./gradlew bootRun`.
 - **Asking too early.** The HTTP server starts before ingestion finishes. A
   question asked before the `Embedded N segments` log line finds nothing and
-  gets "I don't know".
+  gets "I don't know". The web UI checks `/status` and waits; `curl` doesn't.
 - **First request is slow.** LM Studio loads the model into memory on first
   use. The read timeout is 3 minutes for that reason.

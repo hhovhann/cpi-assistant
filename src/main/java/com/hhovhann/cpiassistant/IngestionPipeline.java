@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class IngestionPipeline {
@@ -21,6 +22,9 @@ public class IngestionPipeline {
     private final EmbeddingModel embeddingModel;
     private final EmbeddingStore<TextSegment> embeddingStore;
     private final String documentPrefix;
+
+    /** Written by the startup thread, read by request threads — hence atomic. */
+    private final AtomicInteger indexedSegments = new AtomicInteger();
 
     public IngestionPipeline(IngestionProperties properties,
                              EmbeddingModel embeddingModel,
@@ -78,7 +82,13 @@ public class IngestionPipeline {
         List<Embedding> embeddings = embeddingModel.embedAll(prefixed).content();
 
         embeddingStore.addAll(embeddings, segments);
+        indexedSegments.addAndGet(embeddings.size());
 
         return embeddings;
+    }
+
+    /** How many segments are searchable. Zero until startup ingestion finishes. */
+    public int indexedSegments() {
+        return indexedSegments.get();
     }
 }

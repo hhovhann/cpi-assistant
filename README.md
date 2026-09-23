@@ -91,6 +91,13 @@ before asking questions — until then the vector store is empty:
 
 ### 4. Ask
 
+**In the browser:** open <http://localhost:8080>. The page waits until the
+docs are indexed, then lets you ask. Tick *Compare with the model alone* to
+see the RAG answer next to the model's answer without documents. Click a
+citation chip like `1` to jump to its source.
+
+**From the command line:**
+
 ```bash
 # With RAG — answer from the docs
 curl -G localhost:8080/ask --data-urlencode "question=How do I connect to a database from an iFlow?"
@@ -133,9 +140,11 @@ Tests use hand-written fakes for the models, so they run in seconds and do
 
 | Method | Path | Parameter | Purpose |
 |---|---|---|---|
+| GET | `/` | — | Web UI |
 | GET | `/ask` | `question` | RAG answer with cited sources and token usage (LangChain4j) |
 | GET | `/chat` | `message` | Plain LLM call, no retrieval — the baseline (LangChain4j) |
 | GET | `/springai/chat` | `message` | Plain LLM call through Spring AI, for comparing frameworks |
+| GET | `/status` | — | `{"ready": true, "indexedSegments": 207}` — whether the docs are indexed yet |
 
 ## Configuration
 
@@ -183,7 +192,7 @@ Gradle 9.7 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 | ✅ | 6 | RAG: retrieve, then generate |
 | ⬜ | 7 | Persistent vector store (pgvector) |
 | ✅ | 8 | Source references in answers |
-| ⬜ | 9 | Web UI |
+| ✅ | 9 | Web UI |
 | ⬜ | 10 | Tuning and evaluation |
 
 Then: an agent with LangChain4j, and a production version with Spring AI.
