@@ -255,8 +255,8 @@ numbers, in three parts:
 
 | Part | Question | Needs the chat model? |
 |---|---|---|
-| **10a** — retrieval eval + chunk sweep | Does the right doc land in the top 3? At which chunk size? | No — embeddings only, seconds |
-| **10b** — RAG vs all docs in the prompt | Is RAG better than giving the model all ~20K tokens? Cost, speed, correctness — and which chunk size gives the best *answers*? | Yes |
+| **10a** ✅ — retrieval eval + chunk sweep | Does the right doc land in the top 3? At which chunk size? | No — embeddings only, seconds |
+| **10b** ✅ — RAG vs all docs in the prompt | Is RAG better than giving the model all ~20K tokens? Cost, speed, correctness — and which chunk size gives the best *answers*? | Yes |
 | **10c** — citation check | Does a cited chunk really support the claim? | Yes |
 
 #### 10a: Retrieval evaluation and chunk-size sweep
@@ -314,18 +314,79 @@ Studio, so it is tagged `eval` and kept out of `./gradlew test`.
 experience and rerun `./gradlew eval`. The report is saved to
 `build/eval/retrieval-report.md`, including a per-question rank table.
 
-#### 10b, 10c and the rest — *next*
-- **10b — control group:** answer with *all* docs in the prompt (~20K tokens)
-  and compare cost, latency and accuracy against RAG, at 300/30 and 500/50.
-  Needs Llama reloaded in LM Studio with a context length of at least 32,768 —
-  LM Studio fixes the context size when it loads a model, often at 4,096.
+#### 10b: RAG vs all docs in the prompt — and the chunk size decision
+*`AnswerEvaluation`, `src/test/resources/eval/answer-questions.txt`, `RagService.answer(question, matches)` · run with `./gradlew eval`*
+
+**Built:** 10 CPI questions plus 2 off-topic ones, each with the key facts a
+correct answer must contain. Three setups answer every question through the
+**same prompt and citation code** — only the context differs:
+- RAG with 500/50 chunks (the default)
+- RAG with 300/30 chunks (best retrieval in 10a)
+- **All docs in the prompt** — all 15 documents whole, no retrieval (the
+  "control group")
+
+The chat model now runs at **temperature 0**: always the most likely next
+word. Answers from documentation should be factual rather than creative, and
+an evaluation must give the same result twice.
+
+**Setup:** the all-docs prompt is ~16K tokens. LM Studio fixes a model's
+context size when it loads it, so Llama had to be reloaded with room for it:
+`lms load meta-llama-3.1-8b-instruct --context-length 32768`.
+
+**Measured** (Llama 3.1 8B, temperature 0):
+
+| Setup | Key facts found | Fully correct | Off-topic declined | Input tokens | Output tokens | Seconds |
+|---|---|---|---|---|---|---|
+| **RAG 500/50** | 90% | 8/10 | 2/2 | **377** | 64 | **3.1** |
+| RAG 300/30 | 73% | 6/10 | 2/2 | 278 | 48 | 2.3 |
+| All docs | 95% | 9/10 | 2/2 | 16,365 | 186 | 15.3 |
+
+**What this shows:**
+- **Better retrieval ≠ better answers.** 300/30 won the retrieval sweep and
+  lost here: short chunks leave the model without the surrounding text. For
+  the database question it wrote *"as described in Step 3 of [2]"* instead of
+  explaining — the Step 6 chunk-boundary problem, made worse. **Decision:
+  keep 500/50.**
+- **All docs in the prompt: slightly better, far more expensive.** 5 points
+  more facts, for **43× the input tokens** and 5× the time. The first request
+  took over 3 minutes and timed out; later ones were fast only because LM
+  Studio cached the ~16K-token prefix they all share. And it stops working
+  the day the docs outgrow the context window — RAG doesn't.
+- **Citations fall apart with too much context.** With 15 numbered documents
+  the model mixed up numbers and files ("[11] 07-b2b…"), and used `[1]…[7]`
+  as list numbering — one answer "cited" 7 unrelated files. Fewer, relevant
+  chunks keep Step 8 honest.
+- **Two safeguards, working together.** The JVM question gets past the score
+  floor (10a), yet every setup answered "I don't know": the prompt rule caught
+  what the floor let through.
+
+**Where keyword grading fails — read the answers:**
+- *False failure:* every setup explained PunchOut correctly without the word
+  "cXML", so all scored 1/2. The fact was too strict.
+- *False partial credit:* one routing answer was **wrong** — HTTP adapter and
+  an invented "Conditional Split" — and still scored 1/2 for containing
+  "condition".
+- *False decline:* an answer ending *"I don't know any other methods"* counted
+  as "I don't know" — right after an invented tip (a 1-minute data store
+  retention "to avoid duplicates").
+- *Hallucination inside a correct answer:* "CPI (Consumer-Provider
+  Interface)". It's Cloud Platform Integration.
+
+Keyword checks are a cheap first filter. The next level is **LLM-as-judge**: a
+stronger model grades each answer against the source — a natural job for the
+OpenAI part of this step.
+
+**Try:** open `build/eval/answer-report.md` after `./gradlew eval` and read
+the answers side by side. Then add a fact list for a question you know well.
+
+#### 10c and the rest — *next*
 - **10c — citation quality:** does each cited chunk really support the claim?
   Does a stronger model stop blanket-citing?
 - **Ranking:** fix Partner Directory outranking JDBC — *hybrid search*
   (keywords + vectors) or a *reranker*.
-- **Model choice:** Llama 3.1 8B locally vs OpenAI — quality and cost.
-  *Waits until the OpenAI account has credit; everything else here runs on
-  local Llama.*
+- **Model choice and LLM-as-judge:** Llama 3.1 8B vs OpenAI — answer quality,
+  citation reliability, cost; and a stronger model grading the answers.
+  *Waits until the OpenAI account has credit.*
 - **Demo questions:** JDBC adapter setup, Script step vs Groovy Script, error
   handling in an iFlow — each should get an accurate answer with sources.
 

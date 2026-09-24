@@ -45,8 +45,15 @@ public class RagService {
     }
 
     public RagAnswer answer(String question) {
-        List<EmbeddingMatch<TextSegment>> matches = retrievalService.search(question, MAX_CHUNKS);
+        return answer(question, retrievalService.search(question, MAX_CHUNKS));
+    }
 
+    /**
+     * Answers from context chosen by the caller. The evaluation uses this to
+     * compare retrieval setups — and all docs in the prompt — through the
+     * same prompt and citation code as /ask.
+     */
+    RagAnswer answer(String question, List<EmbeddingMatch<TextSegment>> matches) {
         long start = System.currentTimeMillis();
         ChatResponse response = chatModel.chat(buildPrompt(question, matches));
         long millis = System.currentTimeMillis() - start;

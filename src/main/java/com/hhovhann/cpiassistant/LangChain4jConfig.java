@@ -61,12 +61,14 @@ public class LangChain4jConfig {
             @Value("${langchain4j.open-ai.chat-model.api-key}") String apiKey,
             @Value("${langchain4j.open-ai.chat-model.model-name}") String modelName,
             @Value("${langchain4j.open-ai.chat-model.log-requests:false}") boolean logRequests,
-            @Value("${langchain4j.open-ai.chat-model.log-responses:false}") boolean logResponses) {
+            @Value("${langchain4j.open-ai.chat-model.log-responses:false}") boolean logResponses,
+            @Value("${langchain4j.open-ai.chat-model.temperature:#{null}}") Double temperature) {
         return OpenAiChatModel.builder()
                 .httpClientBuilder(httpClientBuilder)
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
                 .modelName(modelName)
+                .temperature(temperature)
                 .logRequests(logRequests)
                 .logResponses(logResponses)
                 .build();

@@ -142,10 +142,17 @@ Tests use hand-written fakes for the models, so they run in seconds and do
 ./gradlew eval
 ```
 
-Runs the retrieval evaluation against LM Studio: 25 questions with known
-answers, across six chunk sizes. Prints a report and saves it to
-`build/eval/retrieval-report.md`. Edit the questions in
-`src/test/resources/eval/retrieval-questions.txt`.
+Runs two evaluations against LM Studio and saves their reports to `build/eval/`:
+
+| Evaluation | What it measures | Report |
+|---|---|---|
+| `RetrievalEvaluation` | Does the right doc come back? 25 questions across six chunk sizes | `retrieval-report.md` |
+| `AnswerEvaluation` | Are the answers right? RAG at two chunk sizes vs all docs in the prompt | `answer-report.md` (with every answer) |
+
+Edit the question sets in `src/test/resources/eval/`. The answer evaluation
+puts all docs in one ~16K-token prompt, so load the chat model with a larger
+context first: `lms load meta-llama-3.1-8b-instruct --context-length 32768`.
+Run just one with `./gradlew eval --tests '*AnswerEvaluation'`.
 
 ## Endpoints
 
@@ -172,7 +179,7 @@ and can be overridden on the command line:
 | `cpi.ingestion.max-overlap-size` | `50` | Characters repeated between neighbouring chunks |
 | `cpi.ingestion.run-on-startup` | `true` | Load and embed the docs at startup (tests set it to `false`) |
 | `cpi.retrieval.min-score` | `0.80` | Relevance floor. On a `(cosine + 1) / 2` scale — see the learning path |
-| `langchain4j.open-ai.chat-model.*` | LM Studio / Llama 3.1 8B | Chat model endpoint and name |
+| `langchain4j.open-ai.chat-model.*` | LM Studio / Llama 3.1 8B, temperature 0.0 | Chat model endpoint, name and temperature |
 | `langchain4j.open-ai.embedding-model.*` | LM Studio / nomic v1.5 | Embedding model, plus nomic's `query-prefix` / `document-prefix` |
 
 > The score floor and the prefixes are tuned for nomic-embed-text. Switching
@@ -204,7 +211,7 @@ Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 | ⬜ | 7 | Persistent vector store (pgvector) |
 | ✅ | 8 | Source references in answers |
 | ✅ | 9 | Web UI |
-| 🔶 | 10 | Tuning and evaluation — 10a (retrieval eval, chunk sweep) done |
+| 🔶 | 10 | Tuning and evaluation — 10a (retrieval) and 10b (answers, RAG vs all docs) done |
 
 Then: an agent with LangChain4j, and a production version with Spring AI.
 Details in [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

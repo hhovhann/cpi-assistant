@@ -37,6 +37,9 @@ langchain4j:
       base-url: http://localhost:1234/v1
       api-key: lm-studio
       model-name: meta-llama-3.1-8b-instruct
+      # 0 = always the most likely next token. Answers from docs should be
+      # factual, not creative, and the evaluation needs repeatable runs.
+      temperature: 0.0
       log-requests: true
       log-responses: true
 

@@ -90,6 +90,9 @@ adding its own markup. Never assign an answer to `innerHTML` unescaped.
 1.18.46, which breaks on Java 27; `build.gradle.kts` overrides it to 1.18.48.
 A new JDK often breaks Lombok first, because it hooks into compiler internals.
 
+**The chat model runs at temperature 0.** Answers from documentation should be
+factual, and the evaluations need repeatable runs.
+
 **Prefixes are applied to the embedded text only.** `IngestionPipeline.embed()`
 embeds a prefixed copy but stores the original chunk, so the LLM never sees
 `search_document:`.
@@ -101,13 +104,15 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 | `RagServiceTest` | Prompt contents and numbering, citation parsing and its edge cases, answer mapping, empty retrieval, missing token usage | No — hand-written fakes |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | No — sets `cpi.ingestion.run-on-startup=false` |
 | `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
+| `AnswerEvaluation` | Answer quality: RAG at 500/50 and 300/30 vs all docs in the prompt — key facts, declines, tokens, time | **Yes** — same `eval` tag; the chat model needs a ≥ 32K context |
 
 Answer *quality* against a real model is not unit-tested — that belongs to
 evaluation (Step 10 in the [learning path](LEARNING-PATH.md)).
 
 The evaluation lives in the same package as the services so it can call
 package-private overloads — `IngestionPipeline.split(docs, size, overlap)`,
-`embedInto(segments, store)`, `RetrievalService.search(embedding, k, store, floor)`.
+`embedInto(segments, store)`, `RetrievalService.search(embedding, k, store, floor)`,
+`RagService.answer(question, matches)`.
 They let it build a fresh store per chunk size while running the app's own
 code. `embedInto` does not update the `/status` counter, which is why it is
 not public: it must never be used on the live store.
