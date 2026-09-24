@@ -384,9 +384,11 @@ the answers side by side. Then add a fact list for a question you know well.
   Does a stronger model stop blanket-citing?
 - **Ranking:** fix Partner Directory outranking JDBC — *hybrid search*
   (keywords + vectors) or a *reranker*.
-- **Model choice and LLM-as-judge:** Llama 3.1 8B vs OpenAI — answer quality,
-  citation reliability, cost; and a stronger model grading the answers.
-  *Waits until the OpenAI account has credit.*
+- **Model choice and LLM-as-judge:** Llama 3.1 8B vs a frontier model —
+  answer quality, citation reliability, cost; and a stronger model grading
+  the answers. The `claude` profile is ready for it
+  (`./gradlew eval -Dspring.profiles.active=claude`); *waits for API credit —
+  an Anthropic key, or OpenAI credit for the original plan.*
 - **Demo questions:** JDBC adapter setup, Script step vs Groovy Script, error
   handling in an iFlow — each should get an accurate answer with sources.
 

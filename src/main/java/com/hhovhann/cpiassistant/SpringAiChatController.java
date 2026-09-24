@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Track B — the same question, answered through Spring AI, so the two
- * frameworks can be compared side by side against one LM Studio model.
+ * frameworks can be compared side by side against the same model (LM Studio,
+ * or Claude under the `claude` profile).
  */
 @RestController
 public class SpringAiChatController {

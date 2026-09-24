@@ -1,0 +1,31 @@
+# Profile `claude` — Claude Opus 5.5 answers instead of the local Llama.
+#   export ANTHROPIC_API_KEY=...
+#   ./gradlew bootRun --args="--spring.profiles.active=claude"
+# Embeddings stay on LM Studio (Anthropic has no embedding API), so it must
+# still be running. Every question is a paid API call.
+
+# Track B — Spring AI.
+spring:
+  ai:
+    model:
+      chat: anthropic
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
+      chat:
+        options:
+          model: claude-opus-5-5
+          # Thinking counts toward this limit.
+          max-tokens: 16000
+
+# Track A — LangChain4j, consumed by LangChain4jConfig.claudeChatModel.
+# No temperature: Opus 5.5 rejects sampling parameters with a 400.
+# No effort either: LangChain4j 1.20 has no setting for it, so Opus 5.5 runs
+# at its default effort, medium — enough for answering from retrieved docs.
+langchain4j:
+  anthropic:
+    chat-model:
+      api-key: ${ANTHROPIC_API_KEY}
+      model-name: claude-opus-5-5
+      max-tokens: 16000
+      log-requests: true
+      log-responses: true

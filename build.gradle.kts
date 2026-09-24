@@ -38,6 +38,9 @@ dependencies {
     implementation(platform("dev.langchain4j:langchain4j-bom:1.20.0"))
     implementation("dev.langchain4j:langchain4j")
     implementation("dev.langchain4j:langchain4j-open-ai")
+    // Claude chat model for the `claude` profile. Embeddings stay on LM Studio:
+    // Anthropic has no embedding endpoint.
+    implementation("dev.langchain4j:langchain4j-anthropic")
     // Pulled in transitively at runtime anyway, but declared so LangChain4jConfig
     // can compile against JdkHttpClientBuilder to force HTTP/1.1 — see the
     // comment on the HttpClientBuilder bean.
@@ -46,6 +49,8 @@ dependencies {
     // --- Track B: Spring AI (native Boot 4) ---------------------------------
     implementation(platform("org.springframework.ai:spring-ai-bom:2.0.1"))
     implementation("org.springframework.ai:spring-ai-starter-model-openai")
+    // Only one of the two becomes the ChatModel: spring.ai.model.chat picks it.
+    implementation("org.springframework.ai:spring-ai-starter-model-anthropic")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -59,6 +64,7 @@ tasks.test {
 
 // Evaluations need LM Studio running, so they stay out of `test`.
 //   ./gradlew eval
+//   ./gradlew eval -Dspring.profiles.active=claude   (answers from Claude — paid)
 tasks.register<Test>("eval") {
     description = "Runs the evaluations tagged 'eval' against the live models."
     group = "verification"
@@ -69,4 +75,6 @@ tasks.register<Test>("eval") {
     }
     testLogging.showStandardStreams = true
     outputs.upToDateWhen { false }
+    // Gradle runs tests in a separate JVM; pass the profile through to it.
+    System.getProperty("spring.profiles.active")?.let { systemProperty("spring.profiles.active", it) }
 }

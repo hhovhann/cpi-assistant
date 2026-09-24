@@ -90,6 +90,15 @@ adding its own markup. Never assign an answer to `innerHTML` unescaped.
 1.18.46, which breaks on Java 27; `build.gradle.kts` overrides it to 1.18.48.
 A new JDK often breaks Lombok first, because it hooks into compiler internals.
 
+**The `claude` profile swaps only the chat model.** `LangChain4jConfig` builds
+an `AnthropicChatModel` instead of the LM Studio one (`@Profile("claude")` /
+`@Profile("!claude")`), and `spring.ai.model.chat` picks the Anthropic starter
+over the OpenAI one for Spring AI. Embeddings stay on LM Studio: Anthropic has
+no embedding API. Opus 5.5 rejects temperature, top_p and top_k with a 400 —
+`ClaudeProfileTests` guards that neither track sends them. It always thinks,
+and thinking counts toward `max-tokens` (16,000); LangChain4j 1.20 cannot set
+effort, so it runs at the model's default, `medium`.
+
 **The chat model runs at temperature 0.** Answers from documentation should be
 factual, and the evaluations need repeatable runs.
 
@@ -103,6 +112,7 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 |---|---|---|
 | `RagServiceTest` | Prompt contents and numbering, citation parsing and its edge cases, answer mapping, empty retrieval, missing token usage | No — hand-written fakes |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | No — sets `cpi.ingestion.run-on-startup=false` |
+| `ClaudeProfileTests` | Under the `claude` profile both tracks get a Claude chat model — right model id, no temperature/top_p/top_k | No — builds the clients offline with a placeholder key |
 | `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
 | `AnswerEvaluation` | Answer quality: RAG at 500/50 and 300/30 vs all docs in the prompt — key facts, declines, tokens, time | **Yes** — same `eval` tag; the chat model needs a ≥ 32K context |
 

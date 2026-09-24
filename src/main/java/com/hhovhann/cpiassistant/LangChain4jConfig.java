@@ -3,6 +3,7 @@ package com.hhovhann.cpiassistant;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
+import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -12,6 +13,7 @@ import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -55,6 +57,7 @@ public class LangChain4jConfig {
     }
 
     @Bean
+    @Profile("!claude")
     ChatModel langChain4jChatModel(
             HttpClientBuilder httpClientBuilder,
             @Value("${langchain4j.open-ai.chat-model.base-url}") String baseUrl,
@@ -69,6 +72,35 @@ public class LangChain4jConfig {
                 .apiKey(apiKey)
                 .modelName(modelName)
                 .temperature(temperature)
+                .logRequests(logRequests)
+                .logResponses(logResponses)
+                .build();
+    }
+
+    /**
+     * The chat model under the `claude` profile: Claude Opus 5.5 instead of
+     * the local Llama. Only generation moves — retrieval still embeds with
+     * LM Studio, because Anthropic has no embedding endpoint.
+     *
+     * No temperature: Opus 5.5 rejects sampling parameters with a 400. It
+     * also always thinks, and the thinking counts toward maxTokens, so the
+     * limit is sized for thinking plus the answer, not the answer alone.
+     */
+    @Bean
+    @Profile("claude")
+    ChatModel claudeChatModel(
+            @Value("${langchain4j.anthropic.chat-model.api-key}") String apiKey,
+            @Value("${langchain4j.anthropic.chat-model.model-name}") String modelName,
+            @Value("${langchain4j.anthropic.chat-model.max-tokens}") int maxTokens,
+            @Value("${langchain4j.anthropic.chat-model.log-requests:false}") boolean logRequests,
+            @Value("${langchain4j.anthropic.chat-model.log-responses:false}") boolean logResponses) {
+        return AnthropicChatModel.builder()
+                .apiKey(apiKey)
+                .modelName(modelName)
+                .maxTokens(maxTokens)
+                // Opus thinks before it answers, so a call can run long. Set it
+                // explicitly, matching the local model's read timeout.
+                .timeout(Duration.ofMinutes(3))
                 .logRequests(logRequests)
                 .logResponses(logResponses)
                 .build();

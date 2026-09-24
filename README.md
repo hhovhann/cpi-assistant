@@ -127,6 +127,20 @@ curl -G localhost:8080/chat --data-urlencode "message=How do I connect to a data
 - `retrievedFrom` — everything retrieval handed to the model. Here the data
   store chunk was retrieved but not used, so it isn't a source.
 
+### Optional: answer with Claude instead of Llama
+
+The `claude` profile swaps the chat model to Claude Opus 5.5 on both tracks
+(LangChain4j and Spring AI). Embeddings stay on LM Studio — Anthropic has no
+embedding API — so LM Studio must still run with the nomic model.
+
+```bash
+export ANTHROPIC_API_KEY=...        # every question is a paid API call
+./gradlew bootRun --args="--spring.profiles.active=claude"
+./gradlew eval -Dspring.profiles.active=claude     # evaluations, answered by Claude
+```
+
+Settings are in [`application-claude.yml`](src/main/resources/application-claude.yml).
+
 ### 5. Test
 
 ```bash
@@ -180,6 +194,7 @@ and can be overridden on the command line:
 | `cpi.ingestion.run-on-startup` | `true` | Load and embed the docs at startup (tests set it to `false`) |
 | `cpi.retrieval.min-score` | `0.80` | Relevance floor. On a `(cosine + 1) / 2` scale — see the learning path |
 | `langchain4j.open-ai.chat-model.*` | LM Studio / Llama 3.1 8B, temperature 0.0 | Chat model endpoint, name and temperature |
+| `spring.profiles.active=claude` | off | Answer with Claude Opus 5.5 (needs `ANTHROPIC_API_KEY`) — see above |
 | `langchain4j.open-ai.embedding-model.*` | LM Studio / nomic v1.5 | Embedding model, plus nomic's `query-prefix` / `document-prefix` |
 
 > The score floor and the prefixes are tuned for nomic-embed-text. Switching

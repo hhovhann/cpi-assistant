@@ -8,6 +8,10 @@ spring:
   # path with HTTP 200 and {"error": "Unexpected endpoint or method"}, so the
   # SDK parses it as a completion and fails with "`choices` is not set".
   ai:
+    # Both the OpenAI and the Anthropic starters are on the classpath; this
+    # picks which one becomes the ChatModel. The `claude` profile flips it.
+    model:
+      chat: openai
     openai:
       base-url: http://localhost:1234/v1
       api-key: lm-studio
