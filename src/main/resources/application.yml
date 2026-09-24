@@ -44,6 +44,8 @@ langchain4j:
       # 0 = always the most likely next token. Answers from docs should be
       # factual, not creative, and the evaluation needs repeatable runs.
       temperature: 0.0
+      # Set here, not on the HTTP client: the model's own timeout overrides it.
+      timeout: 3m
       log-requests: true
       log-responses: true
 
@@ -54,6 +56,7 @@ langchain4j:
       base-url: http://localhost:1234/v1
       api-key: lm-studio
       model-name: text-embedding-nomic-embed-text-v1.5
+      timeout: 3m
       # nomic is trained with asymmetric task prefixes: questions and documents
       # are embedded differently. Model-specific — an OpenAI embedding model
       # wants both empty, which is why they live here and not in code.

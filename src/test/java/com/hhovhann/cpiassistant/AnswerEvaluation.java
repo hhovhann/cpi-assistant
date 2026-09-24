@@ -49,6 +49,9 @@ class AnswerEvaluation {
 
     private static final int K = 3;
 
+    /** Short and neutral: warm-up calls exist for their side effects, not their answers. */
+    private static final String WARM_UP = "Reply with OK.";
+
     @Autowired
     IngestionPipeline pipeline;
 
@@ -120,6 +123,10 @@ class AnswerEvaluation {
                 .map(q -> retrievalService.embedQuery(q.text()))
                 .toList();
 
+        // Warm-up, untimed: the first request makes LM Studio load the model,
+        // which would otherwise be billed to the first RAG answer.
+        ragService.answer(WARM_UP, List.of());
+
         List<SetupResult> results = new ArrayList<>();
         for (int[] config : new int[][]{{500, 50}, {300, 30}}) {
             var store = new InMemoryEmbeddingStore<TextSegment>();
@@ -135,9 +142,15 @@ class AnswerEvaluation {
                 .map(d -> new EmbeddingMatch<>(1.0, d.metadata().getString("file_name"), null,
                         TextSegment.from(d.text(), d.metadata())))
                 .toList();
+        // The first call has to read the full ~16K-token prompt; LM Studio then
+        // caches that shared prefix, and later calls only read the question.
+        // Time the cold call separately so it doesn't distort the average.
+        long coldStart = System.nanoTime();
+        ragService.answer(WARM_UP, allDocs);
+        double coldSeconds = (System.nanoTime() - coldStart) / 1e9;
         results.add(run("All docs", questions, i -> allDocs));
 
-        String report = report(results, questions);
+        String report = report(results, questions, coldSeconds);
         System.out.println(report);
         Path out = Path.of("build", "eval", "answer-report.md");
         Files.createDirectories(out.getParent());
@@ -161,7 +174,7 @@ class AnswerEvaluation {
         return new SetupResult(name, graded);
     }
 
-    private static String report(List<SetupResult> results, List<Question> questions) {
+    private static String report(List<SetupResult> results, List<Question> questions, double allDocsColdSeconds) {
         var sb = new StringBuilder();
         long onTopic = questions.stream().filter(q -> !q.offTopic()).count();
         long offTopic = questions.size() - onTopic;
@@ -177,6 +190,10 @@ class AnswerEvaluation {
                     r.avg(RagService.RagAnswer::inputTokens), r.avg(RagService.RagAnswer::outputTokens),
                     r.avg(RagService.RagAnswer::millis) / 1000));
         }
+
+        sb.append(format("%nAvg seconds are warm: the model is loaded first, untimed. The all-docs setup's "
+                + "first (cold) call, which reads the full prompt before LM Studio can cache it, took %.1f s "
+                + "and is not in its average.%n", allDocsColdSeconds));
 
         sb.append("\n## Answers\n\nFacts found / facts expected. Read these — keyword matching is only a first filter.\n");
         for (int q = 0; q < questions.size(); q++) {

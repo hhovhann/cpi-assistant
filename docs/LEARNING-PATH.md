@@ -335,11 +335,17 @@ context size when it loads it, so Llama had to be reloaded with room for it:
 
 **Measured** (Llama 3.1 8B, temperature 0):
 
-| Setup | Key facts found | Fully correct | Off-topic declined | Input tokens | Output tokens | Seconds |
+| Setup | Key facts found | Fully correct | Off-topic declined | Input tokens | Output tokens | Seconds (warm) |
 |---|---|---|---|---|---|---|
-| **RAG 500/50** | 90% | 8/10 | 2/2 | **377** | 64 | **3.1** |
-| RAG 300/30 | 73% | 6/10 | 2/2 | 278 | 48 | 2.3 |
-| All docs | 95% | 9/10 | 2/2 | 16,365 | 186 | 15.3 |
+| **RAG 500/50** | 90% | 8/10 | 2/2 | **377** | 64 | **1.1** |
+| RAG 300/30 | 73% | 6/10 | 2/2 | 278 | 48 | 0.8 |
+| All docs | 95% | 9/10 | 2/2 | 16,365 | 186 | 3.4 — plus a **41 s** cold first call |
+
+Seconds are per answer with the model already loaded. The all-docs setup's
+first call has to read the whole ~16K-token prompt; LM Studio then caches that
+shared prefix, so later calls only read the new question. That cold call is
+timed separately — a real user of an all-docs system pays it whenever the
+cache is cold.
 
 **What this shows:**
 - **Better retrieval ≠ better answers.** 300/30 won the retrieval sweep and
@@ -348,10 +354,21 @@ context size when it loads it, so Llama had to be reloaded with room for it:
   explaining — the Step 6 chunk-boundary problem, made worse. **Decision:
   keep 500/50.**
 - **All docs in the prompt: slightly better, far more expensive.** 5 points
-  more facts, for **43× the input tokens** and 5× the time. The first request
-  took over 3 minutes and timed out; later ones were fast only because LM
-  Studio cached the ~16K-token prefix they all share. And it stops working
-  the day the docs outgrow the context window — RAG doesn't.
+  more facts, for **43× the input tokens**, 3× the time per warm answer, and a
+  41-second cold start. Warm answers are fast only because LM Studio caches
+  the ~16K-token prefix they all share. And it stops working the day the docs
+  outgrow the context window — RAG doesn't.
+- **The first run found a timeout bug.** Its cold all-docs call was cut off
+  after ~60 s and retried — although the app configured 3 minutes. LangChain4j's
+  `OpenAiChatModel` passes its own timeout (60 s by default) to the HTTP
+  client, overriding the one set on the client, so the configured 3 minutes
+  had never applied. Timeouts now live on the models, and
+  `LangChain4jConfigTest` proves one cuts a slow call off. With the fix and an
+  untimed warm-up, the evaluation went from 252 s to 110 s. The answers were
+  identical, token for token — temperature 0 makes them repeatable. About 60 s
+  of that is the fix; generation also ran ~3× faster in every setup after a
+  fresh model load, which no code change explains — so the first run's
+  seconds (3.1 / 2.3 / 15.3) are not comparable, and are replaced above.
 - **Citations fall apart with too much context.** With 15 numbered documents
   the model mixed up numbers and files ("[11] 07-b2b…"), and used `[1]…[7]`
   as list numbering — one answer "cited" 7 unrelated files. Fewer, relevant

@@ -64,6 +64,14 @@ Both talk to the same LM Studio server.
 The LangChain4j core has no Spring dependency, so the beans are built in
 `LangChain4jConfig` instead. That is also the learning goal: nothing hidden.
 
+**Timeouts are set on the models, not the HTTP client.** `OpenAiChatModel` and
+`OpenAiEmbeddingModel` pass their own timeout to the HTTP client — 60 s unless
+`.timeout(...)` is set — and it overrides the client's. A 3-minute timeout on the
+client was silently ignored until the answer evaluation hit it.
+`langchain4j.open-ai.chat-model.timeout` / `.embedding-model.timeout` (default
+3m) and `chat-model.max-retries` are the knobs; `LangChain4jConfigTest` proves
+the chat timeout really cuts a slow call off.
+
 **HTTP/1.1 is forced for LangChain4j.** The JDK HTTP client defaults to
 HTTP/2, which on a plain `http://` URL sends an upgrade request that LM Studio
 never answers. The symptom is misleading — requests just time out, as if the
@@ -112,6 +120,7 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 |---|---|---|
 | `RagServiceTest` | Prompt contents and numbering, citation parsing and its edge cases, answer mapping, empty retrieval, missing token usage | No — hand-written fakes |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | No — sets `cpi.ingestion.run-on-startup=false` |
+| `LangChain4jConfigTest` | The configured chat timeout really cuts off a slow server (the 60 s override bug) | No — a local stub server |
 | `ClaudeProfileTests` | Under the `claude` profile both tracks get a Claude chat model — right model id, no temperature/top_p/top_k | No — builds the clients offline with a placeholder key |
 | `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
 | `AnswerEvaluation` | Answer quality: RAG at 500/50 and 300/30 vs all docs in the prompt — key facts, declines, tokens, time | **Yes** — same `eval` tag; the chat model needs a ≥ 32K context |
@@ -136,4 +145,5 @@ not public: it must never be used on the live store.
   question asked before the `Embedded N segments` log line finds nothing and
   gets "I don't know". The web UI checks `/status` and waits; `curl` doesn't.
 - **First request is slow.** LM Studio loads the model into memory on first
-  use. The read timeout is 3 minutes for that reason.
+  use, and a cold long prompt takes time to read (41 s for all 15 docs). The
+  chat and embedding timeouts are 3 minutes for that reason.

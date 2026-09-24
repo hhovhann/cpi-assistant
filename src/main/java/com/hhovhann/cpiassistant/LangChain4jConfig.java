@@ -45,15 +45,17 @@ public class LangChain4jConfig {
      * upgrade request. LM Studio never answers that upgrade — verified with
      * curl: --http1.1 returns 200 in 2ms, --http2 hangs until the timeout.
      *
-     * The read timeout is generous because the first request makes LM Studio
-     * load the model into memory, which can take far longer than a warm call.
+     * No timeouts here: they would be ignored. OpenAiChatModel and
+     * OpenAiEmbeddingModel always pass their own timeout to the HTTP client,
+     * 60 seconds unless .timeout(...) is set on the model, and it overrides
+     * whatever this builder says (langchain4j-open-ai 1.20, OpenAiChatModel
+     * lines 78-79). A 3-minute read timeout lived here for months and never
+     * applied. Timeouts are set on each model below instead.
      */
     @Bean
     HttpClientBuilder langChain4jHttpClientBuilder() {
         return new JdkHttpClientBuilder()
-                .httpClientBuilder(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1))
-                .connectTimeout(Duration.ofSeconds(10))
-                .readTimeout(Duration.ofMinutes(3));
+                .httpClientBuilder(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1));
     }
 
     @Bean
@@ -65,13 +67,20 @@ public class LangChain4jConfig {
             @Value("${langchain4j.open-ai.chat-model.model-name}") String modelName,
             @Value("${langchain4j.open-ai.chat-model.log-requests:false}") boolean logRequests,
             @Value("${langchain4j.open-ai.chat-model.log-responses:false}") boolean logResponses,
-            @Value("${langchain4j.open-ai.chat-model.temperature:#{null}}") Double temperature) {
+            @Value("${langchain4j.open-ai.chat-model.temperature:#{null}}") Double temperature,
+            @Value("${langchain4j.open-ai.chat-model.timeout:PT3M}") Duration timeout,
+            @Value("${langchain4j.open-ai.chat-model.max-retries:#{null}}") Integer maxRetries) {
         return OpenAiChatModel.builder()
                 .httpClientBuilder(httpClientBuilder)
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
                 .modelName(modelName)
                 .temperature(temperature)
+                // Generous: the first request makes LM Studio load the model,
+                // and a cold 16K-token prompt takes over a minute to read.
+                .timeout(timeout)
+                // null keeps LangChain4j's default: 2 retries, with back-off.
+                .maxRetries(maxRetries)
                 .logRequests(logRequests)
                 .logResponses(logResponses)
                 .build();
@@ -122,12 +131,14 @@ public class LangChain4jConfig {
             @Value("${langchain4j.open-ai.embedding-model.base-url}") String baseUrl,
             @Value("${langchain4j.open-ai.embedding-model.api-key}") String apiKey,
             @Value("${langchain4j.open-ai.embedding-model.model-name}") String modelName,
-            @Value("${langchain4j.open-ai.embedding-model.log-requests:false}") boolean logRequests) {
+            @Value("${langchain4j.open-ai.embedding-model.log-requests:false}") boolean logRequests,
+            @Value("${langchain4j.open-ai.embedding-model.timeout:PT3M}") Duration timeout) {
         return OpenAiEmbeddingModel.builder()
                 .httpClientBuilder(httpClientBuilder)
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
                 .modelName(modelName)
+                .timeout(timeout)
                 .logRequests(logRequests)
                 .build();
     }

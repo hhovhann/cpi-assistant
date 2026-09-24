@@ -40,7 +40,7 @@ class ClaudeProfileTests {
     @Test
     void springAiTrackUsesClaudeWithoutSamplingParameters() {
         assertThat(springAiChatModel).isInstanceOf(org.springframework.ai.anthropic.AnthropicChatModel.class);
-        var options = springAiChatModel.getDefaultOptions();
+        var options = springAiChatModel.getOptions();
         assertThat(options.getModel()).isEqualTo("claude-opus-5-5");
         assertThat(options.getTemperature()).isNull();
         assertThat(options.getTopP()).isNull();
