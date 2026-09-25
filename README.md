@@ -162,6 +162,7 @@ Runs two evaluations against LM Studio and saves their reports to `build/eval/`:
 |---|---|---|
 | `RetrievalEvaluation` | Does the right doc come back? 25 questions across six chunk sizes | `retrieval-report.md` |
 | `AnswerEvaluation` | Are the answers right? RAG at two chunk sizes vs all docs in the prompt | `answer-report.md` (with every answer) |
+| `CitationEvaluation` | Does each cited chunk support its claim? An LLM judge plus similarity, per (claim, chunk) pair | `citation-report.md` (with passages to check) |
 
 Edit the question sets in `src/test/resources/eval/`. The answer evaluation
 puts all docs in one ~16K-token prompt, so load the chat model with a larger
@@ -226,7 +227,7 @@ Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 | ⬜ | 7 | Persistent vector store (pgvector) |
 | ✅ | 8 | Source references in answers |
 | ✅ | 9 | Web UI |
-| 🔶 | 10 | Tuning and evaluation — 10a (retrieval) and 10b (answers, RAG vs all docs) done |
+| 🔶 | 10 | Tuning and evaluation — local part done: retrieval, answers, citations. A stronger model and judge wait for API credit |
 
 Then: an agent with LangChain4j, and a production version with Spring AI.
 Details in [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

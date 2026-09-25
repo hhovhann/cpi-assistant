@@ -248,7 +248,7 @@ second column for comparison.
 JDBC adapter?"*. Then ask the database question and look at which source is
 tagged *retrieved, not cited* — or isn't, when the model blanket-cites.
 
-### Step 10: Tuning and evaluation — *in progress*
+### Step 10: Tuning and evaluation — *local part done*
 Measure instead of guessing. Up to now every decision rested on two or three
 hand-picked questions. Step 10 replaces that with fixed question sets and
 numbers, in three parts:
@@ -257,7 +257,7 @@ numbers, in three parts:
 |---|---|---|
 | **10a** ✅ — retrieval eval + chunk sweep | Does the right doc land in the top 3? At which chunk size? | No — embeddings only, seconds |
 | **10b** ✅ — RAG vs all docs in the prompt | Is RAG better than giving the model all ~20K tokens? Cost, speed, correctness — and which chunk size gives the best *answers*? | Yes |
-| **10c** — citation check | Does a cited chunk really support the claim? | Yes |
+| **10c** ✅ — citation check | Does a cited chunk really support the claim? | Yes |
 
 #### 10a: Retrieval evaluation and chunk-size sweep
 *`RetrievalEvaluation`, `src/test/resources/eval/retrieval-questions.txt` · run with `./gradlew eval`*
@@ -396,16 +396,77 @@ OpenAI part of this step.
 **Try:** open `build/eval/answer-report.md` after `./gradlew eval` and read
 the answers side by side. Then add a fact list for a question you know well.
 
-#### 10c and the rest — *next*
-- **10c — citation quality:** does each cited chunk really support the claim?
-  Does a stronger model stop blanket-citing?
-- **Ranking:** fix Partner Directory outranking JDBC — *hybrid search*
-  (keywords + vectors) or a *reranker*.
-- **Model choice and LLM-as-judge:** Llama 3.1 8B vs a frontier model —
-  answer quality, citation reliability, cost; and a stronger model grading
-  the answers. The `claude` profile is ready for it
-  (`./gradlew eval -Dspring.profiles.active=claude`); *waits for API credit —
-  an Anthropic key, or OpenAI credit for the original plan.*
+#### 10c: Citation check — does the cited chunk support the claim?
+*`CitationEvaluation`, `CitationClaimsTest` · run with `./gradlew eval --tests '*CitationEvaluation'`*
+
+**Built:** answers are split into *claims* — a sentence or list item with the
+citation markers in it — giving (claim, cited chunk) pairs. Each pair is
+checked two ways:
+- **Similarity** — the claim's embedding against the chunk's. Cheap, no LLM.
+- **LLM-as-judge** — a separate prompt: *given this PASSAGE and this
+  STATEMENT, reply SUPPORTED, PARTIAL or UNSUPPORTED.*
+
+The judge is whatever chat model is active — Llama by default, so it grades
+its own answers. The report (`build/eval/citation-report.md`) lists every
+pair **with the cited passage** and an empty *Your verdict* column.
+
+**Ideas:**
+- **A citation is a claim that can be checked.** Step 8 parsed citations;
+  this step verifies them.
+- **Splitting answers is harder than it looks.** Where does `[1]` belong in
+  *"…the flow. [1] Then…"*? Is *"1."* a sentence? Is *"here are the steps:"* a
+  claim? `CitationClaimsTest` pins down the rules; it caught two splitter bugs
+  before the first run, and reading the first report caught a third —
+  lead-in lines counted as claims inflated "unsupported" from 25% to 40%.
+- **Who judges the judge?** An LLM judge is a model too. Its verdicts are only
+  worth something once compared with a person who knows the domain — hence
+  the passage and *Your verdict* columns.
+
+**Measured** (Llama 3.1 8B answering and judging, 71 s):
+
+| Setup | Cited claims | Pairs judged | Supported | Unsupported | Bare | Uncited sentences |
+|---|---|---|---|---|---|---|
+| **RAG 500/50** | 14 | 12 | **75%** | 25% | 2 | 20 |
+| All docs | 18 | 10 | 10% | **70%** | 9 | 98 |
+
+*Bare* = a citation with nothing to check (a file name, a lone marker).
+
+**What this shows:**
+- **Three of four RAG citations hold up.** The failures are of two kinds:
+  - *Blanket citations of a noise chunk* — the Partner Directory chunk from
+    Step 8, now measured rather than noticed.
+  - *Right answer, wrong source* — the most dangerous kind. "Use the EDI
+    Splitter" is correct, but the cited chunk is *Best Practices for EDI
+    Processing* and never mentions a splitter. The model knew the answer
+    without the chunk and cited it anyway. The citation lends credibility the
+    source does not have.
+- **All docs in the prompt makes citations useless** — 70% unsupported, plus
+  file names passed off as citations. 10b's finding, now in numbers.
+- **Much of an answer is untraceable.** ~1.5 uncited sentences per RAG answer,
+  mostly list items under a cited lead-in.
+- **Cheap similarity cannot replace the judge.** The wrong EDI citation scores
+  0.889 — above several correct ones (0.874–0.882). Being on the same topic is
+  not the same as supporting the claim.
+- **The judge caught its own mistakes** — all three pairs it rejected were
+  checked against their passages, and it was right each time. The nine it
+  accepted have not been checked yet: that is what *Your verdict* is for.
+
+**Try:** open the report, read the passages, and fill in *Your verdict* for
+the RAG pairs. Count how often you agree with the judge. Then run the same
+evaluation with `-Dspring.profiles.active=claude` and compare the judges.
+
+#### The rest of Step 10 — *needs API credit*
+- **A stronger model, and a stronger judge:** Llama 3.1 8B vs a frontier model
+  on answer quality, citation reliability and cost — and a stronger model
+  grading the answers and citations. The `claude` profile is ready for it
+  (`./gradlew eval -Dspring.profiles.active=claude`); *waits for an Anthropic
+  key, or OpenAI credit for the original plan.*
+- **Ranking:** fix the Partner Directory chunk outranking JDBC — *hybrid
+  search* (keywords + vectors) or a *reranker*. It is the source of the blanket
+  citations above.
+- **Flag unverified citations in the UI:** run the judge per citation and mark
+  the ones it rejects. One extra call per citation — a better fit for a fast
+  hosted model than for local Llama.
 - **Demo questions:** JDBC adapter setup, Script step vs Groovy Script, error
   handling in an iFlow — each should get an accurate answer with sources.
 

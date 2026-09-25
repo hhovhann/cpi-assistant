@@ -34,7 +34,7 @@ public class RagService {
     private static final int MAX_CHUNKS = 3;
 
     /** A bracket holding only digits, commas and spaces: [1], [1, 2]. Not [SAP_ApplicationID]. */
-    private static final Pattern CITATION = Pattern.compile("\\[([\\d,\\s]+)]");
+    static final Pattern CITATION = Pattern.compile("\\[([\\d,\\s]+)]");
 
     private final RetrievalService retrievalService;
     private final ChatModel chatModel;

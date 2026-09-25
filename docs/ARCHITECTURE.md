@@ -124,6 +124,8 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 | `ClaudeProfileTests` | Under the `claude` profile both tracks get a Claude chat model — right model id, no temperature/top_p/top_k | No — builds the clients offline with a placeholder key |
 | `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
 | `AnswerEvaluation` | Answer quality: RAG at 500/50 and 300/30 vs all docs in the prompt — key facts, declines, tokens, time | **Yes** — same `eval` tag; the chat model needs a ≥ 32K context |
+| `CitationEvaluation` | Citation quality: each (claim, cited chunk) pair judged by the active chat model, plus embedding similarity | **Yes** — same `eval` tag and context |
+| `CitationClaimsTest` | How answers split into claims: where markers belong, list numbers, lead-ins, bare citations | No — pure string logic |
 
 Answer *quality* against a real model is not unit-tested — that belongs to
 evaluation (Step 10 in the [learning path](LEARNING-PATH.md)).
@@ -131,7 +133,8 @@ evaluation (Step 10 in the [learning path](LEARNING-PATH.md)).
 The evaluation lives in the same package as the services so it can call
 package-private overloads — `IngestionPipeline.split(docs, size, overlap)`,
 `embedInto(segments, store)`, `RetrievalService.search(embedding, k, store, floor)`,
-`RagService.answer(question, matches)`.
+`RagService.answer(question, matches)`, and the `RagService.CITATION` pattern, so
+the citation evaluation parses markers exactly as `/ask` does.
 They let it build a fresh store per chunk size while running the app's own
 code. `embedInto` does not update the `/status` counter, which is why it is
 not public: it must never be used on the live store.
