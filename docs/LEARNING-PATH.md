@@ -12,7 +12,13 @@ git log --oneline          # find the step
 git show <commit> --stat   # the files it touched
 ```
 
-Step 7 was skipped for now (optional for a demo), so Step 8 came before it.
+Step 7 was skipped at first and done after Step 13.
+
+**Each step describes the project as it was then.** Step 15 merged `/chat`,
+`/ask` and `/agent` into one `/assist` endpoint and replaced the hand-written
+docs with the official SAP documentation — so the endpoints, files and
+commands in Steps 1–14 no longer exist on `master`. Check out a step's commit
+to run it as it was.
 
 **Suggested way to learn:** read a step here, check out its commit, read the
 classes it names, then run the app and try the experiment listed.
@@ -666,20 +672,81 @@ Cloud Integration?"** (the local docs only mention Kafka in an overview):
   cites "Integration Flow Editor overview" — a real catalog page no tool
   returned. Same lesson as Step 13, now with correct-looking links: citations
   need checking in code.
+(A later live AS4 run through the same tools: `searchCpiDocs` miss →
+`searchSapHelp` → `readSapHelpPage`, downloaded, 7 chunks saved, 100 s.)
 **Try:** `select metadata->>'title', count(*) from cpi_chunks where
 metadata->>'source' = 'sap-help' group by 1;` after a few questions. Ask about
 a topic the catalog has no page for, and watch what the model does.
+
+### Step 15: One assistant — one path, one source of truth
+
+**Why:** by Step 14 there were three endpoints (`/chat`, `/ask`, `/agent`), two
+UI modes, hand-written local docs *and* SAP pages, and SAP Help reachable only
+if the model remembered to call two tools. "What gets called when" had become
+the hardest question about the project — and in the browser, which only used
+`/ask`, none of the tools ever ran.
+**What:** one endpoint, `GET /assist`, and one path for every question:
+1. **Find documentation — code, no model** (`KnowledgeService`): the store;
+   on a miss (< 0.80) the best catalog page, if its title matches ≥ 0.82 —
+   downloaded, saved, searched again.
+2. **Answer — one assistant** (`CpiAgent`): question + passages + tools. A
+   documentation question is answered from the passages with no tool; a
+   tenant question makes the model call the tenant tools. No router, no mode.
+3. **Check** (`AssistService`): "I don't know" despite passages → SAP Help
+   once more; every cited `[Page Title]` checked against the pages the model
+   was given (`unverifiedCitations`, ⚠ in the UI).
+
+The only knowledge is the official SAP documentation: the 15 hand-written
+files, `/chat`, `/ask`, `/agent`, `RagService` and the Step 10 evaluations
+were removed (they are in git history). At startup `SeedRunner` saves ten
+popular pages. Every answer returns its **path**.
+**Classes:** `AssistService`, `AssistController`, `KnowledgeService`,
+`SeedRunner`, `SeedProperties`, `CpiAgent`, `CpiDocsTool` (`searchDocs`),
+`index.html`; tests `AssistServiceTest`, `KnowledgeServiceTest`.
+**Idea:** decide *where* the model is needed. Finding documents is
+deterministic work — code does it the same way every time. Deciding whether a
+question needs live data is judgment — the model does that, with the tools in
+hand. Most production assistants split the work the same way: retrieval
+always, tools when needed.
+**Measured with Qwen3 14B, empty store, 10 pages seeded (346 chunks, 23 s):**
+
+| Question | Path | Result |
+|---|---|---|
+| Configure a JDBC adapter | Database 0.911 → no tool | Grounded; 1 model call, 23 s |
+| Handle errors in an iFlow | Database 0.852 → no tool | Cites [Handle Errors Gracefully], 23 s |
+| Configure the AS4 receiver adapter | Database (AS2, 0.850) → "I don't know" → downloaded "AS4 Receiver Adapter" → answered | 36 s |
+| *same AS4 question again* | Database 0.904 → no tool | 11 s — no download |
+| Why did Order_Sync fail today? | Database → `getProblemMessages` → `getErrorDetails` | JDBC pool timeout on ORDER_DB, 90 s |
+| Capital of France | Database miss → no title ≥ 0.82 → declined | No download, 9 s |
+
+- **The citation check found a problem at once:** in the first run 5 of 6
+  answers cited pages the model was never given. Most were Markdown links
+  inside SAP pages (`[Handle Errors in Successful Responses](….md)`), copied as
+  citations; one was the model citing [JDBC Receiver Adapter] from memory.
+  Stripping links when saving, and telling the model to call `searchDocs`
+  before citing anything new: **0 of 6**.
+- **The AS2/AS4 trap** — close passages, wrong topic — is what the "I don't
+  know → SAP Help once" step is for; it also stopped downloading the
+  second-best page (AS2) after `max-pages-per-miss` went to 1.
+- **Known limits:** titles pick the page, so an *overview* page ("JDBC
+  Receiver Adapter", "AS4 Receiver Adapter") wins over the "Configure the …"
+  page with the steps — the answers now say the steps are missing instead of
+  inventing them. For "how do I fix it", the model did not always look the fix
+  up with `searchDocs`; the fix is then uncited.
+**Try:** the QA checklist in the README, from an empty store. Then ask about a
+topic in the catalog but not seeded, twice, and compare the two paths.
 
 ---
 
 ## Phase 2 — an agent with LangChain4j
 
-Go beyond "retrieve once, answer once": let the model decide which tools to
-call (search the docs, look up an adapter, ask a follow-up) and in what order.
-**Idea:** how context and reasoning combine; when an agent is worth its extra
-calls and cost.
+Done in Steps 12–13 and folded into the one path in Step 15: the model decides
+which tools to call and in what order. **Idea:** how context and reasoning
+combine; when an agent is worth its extra calls and cost.
 
 ## Phase 3 — knowledge that grows
 
-Done in Step 7 (pgvector) and Step 14 (SAP Help pages, saved). Next: check
-every citation against what the tools really returned, and flag the rest.
+Done in Step 7 (pgvector), Step 14 (SAP Help pages, saved) and Step 15 (one
+source of truth, citations checked). Next: pick "Configure the …" pages over
+overview pages (hybrid search, or title rules), and an automated evaluation
+of the one path.

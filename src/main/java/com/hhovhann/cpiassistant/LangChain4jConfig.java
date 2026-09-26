@@ -136,17 +136,14 @@ public class LangChain4jConfig {
     static final int MAX_TOOL_ROUND_TRIPS = 5;
 
     /**
-     * The agent: AiServices implements {@link CpiAgent} and runs the tool loop
-     * against whichever chat model {@code cpi.chat.provider} picked. Three
-     * kinds of tool: the local docs and the vector store (how CPI works), SAP
-     * Help when those miss, and the tenant (what is happening).
+     * The assistant: AiServices implements {@link CpiAgent} and runs the tool
+     * loop against whichever chat model {@code cpi.chat.provider} picked.
      */
     @Bean
-    CpiAgent cpiAgent(ChatModel chatModel, CpiDocsTool cpiDocsTool, CpiTenantTools cpiTenantTools,
-                      SapHelpTools sapHelpTools) {
+    CpiAgent cpiAgent(ChatModel chatModel, CpiDocsTool cpiDocsTool, CpiTenantTools cpiTenantTools) {
         return AiServices.builder(CpiAgent.class)
                 .chatModel(chatModel)
-                .tools(cpiDocsTool, cpiTenantTools, sapHelpTools)
+                .tools(cpiDocsTool, cpiTenantTools)
                 .maxToolCallingRoundTrips(MAX_TOOL_ROUND_TRIPS)
                 .build();
     }

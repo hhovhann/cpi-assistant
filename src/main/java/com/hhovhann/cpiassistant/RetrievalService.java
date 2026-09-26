@@ -17,8 +17,8 @@ import java.util.List;
  * whose vectors point in the most similar direction.
  * <p>
  * Kept separate from {@link IngestionPipeline} on purpose — ingestion runs once
- * and is slow, retrieval runs per question and must be fast. Same embedding
- * model on both sides, though, which is why it is injected rather than built.
+ * per page and is slow, retrieval runs per question and must be fast. Same
+ * embedding model on both sides, which is why it is injected rather than built.
  */
 @Service
 public class RetrievalService {
@@ -39,30 +39,17 @@ public class RetrievalService {
     }
 
     /**
-     * Embeds the question and returns the closest segments.
+     * Embeds the question and returns the closest chunks at or above the floor.
      *
-     * Note what .score() actually is. It is NOT raw cosine similarity:
-     * InMemoryEmbeddingStore reports RelevanceScore.fromCosineSimilarity,
-     * which rescales [-1..1] onto [0..1] as (cosine + 1) / 2. A minScore of
-     * 0.5 would mean "cosine >= 0.0" and filter nothing useful.
+     * .score() is not raw cosine similarity: both stores report
+     * (cosine + 1) / 2, so 0.5 means "cosine 0" and filters nothing useful.
      *
      * nomic-embed-text-v1.5 is trained with asymmetric task prefixes —
-     * "search_query: " here, "search_document: " in IngestionPipeline.embed().
-     * Measured at (500, 50), without -> with prefixes:
-     *   JDBC chunk, database question   0.8168 -> 0.8642
-     *   best "capital of France" junk   0.7511 -> 0.7873
-     *   weakest real hit (AS2)               -> 0.8661
-     * The gap between a right answer and noise widened a little (0.065 -> 0.077),
-     * so the floor (cpi.retrieval.min-score) was set at 0.80. The larger
-     * evaluation set (RetrievalEvaluation) later showed there is no clean gap:
-     * a technical off-topic question scores up to 0.82, and some correct chunks
-     * land just under 0.80. The floor filters everyday noise, not everything.
-     *
-     * Still unsolved: the Partner Directory chunk (0.8714) outranks JDBC
-     * (0.8642) for "How do I connect to a database from an iFlow?". The
-     * question avoids the word "JDBC" on purpose, so pure semantic search
-     * has little to go on. JDBC is still in the top 3, which is enough for
-     * RagService; fixing the order needs hybrid keyword search or a reranker.
+     * "search_query: " here, "search_document: " in IngestionPipeline. The
+     * floor (cpi.retrieval.min-score, 0.80) was measured on the earlier
+     * hand-written docs: noise reached 0.82 and some right chunks scored just
+     * under 0.80 — it filters everyday noise, not everything. Below it,
+     * KnowledgeService goes to SAP Help.
      */
     public List<EmbeddingMatch<TextSegment>> search(String query, int maxResults) {
         return search(embedQuery(query), maxResults, embeddingStore, minScore);
@@ -79,15 +66,6 @@ public class RetrievalService {
                 .minScore(0.0)
                 .filter(filter)
                 .build()).matches();
-    }
-
-    /**
-     * What a chunk cites: the file name for the local docs, the page URL for
-     * a saved SAP Help page.
-     */
-    public static String sourceOf(TextSegment segment) {
-        String fileName = segment.metadata().getString("file_name");
-        return fileName != null ? fileName : segment.metadata().getString(SapHelpTools.URL);
     }
 
     /** Embeds a question the way search does, with the query prefix. */

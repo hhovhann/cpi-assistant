@@ -8,12 +8,10 @@ cpi:
   ingestion:
     max-segment-size: 500
     max-overlap-size: 50
-  # Relevance floor, on the store's (cosine + 1) / 2 scale, not raw
-  # cosine. A trade-off, not a clean gap: across the evaluation set
-  # (./gradlew eval) off-topic questions reach 0.82 ("tune JVM garbage
-  # collection") and some correct chunks score just under 0.80. It stops
-  # everyday noise; the prompt's "answer only from the context" rule has to
-  # catch the rest. Model-specific (nomic with task prefixes).
+  # Relevance floor, on the store's (cosine + 1) / 2 scale, not raw cosine.
+  # Below it, the question counts as a miss and SAP Help is asked. Measured on
+  # the earlier hand-written docs: noise reached 0.82, some right chunks
+  # scored just under 0.80. Model-specific (nomic with task prefixes).
   retrieval:
     min-score: 0.80
 
@@ -64,7 +62,7 @@ cpi:
       table: cpi_chunks
       dimension: 768            # nomic-embed-text-v1.5
 
-  # The CPI tenant the agent's tools read (CpiTenantClient). Until a real
+  # The CPI tenant the assistant's tools read (CpiTenantClient). Until a real
   # tenant is reachable, a fake one runs inside this app (FakeCpiController)
   # with the same paths and JSON as the real OData API. For a real tenant:
   # fake: false, and base-url = the service key's URL + /api/v1 (OAuth still to do).
@@ -72,18 +70,39 @@ cpi:
     fake: true
     base-url: http://localhost:${server.port:8080}/fake-cpi/api/v1
 
-  # SAP Help fallback (SapHelpTools): pages of the official Integration Suite
-  # docs, as Markdown from SAP's GitHub repository (CC BY 4.0) — help.sap.com
-  # itself is rendered by JavaScript and disallows automated clients. Only pages
-  # in sap-help/catalog.tsv can be read. Saved pages are re-downloaded after max-age.
-  sap-help:
-    base-url: https://raw.githubusercontent.com/SAP-docs/btp-integration-suite/main
+  # The knowledge: official SAP Integration Suite docs only, as Markdown from
+  # SAP's GitHub repository (CC BY 4.0) — help.sap.com itself is rendered by
+  # JavaScript and disallows automated clients. KnowledgeService searches the
+  # store; on a miss it downloads the best-matching pages of sap-help/catalog.tsv
+  # and saves them. A saved page is downloaded again after max-age.
+  knowledge:
+    sap-help-url: https://raw.githubusercontent.com/SAP-docs/btp-integration-suite/main
     max-age: 30d
+    # A page is downloaded only if its title matches the question this well.
+    # Measured: real CPI questions 0.83-0.95; off-topic ones up to 0.80.
+    min-title-score: 0.82
+    # One page per miss: the second-best title was usually a neighbour (AS2 for
+    # an AS4 question) — a download and 50 chunks for nothing.
+    max-pages-per-miss: 1
+    # Saved at startup (unless already saved and fresh), so common questions
+    # never wait for a download. Page ids from sap-help/catalog.tsv.
+    seed-on-startup: true
+    seed-pages:
+      - jdbc-receiver-adapter-88be644
+      - http-receiver-adapter-2da452e
+      - configure-the-sftp-receiver-adapter-4ef52cf
+      - configure-the-odata-v2-receiver-adapter-c5c2e38
+      - handle-errors-gracefully-42c95f7
+      - define-exception-subprocess-690e078
+      - using-script-api-methods-in-groovy-scripts-062f7a7
+      - define-content-modifier-8f04a70
+      - message-processing-log-b32f8cd
+      - monitor-message-processing-314df3f
 
 # Embedding model, consumed by LangChain4jConfig. A separate model on the same
 # LM Studio server. It returns vectors, not text. nomic-embed-text-v1.5
-# produces 768 dimensions. Request logging stays off: 207 segments of payload
-# is unreadable.
+# produces 768 dimensions. Request logging stays off: a page's worth of
+# chunks is unreadable.
 langchain4j:
   open-ai:
     embedding-model:

@@ -30,8 +30,8 @@ import java.util.Optional;
  * and its robots.txt disallows automated clients. The list also bounds what
  * the model can reach — it picks page ids from here, never free URLs.
  * <p>
- * Pages are found by their titles. The ~1,700 titles are embedded on the first
- * search, not at startup, and kept in memory: a few seconds, once.
+ * Pages are found by their titles. The ~1,660 titles are embedded on the first
+ * search and kept in memory: a few seconds, once per start.
  */
 @Component
 public class SapHelpCatalog {
@@ -99,13 +99,22 @@ public class SapHelpCatalog {
         return Optional.ofNullable(id == null ? null : pagesById.get(id.trim()));
     }
 
-    /** The pages whose titles are closest to the query. */
-    public List<Page> search(String query, int maxResults) {
+    /** The first page with this exact title — to link a title the model was shown. */
+    public Optional<Page> pageByTitle(String title) {
+        return pagesById.values().stream().filter(page -> page.title().equals(title)).findFirst();
+    }
+
+    /** A catalog page and how well its title matches, on the (cosine + 1) / 2 scale. */
+    public record PageMatch(Page page, double score) {
+    }
+
+    /** The pages whose titles are closest to the query, best first. */
+    public List<PageMatch> search(String query, int maxResults) {
         Embedding queryEmbedding = embeddingModel.embed(queryPrefix + query).content();
         return titleIndex().search(EmbeddingSearchRequest.builder()
                         .queryEmbedding(queryEmbedding).maxResults(maxResults).minScore(0.0).build())
                 .matches().stream()
-                .map(match -> pagesById.get(match.embedded().metadata().getString("id")))
+                .map(match -> new PageMatch(pagesById.get(match.embedded().metadata().getString("id")), match.score()))
                 .toList();
     }
 

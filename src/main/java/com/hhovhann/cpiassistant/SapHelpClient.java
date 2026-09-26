@@ -10,15 +10,18 @@ import java.util.Optional;
 
 /**
  * Downloads one page of the SAP Integration Suite documentation as Markdown
- * from GitHub ({@code cpi.sap-help.base-url}), and strips what is only there
- * for the help portal: HTML comments and anchor tags.
+ * from GitHub ({@code cpi.knowledge.sap-help-url}), and strips what is only there
+ * for the help portal: HTML comments, anchor tags, images — and links, which
+ * keep their text. A link like [Handle Errors in Successful Responses](….md)
+ * looks exactly like a citation; the model copied such links as sources it was
+ * never given.
  */
 @Component
 public class SapHelpClient {
 
     private final RestClient restClient;
 
-    public SapHelpClient(@Value("${cpi.sap-help.base-url}") String baseUrl) {
+    public SapHelpClient(@Value("${cpi.knowledge.sap-help-url}") String baseUrl) {
         this.restClient = RestClient.builder().baseUrl(baseUrl).build();
     }
 
@@ -40,6 +43,8 @@ public class SapHelpClient {
         return markdown
                 .replaceAll("(?s)<!--.*?-->", "")
                 .replaceAll("<a name=\"[^\"]*\"\\s*/>", "")
+                .replaceAll("!\\[[^\\]]*]\\([^)]*\\)", "")
+                .replaceAll("\\[([^\\]]+)]\\([^)]*\\)", "$1")
                 .replaceAll("\n{3,}", "\n\n")
                 .strip();
     }

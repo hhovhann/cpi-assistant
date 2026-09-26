@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ChatProviderTests {
 
     @Nested
-    @SpringBootTest(properties = "cpi.ingestion.run-on-startup=false")
+    @SpringBootTest
     class ByDefault {
 
         @Autowired
@@ -37,7 +37,6 @@ class ChatProviderTests {
 
     @Nested
     @SpringBootTest(properties = {
-            "cpi.ingestion.run-on-startup=false",
             "cpi.chat.provider=anthropic",
             "cpi.chat.anthropic.api-key=test-key-not-used"})
     class Anthropic {
@@ -59,7 +58,6 @@ class ChatProviderTests {
 
     @Nested
     @SpringBootTest(properties = {
-            "cpi.ingestion.run-on-startup=false",
             "cpi.chat.provider=openai",
             "cpi.chat.openai.api-key=test-key-not-used"})
     class OpenAi {

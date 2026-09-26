@@ -57,28 +57,5 @@ dependencies {
 }
 
 tasks.test {
-    useJUnitPlatform {
-        excludeTags("eval")
-    }
-}
-
-// Evaluations need LM Studio running, so they stay out of `test`.
-//   ./gradlew eval
-//   ./gradlew eval -Dcpi.chat.provider=anthropic   (answers from Claude — paid)
-//   ./gradlew eval -Dcpi.chat.lmstudio.model-name=meta-llama-3.1-8b-instruct
-tasks.register<Test>("eval") {
-    description = "Runs the evaluations tagged 'eval' against the live models."
-    group = "verification"
-    testClassesDirs = sourceSets["test"].output.classesDirs
-    classpath = sourceSets["test"].runtimeClasspath
-    useJUnitPlatform {
-        includeTags("eval")
-    }
-    testLogging.showStandardStreams = true
-    outputs.upToDateWhen { false }
-    // Gradle runs tests in a separate JVM; pass every -Dcpi.* setting through,
-    // e.g. -Dcpi.chat.provider=anthropic or -Dcpi.chat.lmstudio.model-name=...
-    System.getProperties().stringPropertyNames()
-        .filter { it.startsWith("cpi.") }
-        .forEach { systemProperty(it, System.getProperty(it)) }
+    useJUnitPlatform()
 }

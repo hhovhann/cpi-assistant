@@ -4,6 +4,7 @@ import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -12,6 +13,7 @@ import dev.langchain4j.service.Result;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -20,36 +22,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * The tool loop without an LLM. A scripted fake model plays the model's part —
- * "call searchCpiDocs", then "answer" — so these check our wiring: the tool is
- * offered, runs with the model's arguments, its result goes back to the model,
- * and the round-trip limit holds.
+ * The assistant's tool loop without an LLM. A scripted fake model plays the
+ * model's part, so these check the wiring: the passages arrive in the message,
+ * the tools are offered, a tool runs with the model's arguments and its result
+ * goes back, and the round-trip limit holds.
  */
 class CpiAgentTest {
 
-    private static final String QUESTION = "How do I connect to a database from an iFlow?";
+    static final String JDBC = "[JDBC Receiver Adapter]\nAdd a receiver channel and select JDBC.";
 
-    /** Records every query and returns one JDBC passage, or nothing. */
-    private static final class FakeRetrieval extends RetrievalService {
+    /** Knowledge that always returns one JDBC passage, or nothing, and records each query. */
+    static final class FakeKnowledge extends KnowledgeService {
         final List<String> queries = new ArrayList<>();
         private final boolean empty;
 
-        FakeRetrieval(boolean empty) {
-            super(null, null, "", 0.80);
+        FakeKnowledge(boolean empty) {
+            super(null, null, null, null, null, 0.82, 1, Duration.ofDays(30), null);
             this.empty = empty;
         }
 
         @Override
-        public List<EmbeddingMatch<TextSegment>> search(String query, int maxResults) {
+        public Found find(String query) {
             queries.add(query);
-            return empty ? List.of() : List.of(new EmbeddingMatch<>(0.86, "jdbc#0", null,
-                    TextSegment.from("Add a receiver channel and select JDBC.",
-                            Metadata.from("file_name", "02-jdbc-adapter.txt"))));
+            return new Found(empty ? List.of() : List.of(jdbcMatch()), List.of("Database: fake"), List.of());
+        }
+
+        static EmbeddingMatch<TextSegment> jdbcMatch() {
+            return new EmbeddingMatch<>(0.87, "jdbc#0", null, TextSegment.from("Add a receiver channel and select JDBC.",
+                    Metadata.from(TITLE, "JDBC Receiver Adapter").put(URL, SapHelpCatalog.REPO_BLOB + "docs/x/jdbc-receiver-adapter-88be644.md")));
         }
     }
 
     /** Answers each request with whatever the script says, given the request number. */
-    private static final class ScriptedChatModel implements ChatModel {
+    static final class ScriptedChatModel implements ChatModel {
         final List<ChatRequest> requests = new ArrayList<>();
         private final Function<Integer, AiMessage> script;
 
@@ -64,73 +69,64 @@ class CpiAgentTest {
         }
     }
 
-    private static AiMessage callSearch(String query) {
-        return AiMessage.from(ToolExecutionRequest.builder()
-                .id("call-1").name("searchCpiDocs").arguments("{\"query\": \"" + query + "\"}").build());
+    static AiMessage callTool(String name, String arguments) {
+        return AiMessage.from(ToolExecutionRequest.builder().id("call-1").name(name).arguments(arguments).build());
     }
 
-    private static CpiAgent agent(ChatModel model, RetrievalService retrieval) {
+    static CpiAgent agent(ChatModel model, KnowledgeService knowledge) {
         // The tenant tools are offered but never called in these tests.
-        return new LangChain4jConfig().cpiAgent(model, new CpiDocsTool(retrieval),
-                new CpiTenantTools(new CpiTenantClient("http://localhost:1/unused")),
-                new SapHelpTools(null, null, null, null, null, java.time.Duration.ZERO));
+        return new LangChain4jConfig().cpiAgent(model, new CpiDocsTool(knowledge),
+                new CpiTenantTools(new CpiTenantClient("http://localhost:1/unused")));
     }
 
     @Test
-    void runsTheToolTheModelAsksForAndSendsTheResultBack() {
-        var retrieval = new FakeRetrieval(false);
-        var model = new ScriptedChatModel(n -> n == 1
-                ? callSearch("JDBC receiver adapter")
-                : AiMessage.from("Use the JDBC adapter [02-jdbc-adapter.txt]."));
+    void aDocsQuestionIsAnsweredFromThePassagesWithoutATool() {
+        var knowledge = new FakeKnowledge(false);
+        var model = new ScriptedChatModel(n -> AiMessage.from("Use the JDBC adapter [JDBC Receiver Adapter]."));
 
-        Result<String> result = agent(model, retrieval).answer(QUESTION);
-
-        assertThat(result.content()).isEqualTo("Use the JDBC adapter [02-jdbc-adapter.txt].");
-        // The model chose the query, not the user's wording.
-        assertThat(retrieval.queries).containsExactly("JDBC receiver adapter");
-        assertThat(result.toolExecutions()).singleElement()
-                .satisfies(e -> assertThat(e.request().name()).isEqualTo("searchCpiDocs"));
-
-        // The first request offered the tool; the second carried its result back.
-        assertThat(model.requests).hasSize(2);
-        assertThat(model.requests.getFirst().toolSpecifications())
-                .extracting(spec -> spec.name())
-                .containsExactlyInAnyOrder("searchCpiDocs", "listIflows", "getProblemMessages", "getErrorDetails",
-                        "searchSapHelp", "readSapHelpPage");
-        assertThat(model.requests.get(1).messages()).last()
-                .isInstanceOfSatisfying(ToolExecutionResultMessage.class, message -> assertThat(message.text())
-                        .contains("[02-jdbc-adapter.txt]", "select JDBC"));
-    }
-
-    @Test
-    void modelMayAnswerWithoutSearching() {
-        var retrieval = new FakeRetrieval(false);
-        var model = new ScriptedChatModel(n -> AiMessage.from("That is not a CPI question."));
-
-        Result<String> result = agent(model, retrieval).answer("What is the capital of France?");
+        Result<String> result = agent(model, knowledge).answer(JDBC, "How do I connect to a database?");
 
         assertThat(result.toolExecutions()).isEmpty();
-        assertThat(retrieval.queries).isEmpty();
+        assertThat(model.requests).hasSize(1);
+        assertThat(model.requests.getFirst().messages()).last()
+                .isInstanceOfSatisfying(UserMessage.class, message -> assertThat(message.singleText())
+                        .contains("[JDBC Receiver Adapter]", "Question: How do I connect to a database?"));
+        assertThat(model.requests.getFirst().toolSpecifications()).extracting(spec -> spec.name())
+                .containsExactlyInAnyOrder("searchDocs", "listIflows", "getProblemMessages", "getErrorDetails");
     }
 
     @Test
-    void emptySearchTellsTheModelSoInsteadOfReturningNothing() {
-        var retrieval = new FakeRetrieval(true);
-        var model = new ScriptedChatModel(n -> n == 1 ? callSearch("tune JVM garbage collection") : AiMessage.from("I don't know."));
+    void theModelCanAskForMoreDocsAndGetsThemBack() {
+        var knowledge = new FakeKnowledge(false);
+        var model = new ScriptedChatModel(n -> n == 1
+                ? callTool("searchDocs", "{\"query\": \"JdbcAdapterException connection pool\"}")
+                : AiMessage.from("A pool timeout [JDBC Receiver Adapter]."));
 
-        Result<String> result = agent(model, retrieval).answer("How do I tune JVM garbage collection?");
+        Result<String> result = agent(model, knowledge).answer("(no documentation found)", "Why did Order_Sync fail?");
 
-        assertThat(result.toolExecutions().getFirst().result()).isEqualTo("No relevant passages found in the CPI documentation.");
+        assertThat(knowledge.queries).containsExactly("JdbcAdapterException connection pool");
+        assertThat(model.requests.get(1).messages()).last()
+                .isInstanceOfSatisfying(ToolExecutionResultMessage.class, message -> assertThat(message.text())
+                        .startsWith("[JDBC Receiver Adapter]\n"));
+        assertThat(result.content()).isEqualTo("A pool timeout [JDBC Receiver Adapter].");
     }
 
     @Test
-    void stopsAModelThatNeverStopsSearching() {
-        var retrieval = new FakeRetrieval(false);
-        var model = new ScriptedChatModel(n -> callSearch("JDBC, attempt " + n));
+    void aSearchThatFindsNothingSaysSo() {
+        var model = new ScriptedChatModel(n -> n == 1 ? callTool("searchDocs", "{\"query\": \"JVM tuning\"}") : AiMessage.from("I don't know."));
 
-        assertThatThrownBy(() -> agent(model, retrieval).answer(QUESTION))
-                .isInstanceOf(RuntimeException.class);
+        Result<String> result = agent(model, new FakeKnowledge(true)).answer("(no documentation found)", "How do I tune the JVM?");
+
+        assertThat(result.toolExecutions().getFirst().result()).isEqualTo("(no documentation found)");
+    }
+
+    @Test
+    void stopsAModelThatNeverStopsCallingTools() {
+        var knowledge = new FakeKnowledge(false);
+        var model = new ScriptedChatModel(n -> callTool("searchDocs", "{\"query\": \"attempt " + n + "\"}"));
+
+        assertThatThrownBy(() -> agent(model, knowledge).answer(JDBC, "anything")).isInstanceOf(RuntimeException.class);
         // One search per reply here, so round trips = searches.
-        assertThat(retrieval.queries).hasSizeLessThanOrEqualTo(LangChain4jConfig.MAX_TOOL_ROUND_TRIPS);
+        assertThat(knowledge.queries).hasSizeLessThanOrEqualTo(LangChain4jConfig.MAX_TOOL_ROUND_TRIPS);
     }
 }

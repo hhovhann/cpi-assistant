@@ -3,8 +3,6 @@ package com.hhovhann.cpiassistant;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -18,6 +16,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.util.List;
 import java.util.UUID;
 
+import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -43,28 +42,16 @@ class PgVectorStoreTest {
     }
 
     private static TextSegment segment(String text, String source) {
-        return TextSegment.from(text, Metadata.from("file_name", text + ".txt").put(IngestionPipeline.SOURCE, source));
+        return TextSegment.from(text, Metadata.from(KnowledgeService.TITLE, text).put(KnowledgeService.SOURCE, source));
+    }
+
+    private static TextSegment page(String text, String url) {
+        return TextSegment.from(text, Metadata.from(KnowledgeService.URL, url).put(KnowledgeService.SOURCE, KnowledgeService.SAP_HELP));
     }
 
     private static List<EmbeddingMatch<TextSegment>> everything(EmbeddingStore<TextSegment> store) {
         return store.search(EmbeddingSearchRequest.builder()
                 .queryEmbedding(Embedding.from(new float[]{1, 0, 0})).maxResults(100).minScore(0.0).build()).matches();
-    }
-
-    /** Embeds every text as the same vector, and counts the calls. */
-    private static final class FixedEmbeddingModel implements EmbeddingModel {
-        int calls;
-
-        @Override
-        public Response<List<Embedding>> embedAll(List<TextSegment> segments) {
-            calls++;
-            return Response.from(segments.stream().map(s -> Embedding.from(new float[]{1, 0, 0})).toList());
-        }
-
-        @Override
-        public int dimension() {
-            return 3;
-        }
     }
 
     @Test
@@ -89,22 +76,16 @@ class PgVectorStoreTest {
     }
 
     @Test
-    void reingestingReplacesTheLocalDocsAndKeepsEverythingElse() {
+    void removingByUrlDeletesOnlyThatPage() {
         var store = LangChain4jConfig.pgVectorStore(table(uniqueTable()));
-        // Something that did not come from the files — later, a saved web page.
-        store.add(Embedding.from(new float[]{1, 0, 0}), segment("saved-page", "web"));
-        var pipeline = new IngestionPipeline(new IngestionProperties(500, 50), new FixedEmbeddingModel(), store, "");
-        var docs = List.of(TextSegment.from("JDBC", Metadata.from("file_name", "02-jdbc-adapter.txt")),
-                TextSegment.from("AS2", Metadata.from("file_name", "08-as2.txt")));
+        store.add(Embedding.from(new float[]{1, 0, 0}), page("jdbc", "https://example.com/jdbc"));
+        store.add(Embedding.from(new float[]{1, 0, 0}), page("jdbc, part 2", "https://example.com/jdbc"));
+        store.add(Embedding.from(new float[]{1, 0, 0}), page("sftp", "https://example.com/sftp"));
 
-        pipeline.embed(docs);
-        pipeline.embed(docs); // a restart: the same files again
+        // What KnowledgeService does before saving a fresh copy of a page.
+        store.removeAll(metadataKey(KnowledgeService.URL).isEqualTo("https://example.com/jdbc"));
 
-        var all = everything(store);
-        assertThat(all).hasSize(3);
-        assertThat(all).filteredOn(m -> IngestionPipeline.LOCAL_DOCS.equals(m.embedded().metadata().getString(IngestionPipeline.SOURCE)))
-                .extracting(m -> m.embedded().text()).containsExactlyInAnyOrder("JDBC", "AS2");
-        assertThat(all).extracting(m -> m.embedded().text()).contains("saved-page");
+        assertThat(everything(store)).extracting(m -> m.embedded().text()).containsExactly("sftp");
     }
 
     @Test
@@ -116,6 +97,6 @@ class PgVectorStoreTest {
         var afterRestart = LangChain4jConfig.pgVectorStore(table(name));
 
         assertThat(everything(afterRestart)).extracting(m -> m.embedded().text()).containsExactly("kept");
-        assertThat(everything(afterRestart).getFirst().embedded().metadata().getString("file_name")).isEqualTo("kept.txt");
+        assertThat(everything(afterRestart).getFirst().embedded().metadata().getString(KnowledgeService.TITLE)).isEqualTo("kept");
     }
 }

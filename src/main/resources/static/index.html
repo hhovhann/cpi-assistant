@@ -95,13 +95,31 @@
   .source .excerpt { margin-top: 4px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
   .source.unused { opacity: .6; border-style: dashed; }
   .tag { font-size: 11px; padding: 1px 6px; border-radius: 4px; color: var(--warn); background: var(--warn-soft); }
+
+  .path { margin: 0 0 12px; padding: 8px 12px; list-style: none; font-size: 13px; color: var(--muted);
+          background: var(--bg); border-radius: 8px; }
+  .path li { padding: 2px 0; overflow-wrap: anywhere; }
+  .path li::before { content: "→ "; }
+  .path li.web { color: var(--warn); }
+  .cite.text { min-width: 0; max-width: 100%; overflow-wrap: anywhere; text-align: left; }
+  .cite.unknown { color: var(--warn); background: var(--warn-soft); cursor: help; }
+  .source a { color: var(--accent); }
+  .tools { margin-top: 16px; }
+  .tools h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .step { padding: 10px 12px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 8px; }
+  .step .tool { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+  .step .args { margin-top: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  .step details { margin-top: 6px; font-size: 13px; }
+  .step summary { cursor: pointer; color: var(--muted); }
+  .step pre { margin: 6px 0 0; padding: 8px; max-height: 280px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+              font-size: 12px; background: var(--bg); border-radius: 6px; }
 </style>
 </head>
 <body>
 <main>
   <header>
     <h1>CPI Assistant</h1>
-    <p>Answers SAP Cloud Integration questions from the documentation, with sources.</p>
+    <p>Answers SAP Cloud Integration questions from the official SAP documentation, and looks at the CPI tenant when needed.</p>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Connecting…</span></div>
   </header>
 
@@ -113,10 +131,10 @@
   <div class="options">
     <div class="examples">
       <button class="example" type="button">How do I configure a JDBC adapter?</button>
-      <button class="example" type="button">What is the difference between Script step and Groovy Script?</button>
       <button class="example" type="button">How do I handle errors in an iFlow?</button>
+      <button class="example" type="button">How do I configure the AS4 receiver adapter?</button>
+      <button class="example" type="button">Why did Order_Sync fail today and how do I fix it?</button>
     </div>
-    <label class="compare"><input type="checkbox" id="compare"> Compare with the model alone (no docs)</label>
   </div>
 
   <section class="results" id="results"></section>
@@ -126,97 +144,84 @@
   const $ = id => document.getElementById(id);
   const form = $('form'), questionInput = $('question'), askButton = $('ask'), results = $('results');
 
-  // Everything the model writes is untrusted text. Escape it before it goes
-  // anywhere near innerHTML — a doc or a question could contain <script>.
+  // Everything the model or a remote system writes is untrusted text. Escape
+  // it before it goes anywhere near innerHTML.
   function escapeHtml(text) {
-    return text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   }
 
-  // Runs on already-escaped text only. Adds **bold** and turns [1] / [1, 2]
-  // into clickable chips — but only for numbers that are real sources.
-  function renderAnswer(text, cardId, citedNumbers) {
-    let html = escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    if (citedNumbers) {
-      html = html.replace(/\[([\d,\s]+)]/g, (whole, inside) => {
-        const chips = inside.split(/[,\s]+/).filter(Boolean).map(n =>
-          citedNumbers.has(Number(n))
-            ? `<button class="cite" type="button" data-card="${cardId}" data-n="${n}" title="Show source ${n}">${n}</button>`
-            : null);
-        return chips.every(Boolean) ? chips.join('') : whole;
-      });
-    }
-    return html;
+  // Only links into SAP's documentation repository become links.
+  function safeLink(url, label) {
+    return url && /^https:\/\/github\.com\/SAP-docs\/[\w./-]+$/.test(url)
+      ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>` : escapeHtml(label);
   }
 
-  function card(id, title, subtitle) {
-    const el = document.createElement('article');
-    el.className = 'card';
-    el.id = id;
-    el.innerHTML = `<h2>${title}</h2><p class="sub">${subtitle}</p><div class="answer loading">Thinking…</div>`;
-    return el;
+  // On escaped text: **bold**, and [Page Title] as a chip. The server says
+  // which titles the model was given; any other title gets a warning chip.
+  function renderAnswer(text, sourceIndex, unverified) {
+    const html = escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    return html.replace(/\[([^\[\]\n]{3,150})]/g, (whole, label) => {
+      const title = label.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+      if (sourceIndex.has(title)) {
+        return `<button class="cite text" type="button" data-src="${sourceIndex.get(title)}" title="Show the source">${label}</button>`;
+      }
+      return unverified.includes(title)
+        ? `<span class="cite text unknown" title="The model was never given this page — it cited it anyway">⚠ ${label}</span>`
+        : whole;
+    });
   }
 
-  function showError(el, message) {
-    el.querySelector('.answer').className = 'answer error';
-    el.querySelector('.answer').textContent = message;
-  }
-
-  async function askRag(question, el) {
+  async function ask(question, el) {
     const started = performance.now();
     try {
-      const response = await fetch('/ask?question=' + encodeURIComponent(question));
+      const response = await fetch('/assist?question=' + encodeURIComponent(question));
       if (!response.ok) throw new Error('HTTP ' + response.status);
       const data = await response.json();
-      const cited = new Set(data.sources.map(s => s.number));
 
+      const sourceIndex = new Map(data.sources.map((s, i) => [s.title, i]));
       const answer = el.querySelector('.answer');
       answer.className = 'answer';
-      answer.innerHTML = renderAnswer(data.answer, el.id, cited);
+      answer.innerHTML = renderAnswer(data.answer, sourceIndex, data.unverifiedCitations);
 
-      const sourcesEl = document.createElement('div');
-      sourcesEl.className = 'sources';
-      if (data.retrievedFrom.length === 0) {
-        sourcesEl.innerHTML = '<h3>Sources</h3><div class="source unused">No document was relevant enough to retrieve.</div>';
-      } else {
-        const bySourceNumber = new Map(data.sources.map(s => [s.number, s]));
-        sourcesEl.innerHTML = '<h3>Sources</h3>' + data.retrievedFrom.map((file, i) => {
-          const source = bySourceNumber.get(i + 1);
-          return source
-            ? `<div class="source" id="${el.id}-src-${source.number}">
-                 <div class="head"><span class="cite">${source.number}</span>
-                   <span class="file">${escapeHtml(source.file)}</span>
-                   <span class="score">relevance ${source.score.toFixed(3)}</span></div>
-                 <div class="excerpt">${escapeHtml(source.excerpt)}</div>
-               </div>`
-            : `<div class="source unused">
-                 <div class="head"><span class="file">${escapeHtml(file)}</span>
-                   <span class="tag">retrieved, not cited</span></div>
-               </div>`;
-        }).join('');
+      answer.insertAdjacentHTML('beforebegin', '<ul class="path">' + data.path.map(step =>
+        `<li class="${/downloaded|^Tool:/.test(step) ? 'web' : ''}">${escapeHtml(step)}</li>`).join('') + '</ul>');
+
+      const sources = document.createElement('div');
+      sources.className = 'sources';
+      sources.innerHTML = '<h3>Sources</h3>' + (data.sources.length === 0
+        ? '<div class="source unused">No documentation was found for this question.</div>'
+        : data.sources.map((s, i) => `
+            <div class="source ${s.cited ? '' : 'unused'}" id="src-${i}">
+              <div class="head"><span class="file">${safeLink(s.url, s.title)}</span>
+                ${s.score == null ? '' : `<span class="score">relevance ${s.score.toFixed(3)}</span>`}
+                ${s.cited ? '' : '<span class="tag">given, not cited</span>'}</div>
+              ${s.excerpt ? `<div class="excerpt">${escapeHtml(s.excerpt)}</div>` : ''}
+            </div>`).join(''));
+      answer.after(sources);
+
+      let last = sources;
+      if (data.toolCalls.length) {
+        const tools = document.createElement('div');
+        tools.className = 'tools';
+        tools.innerHTML = '<h3>Tool calls</h3>' + data.toolCalls.map((call, i) => `
+            <div class="step">
+              <span class="tool">${i + 1}. ${escapeHtml(call.tool)}</span>
+              <div class="args">${escapeHtml(call.arguments || '{}')}</div>
+              <details><summary>Result (${(call.result || '').length} chars)</summary><pre>${escapeHtml(call.result || '')}</pre></details>
+            </div>`).join('');
+        sources.after(tools);
+        last = tools;
       }
-      answer.after(sourcesEl);
 
-      const tokens = data.inputTokens == null ? '' : ` · ${data.inputTokens} tokens in / ${data.outputTokens} out`;
-      sourcesEl.insertAdjacentHTML('afterend',
-        `<div class="meta">${(data.millis / 1000).toFixed(1)} s model time${tokens} · ${((performance.now() - started) / 1000).toFixed(1)} s total</div>`);
+      const warning = data.unverifiedCitations.length
+        ? ` · <span class="tag">${data.unverifiedCitations.length} citation(s) of pages the model was never given</span>` : '';
+      last.insertAdjacentHTML('afterend',
+        `<div class="meta">${data.toolCalls.length} tool call(s) · ${data.inputTokens} tokens in / ${data.outputTokens} out · `
+        + `${(data.millis / 1000).toFixed(1)} s${warning}</div>`);
     } catch (e) {
-      showError(el, `Request failed (${e.message}). Is the app running, and LM Studio serving both models?`);
-    }
-  }
-
-  async function askPlain(question, el) {
-    const started = performance.now();
-    try {
-      const response = await fetch('/chat?message=' + encodeURIComponent(question));
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      const text = await response.text();
-      const answer = el.querySelector('.answer');
-      answer.className = 'answer';
-      answer.innerHTML = renderAnswer(text, el.id, null);
-      answer.insertAdjacentHTML('afterend',
-        `<div class="meta">${((performance.now() - started) / 1000).toFixed(1)} s total · no sources — nothing to check it against</div>`);
-    } catch (e) {
-      showError(el, `Request failed (${e.message}).`);
+      el.querySelector('.answer').className = 'answer error';
+      el.querySelector('.answer').textContent =
+        `Request failed (${e.message}). Is the app running, LM Studio serving both models, and pgvector up (docker compose up -d)?`;
     }
   }
 
@@ -224,30 +229,21 @@
     event.preventDefault();
     const question = questionInput.value.trim();
     if (!question) return;
-
-    const compare = $('compare').checked;
-    results.className = 'results' + (compare ? ' two' : '');
     results.replaceChildren();
-
-    const rag = card('rag', 'With the docs', 'Retrieves the most relevant chunks, answers only from them, cites them');
-    results.append(rag);
-    const jobs = [askRag(question, rag)];
-    if (compare) {
-      const plain = card('plain', 'Model alone', 'Same model, no documents — answers from memory');
-      results.append(plain);
-      jobs.push(askPlain(question, plain));
-    }
-
+    const el = document.createElement('article');
+    el.className = 'card';
+    el.innerHTML = '<h2>Answer</h2><div class="answer loading">Thinking… a download or a tool call can take a minute or two.</div>';
+    results.append(el);
     askButton.disabled = true;
-    await Promise.allSettled(jobs);
+    await ask(question, el);
     askButton.disabled = false;
   });
 
-  // Clicking a citation chip highlights its source card.
+  // Clicking a citation chip highlights its source.
   results.addEventListener('click', event => {
     const chip = event.target.closest('button.cite');
     if (!chip) return;
-    const target = $(`${chip.dataset.card}-src-${chip.dataset.n}`);
+    const target = $(`src-${chip.dataset.src}`);
     if (!target) return;
     target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     target.classList.add('flash');
@@ -260,17 +256,17 @@
       if (!askButton.disabled) form.requestSubmit();
     }));
 
-  // The server answers before the docs are indexed. Wait for them.
+  // At startup the server saves a few popular SAP pages. Wait for it.
   async function pollStatus() {
     try {
       const status = await (await fetch('/status')).json();
       if (status.ready) {
         $('dot').classList.add('ready');
-        $('status').textContent = `Ready · ${status.indexedSegments} doc chunks indexed`;
+        $('status').textContent = `Ready · ${status.savedPages} of ${status.seedPages} popular SAP pages in the database`;
         askButton.disabled = false;
         return;
       }
-      $('status').textContent = 'Indexing the documentation…';
+      $('status').textContent = 'Saving popular SAP pages to the database…';
     } catch {
       $('status').textContent = 'Server not reachable — retrying…';
     }

@@ -15,8 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * The tenant tools end to end, over real HTTP: CpiTenantClient calls the fake
  * tenant served by this app, exactly as it would call a real one. No LLM.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "cpi.ingestion.run-on-startup=false")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CpiTenantTest {
 
     @LocalServerPort

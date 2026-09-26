@@ -4,10 +4,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
- * Checks the Spring wiring only. Startup ingestion is switched off, so this
- * passes without LM Studio: building the model beans makes no network call.
+ * Checks the Spring wiring only. Seeding is off in the test properties, so
+ * this passes without LM Studio or the internet: building the beans makes no
+ * network call.
  */
-@SpringBootTest(properties = "cpi.ingestion.run-on-startup=false")
+@SpringBootTest
 class CpiAssistantApplicationTests {
 
     @Test
