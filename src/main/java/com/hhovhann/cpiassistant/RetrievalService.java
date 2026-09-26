@@ -6,6 +6,7 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.filter.Filter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -65,6 +66,28 @@ public class RetrievalService {
      */
     public List<EmbeddingMatch<TextSegment>> search(String query, int maxResults) {
         return search(embedQuery(query), maxResults, embeddingStore, minScore);
+    }
+
+    /**
+     * The best chunks among those matching a metadata filter — e.g. one saved
+     * SAP Help page — with no score floor: the caller already chose the page.
+     */
+    public List<EmbeddingMatch<TextSegment>> searchWithin(String query, int maxResults, Filter filter) {
+        return embeddingStore.search(EmbeddingSearchRequest.builder()
+                .queryEmbedding(embedQuery(query))
+                .maxResults(maxResults)
+                .minScore(0.0)
+                .filter(filter)
+                .build()).matches();
+    }
+
+    /**
+     * What a chunk cites: the file name for the local docs, the page URL for
+     * a saved SAP Help page.
+     */
+    public static String sourceOf(TextSegment segment) {
+        String fileName = segment.metadata().getString("file_name");
+        return fileName != null ? fileName : segment.metadata().getString(SapHelpTools.URL);
     }
 
     /** Embeds a question the way search does, with the query prefix. */

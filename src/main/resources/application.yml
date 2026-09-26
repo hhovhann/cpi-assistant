@@ -72,6 +72,14 @@ cpi:
     fake: true
     base-url: http://localhost:${server.port:8080}/fake-cpi/api/v1
 
+  # SAP Help fallback (SapHelpTools): pages of the official Integration Suite
+  # docs, as Markdown from SAP's GitHub repository (CC BY 4.0) — help.sap.com
+  # itself is rendered by JavaScript and disallows automated clients. Only pages
+  # in sap-help/catalog.tsv can be read. Saved pages are re-downloaded after max-age.
+  sap-help:
+    base-url: https://raw.githubusercontent.com/SAP-docs/btp-integration-suite/main
+    max-age: 30d
+
 # Embedding model, consumed by LangChain4jConfig. A separate model on the same
 # LM Studio server. It returns vectors, not text. nomic-embed-text-v1.5
 # produces 768 dimensions. Request logging stays off: 207 segments of payload

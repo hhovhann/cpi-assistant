@@ -40,7 +40,7 @@ public class CpiDocsTool {
             return "No relevant passages found in the CPI documentation.";
         }
         return matches.stream()
-                .map(match -> "[" + match.embedded().metadata().getString("file_name") + "]\n" + match.embedded().text())
+                .map(match -> "[" + RetrievalService.sourceOf(match.embedded()) + "]\n" + match.embedded().text())
                 .collect(Collectors.joining("\n---\n"));
     }
 }

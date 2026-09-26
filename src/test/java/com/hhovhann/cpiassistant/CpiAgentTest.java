@@ -72,7 +72,8 @@ class CpiAgentTest {
     private static CpiAgent agent(ChatModel model, RetrievalService retrieval) {
         // The tenant tools are offered but never called in these tests.
         return new LangChain4jConfig().cpiAgent(model, new CpiDocsTool(retrieval),
-                new CpiTenantTools(new CpiTenantClient("http://localhost:1/unused")));
+                new CpiTenantTools(new CpiTenantClient("http://localhost:1/unused")),
+                new SapHelpTools(null, null, null, null, null, java.time.Duration.ZERO));
     }
 
     @Test
@@ -94,7 +95,8 @@ class CpiAgentTest {
         assertThat(model.requests).hasSize(2);
         assertThat(model.requests.getFirst().toolSpecifications())
                 .extracting(spec -> spec.name())
-                .containsExactlyInAnyOrder("searchCpiDocs", "listIflows", "getProblemMessages", "getErrorDetails");
+                .containsExactlyInAnyOrder("searchCpiDocs", "listIflows", "getProblemMessages", "getErrorDetails",
+                        "searchSapHelp", "readSapHelpPage");
         assertThat(model.requests.get(1).messages()).last()
                 .isInstanceOfSatisfying(ToolExecutionResultMessage.class, message -> assertThat(message.text())
                         .contains("[02-jdbc-adapter.txt]", "select JDBC"));

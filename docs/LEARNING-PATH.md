@@ -628,6 +628,48 @@ speaks real HTTP to the fake, so a real tenant is a configuration change
 
 **Try:** "Why did Invoice_To_Partner_EDI fail?", and a made-up iFlow name.
 
+### Step 14: Knowledge that grows — SAP Help, saved in pgvector
+
+**What:** two more tools. `searchSapHelp(query)` finds pages in a catalog of
+the official SAP Integration Suite documentation; `readSapHelpPage(pageId,
+question)` downloads one, saves it in pgvector and returns the best passages,
+labelled with the page URL. The system prompt says: local docs first, SAP Help
+only when they miss. A saved page is found by `searchCpiDocs` from then on.
+**Classes:** `SapHelpCatalog`, `SapHelpClient`, `SapHelpTools`,
+`RetrievalService.searchWithin` / `sourceOf`, `SapHelpToolsTest`,
+`sap-help/catalog.tsv`.
+**The source question came first:**
+- help.sap.com returned a 1 KB page with no content — it renders with
+  JavaScript — and its robots.txt says `User-agent: * / Disallow: /`. Not a
+  source for a program, and not something to work around.
+- SAP publishes the same docs as Markdown on GitHub,
+  `SAP-docs/btp-integration-suite`, CC BY 4.0. Clean text, allowed with
+  attribution. ~1,660 pages in `docs/ISuite_Integrations_APIs`.
+**Idea:** a knowledge base that grows from sources you can check, never from
+what the model said. The catalog bounds what the model can fetch — it passes a
+page id, never a URL — and the fetch time lets a page expire (30 days).
+**Measured with Qwen3 14B, "How do I configure the Kafka receiver adapter in
+Cloud Integration?"** (the local docs only mention Kafka in an overview):
+
+| | 1st ask | 2nd ask, same question |
+|---|---|---|
+| Tools | `searchCpiDocs` (miss) → `searchSapHelp` → `readSapHelpPage` (downloaded) | `searchCpiDocs` — found the saved page |
+| Saved | 28 chunks, 1 page | nothing new |
+| Tokens in / out | 6,454 / 1,580 | 2,846 / 837 |
+| Time | 118 s | 50 s |
+
+- **Grows as intended:** the second answer came from pgvector, in one tool
+  call, at less than half the tokens and time.
+- **A real URL is not a true citation.** The first answer lists "Consumer
+  Group" and "Key/Value Deserialization" with the page URL; neither is on the
+  page (and a consumer group belongs to the Kafka *sender*). The second answer
+  cites "Integration Flow Editor overview" — a real catalog page no tool
+  returned. Same lesson as Step 13, now with correct-looking links: citations
+  need checking in code.
+**Try:** `select metadata->>'title', count(*) from cpi_chunks where
+metadata->>'source' = 'sap-help' group by 1;` after a few questions. Ask about
+a topic the catalog has no page for, and watch what the model does.
+
 ---
 
 ## Phase 2 — an agent with LangChain4j
@@ -639,8 +681,5 @@ calls and cost.
 
 ## Phase 3 — knowledge that grows
 
-Persist the vectors (pgvector, Step 7). When retrieval misses, fetch the answer
-from a trusted source (SAP Help, SAP Community), cite it, and store that page —
-never the model's own answer — so the next question finds it locally.
-**Idea:** a knowledge base that grows from sources you can check, not from
-things the model said.
+Done in Step 7 (pgvector) and Step 14 (SAP Help pages, saved). Next: check
+every citation against what the tools really returned, and flag the rest.

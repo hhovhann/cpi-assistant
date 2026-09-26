@@ -213,6 +213,8 @@ and can be overridden on the command line:
 | `cpi.chat.timeout`, `cpi.chat.max-retries` | `3m`, LangChain4j's 2 | Per chat call, whichever provider |
 | `cpi.store.type` | `pgvector` | `pgvector` (Docker, persistent) or `memory` (rebuilt every start; tests use it) |
 | `cpi.store.pgvector.*` | localhost:5433, db/user/password `cpi`, table `cpi_chunks`, 768 dims | Connection and table |
+| `cpi.sap-help.base-url` | SAP-docs/btp-integration-suite on raw.githubusercontent.com | Where SAP Help pages are downloaded from |
+| `cpi.sap-help.max-age` | `30d` | A saved page older than this is downloaded again |
 | `cpi.tenant.fake` | `true` | Serve the fake CPI tenant at `/fake-cpi/api/v1` |
 | `cpi.tenant.base-url` | the fake tenant | CPI OData API the tenant tools read |
 | `langchain4j.open-ai.embedding-model.*` | LM Studio / nomic v1.5 | Embedding model, plus nomic's `query-prefix` / `document-prefix` |
@@ -229,6 +231,18 @@ error handling, adapters, message mapping, B2B / AS2 / EDI / cXML, Partner
 Directory, routing, security, data store.
 
 To add knowledge, drop a `.txt` file in that folder and restart.
+
+**It grows from SAP Help.** When the local docs do not answer, the agent
+(`/agent`) looks the topic up in a catalog of the official SAP Integration
+Suite documentation ([`sap-help/catalog.tsv`](src/main/resources/sap-help/catalog.tsv),
+~1,660 pages), downloads the page and saves its chunks in the vector store
+with the page URL. The next question on that topic is answered from the store,
+without a download. Pages come from
+[SAP-docs/btp-integration-suite](https://github.com/SAP-docs/btp-integration-suite),
+the Markdown source of help.sap.com, © SAP SE, licensed
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); answers cite the
+page URL. help.sap.com itself is not fetched: it renders pages with JavaScript
+and its robots.txt disallows automated clients.
 
 ## Tech stack
 
@@ -251,6 +265,7 @@ JUnit 5 / AssertJ · Testcontainers
 | ✅ | 11 | One switch for the chat model: LM Studio, OpenAI or Anthropic |
 | ✅ | 12 | Retrieval as a tool (`/agent`); Qwen3 14B is now the default local chat model |
 | ✅ | 13 | CPI tenant tools over the OData API, against a fake tenant (real tenant: needs OAuth) |
+| ✅ | 14 | Knowledge that grows: SAP Help pages downloaded on a miss and saved in pgvector |
 
 Then: tools and an agent with LangChain4j.
 Details in [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

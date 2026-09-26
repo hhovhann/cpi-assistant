@@ -10,6 +10,9 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 |---|---|---|
 | `LangChain4jConfig` | Builds the LangChain4j beans: HTTP client, chat model, embedding model, vector store | Once, at startup |
 | `IngestionProperties` | Chunking settings bound from `cpi.ingestion.*` | — |
+| `SapHelpCatalog` | The ~1,660 SAP Help pages the agent may read (`sap-help/catalog.tsv`); finds pages by title | First SAP Help search |
+| `SapHelpClient` | Downloads one page as Markdown from SAP's GitHub docs repository | Per page download |
+| `SapHelpTools` | `@Tool searchSapHelp`, `readSapHelpPage` — find, download, save, answer | Per tool call |
 | `StoreProperties` | Vector store: `memory` or `pgvector`, plus connection, bound from `cpi.store.*` | — |
 | `ChatProperties` | Which chat model answers, bound from `cpi.chat.*`: `provider` plus settings per provider | — |
 | `IngestionPipeline` | Loads the docs, splits them into chunks, embeds and stores them | Once, at startup |
@@ -82,6 +85,28 @@ report `(cosine + 1) / 2`, so the `0.80` floor and every measured score carry
 over — the JDBC chunk scores 0.8642 in both. No vector index: at a few hundred
 rows an exact scan is fast and never misses a neighbour.
 
+**SAP Help comes from GitHub, not help.sap.com.** help.sap.com renders its
+pages with JavaScript — a plain download returns a 1 KB shell — and its
+robots.txt disallows every automated client except named search engines. SAP
+publishes the same documentation as Markdown in
+`github.com/SAP-docs/btp-integration-suite` under CC BY 4.0, which allows
+reuse with attribution; answers cite the page URL, and the README credits SAP.
+
+**The model picks pages from a list, never URLs.** `sap-help/catalog.tsv` holds
+~1,660 pages (path and title, from the repository's file names, pinned to a
+commit). `searchSapHelp` matches the question against the titles — embedded
+once, on the first search, in memory — and `readSapHelpPage` accepts only a
+page id from that list. A model tricked into "reading" some other URL gets
+"Unknown page id". The trade-off: a page not in the catalog cannot be found.
+
+**What is saved is SAP's text, never the model's answer.** `readSapHelpPage`
+splits the page like the local docs and stores it with `source=sap-help`, the
+URL, the title and the fetch time. The next question finds those chunks
+through `searchCpiDocs`, cited by URL (`RetrievalService.sourceOf`). A page
+older than `cpi.sap-help.max-age` (30 days) is downloaded again and replaces
+its old chunks. Saving answers instead would store every mistake, and serve it
+back with a citation.
+
 **Local docs are replaced on every start, nothing else is.** Each chunk read
 from `cpi-docs` gets `source=cpi-docs` in its metadata; ingestion deletes the
 chunks with that tag, then adds the fresh ones. The files may have changed, and
@@ -146,9 +171,11 @@ only, and its description says so and names `getProblemMessages` for anything
 about failing messages; before that, "Is X failing?" went to `listIflows` and
 got "running normally" for an iFlow stuck in RETRY.
 
-**Citations are not checked yet.** The prompt asks the model to cite the files
+**Citations are not checked yet.** The prompt asks the model to cite only what
 the tools returned, but nothing enforces it: in one run the model cited two
-files that do not exist without searching at all. `/ask` parses its `[n]`
+files that do not exist without searching at all; in another it cited a real
+SAP page no tool had returned, and attached a correct URL to claims that are
+not on that page. `/ask` parses its `[n]`
 citations against the retrieved chunks; `/agent` needs the same kind of check.
 
 **All tools are read-only, and their results are data.** The model can look
@@ -174,6 +201,7 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 | `CpiAgentTest` | The tool loop with a scripted fake model: the tool is offered, runs with the model's query, its result goes back; answering without a search; an empty search; the round-trip limit | No — hand-written fakes |
 | `CpiTenantTest` | Client against the fake tenant over real HTTP: filters, time window, RETRY not counted as failed, quote escaping, error text and 404, iFlow list, and the tools' text | No — the fake tenant, random port |
 | `PgVectorStoreTest` | Real pgvector in a throwaway container: same score scale as the in-memory store, re-ingesting replaces the local docs and keeps other chunks, rows survive a new store on the same table | No — but **needs Docker** (Testcontainers) |
+| `SapHelpToolsTest` | A local server plays GitHub: search by title, first read downloads and saves, second read reuses, a saved page is found and cited by URL through `searchCpiDocs`, refresh after max-age without duplicates, only catalog ids, a 404, the real catalog loads | No — local server and a bag-of-words fake embedding model |
 | `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
 | `AnswerEvaluation` | Answer quality: RAG at 500/50 and 300/30 vs all docs in the prompt — key facts, declines, tokens, time | **Yes** — same `eval` tag; the chat model needs a ≥ 32K context |
 | `CitationEvaluation` | Citation quality: each (claim, cited chunk) pair judged by the active chat model, plus embedding similarity | **Yes** — same `eval` tag and context |

@@ -1,0 +1,1663 @@
+# SAP Integration Suite documentation pages, from github.com/SAP-docs/btp-integration-suite
+# (the Markdown source of help.sap.com, CC BY 4.0, (c) SAP SE). Folder docs/ISuite_Integrations_APIs
+# at commit 33f339544cd06d3c4e272fe8ef57c7248f68c6a2. Titles come from the file names. Columns: path <TAB> title
+docs/ISuite_Integrations_APIs/40-RemoteSystems/activating-a-new-sap-key-pair-on-the-tenant-ada2969.md	Activating a New SAP Key Pair on the Tenant
+docs/ISuite_Integrations_APIs/40-RemoteSystems/authentication-and-authorization-options-inbound-983f2a5.md	Authentication and Authorization Options Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/authentication-options-inbound-5495ee0.md	Authentication Options Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/authentication-options-outbound-58a7537.md	Authentication Options Outbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/authorization-options-inbound-c98c87e.md	Authorization Options Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/basic-authentication-2c4c2d9.md	Basic Authentication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/basic-authentication-a5d77b1.md	Basic Authentication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/basic-authentication-inbound-6a584df.md	Basic Authentication Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/basic-authentication-of-an-idp-user-for-api-clients-57f104d.md	Basic Authentication of an Idp User for API Clients
+docs/ISuite_Integrations_APIs/40-RemoteSystems/basic-authentication-of-idp-user-for-integration-flow-processing-5d46e56.md	Basic Authentication of Idp User for Integration Flow Processing
+docs/ISuite_Integrations_APIs/40-RemoteSystems/basic-authentication-outbound-f26152c.md	Basic Authentication Outbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/basic-authentication-with-clientid-and-clientsecret-for-api-clients-db55f0d.md	Basic Authentication with Clientid and Clientsecret for API Clients
+docs/ISuite_Integrations_APIs/40-RemoteSystems/basic-authentication-with-clientid-and-clientsecret-for-integration-flow-processing-647eeb3.md	Basic Authentication with Clientid and Clientsecret for Integration Flow Processing
+docs/ISuite_Integrations_APIs/40-RemoteSystems/basic-security-artifact-renewal-processes-c70b1f2.md	Basic Security Artifact Renewal Processes
+docs/ISuite_Integrations_APIs/40-RemoteSystems/basics-36839ad.md	Basics
+docs/ISuite_Integrations_APIs/40-RemoteSystems/certificate-based-authentication-inbound-0887663.md	Certificate Based Authentication Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/certificate-based-authentication-outbound-a2b9481.md	Certificate Based Authentication Outbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/certificate-chains-77a6094.md	Certificate Chains
+docs/ISuite_Integrations_APIs/40-RemoteSystems/certificate-management-feb9c2f.md	Certificate Management
+docs/ISuite_Integrations_APIs/40-RemoteSystems/client-certificate-authentication-for-api-clients-d9ca0ac.md	Client Certificate Authentication for API Clients
+docs/ISuite_Integrations_APIs/40-RemoteSystems/client-certificate-authentication-for-integration-flow-processing-7f84d16.md	Client Certificate Authentication for Integration Flow Processing
+docs/ISuite_Integrations_APIs/40-RemoteSystems/client-certificate-authentication-inbound-4ec6192.md	Client Certificate Authentication Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/client-certificate-authentication-outbound-c4e4a15.md	Client Certificate Authentication Outbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/concepts-of-secure-communication-3545808.md	Concepts of Secure Communication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/configuration-checklist-for-inbound-authentication-4a428fd.md	Configuration Checklist for Inbound Authentication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/configuring-inbound-communication-62690e5.md	Configuring Inbound Communication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/configuring-inbound-http-connections-f568400.md	Configuring Inbound HTTP Connections
+docs/ISuite_Integrations_APIs/40-RemoteSystems/configuring-outbound-communication-2c6dc72.md	Configuring Outbound Communication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/connecting-to-an-on-premise-landscape-example-setup-a15af84.md	Connecting to an on Premise Landscape Example Setup
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-a-key-pair-bb416c5.md	Creating a Key Pair
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-keys-for-message-level-security-3722111.md	Creating Keys for Message Level Security
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-keys-for-the-usage-of-pkcs-7-xml-digital-signature-and-ws-security-6f43916.md	Creating Keys for the Usage of PKCS 7 XML Digital Signature and WS Security
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-openpgp-keys-6c5846b.md	Creating Openpgp Keys
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-pgp-keys-for-decryption-and-verifying-tenant-is-receiver-f80c999.md	Creating PGP Keys for Decryption and Verifying Tenant Is Receiver
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-pgp-keys-for-decryption-tenant-is-receiver-b69f6c6.md	Creating PGP Keys for Decryption Tenant Is Receiver
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-pgp-keys-for-encryption-and-signing-tenant-is-sender-a05a142.md	Creating PGP Keys for Encryption and Signing Tenant Is Sender
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-pgp-keys-for-encryption-tenant-is-sender-b97e269.md	Creating PGP Keys for Encryption Tenant Is Sender
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-service-instance-and-service-key-for-inbound-authentication-19af5e2.md	Creating Service Instance and Service Key for Inbound Authentication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-sftp-keys-3485a75.md	Creating SFTP Keys
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-tenant-specific-file-directories-8cd3232.md	Creating Tenant Specific File Directories
+docs/ISuite_Integrations_APIs/40-RemoteSystems/creating-x-509-keys-ec605c7.md	Creating X 509 Keys
+docs/ISuite_Integrations_APIs/40-RemoteSystems/detailed-steps-93d9812.md	Detailed Steps
+docs/ISuite_Integrations_APIs/40-RemoteSystems/downloading-a-certificate-signing-request-b199dbe.md	Downloading a Certificate Signing Request
+docs/ISuite_Integrations_APIs/40-RemoteSystems/encrypting-and-decrypting-the-content-of-a-message-using-pkcs-7-cms-130d374.md	Encrypting and Decrypting the Content of a Message Using PKCS 7 Cms
+docs/ISuite_Integrations_APIs/40-RemoteSystems/example-renewal-of-key-pairs-provided-by-sap-avoiding-downtime-fe87373.md	Example Renewal of Key Pairs Provided by SAP Avoiding Downtime
+docs/ISuite_Integrations_APIs/40-RemoteSystems/exporting-the-public-key-2b39fe1.md	Exporting the Public Key
+docs/ISuite_Integrations_APIs/40-RemoteSystems/generating-a-key-pair-abb324d.md	Generating a Key Pair
+docs/ISuite_Integrations_APIs/40-RemoteSystems/how-openpgp-works-29bc188.md	How Openpgp Works
+docs/ISuite_Integrations_APIs/40-RemoteSystems/how-pkcs-7-works-21325d5.md	How PKCS 7 Works
+docs/ISuite_Integrations_APIs/40-RemoteSystems/how-sftp-works-fc8467b.md	How SFTP Works
+docs/ISuite_Integrations_APIs/40-RemoteSystems/how-ws-security-works-2f9a038.md	How WS Security Works
+docs/ISuite_Integrations_APIs/40-RemoteSystems/how-xml-signature-works-9857d50.md	How XML Signature Works
+docs/ISuite_Integrations_APIs/40-RemoteSystems/https-based-communication-1a22d00.md	HTTPS Based Communication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/importing-a-public-key-651b1c5.md	Importing a Public Key
+docs/ISuite_Integrations_APIs/40-RemoteSystems/inbound-message-level-security-with-openpgp-d2acb9f.md	Inbound Message Level Security with Openpgp
+docs/ISuite_Integrations_APIs/40-RemoteSystems/inbound-message-level-security-with-pkcs-7-xml-digitalsignature-9d6bd42.md	Inbound Message Level Security with PKCS 7 XML Digitalsignature
+docs/ISuite_Integrations_APIs/40-RemoteSystems/inbound-sftp-with-public-key-authentication-97e2baa.md	Inbound SFTP with Public Key Authentication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/installing-gpg4win-b55c025.md	Installing Gpg4win
+docs/ISuite_Integrations_APIs/40-RemoteSystems/integrating-sap-integration-suite-with-remote-systems-7004541.md	Integrating SAP Integration Suite with Remote Systems
+docs/ISuite_Integrations_APIs/40-RemoteSystems/introduction-10dc4a3.md	Introduction
+docs/ISuite_Integrations_APIs/40-RemoteSystems/involved-roles-3968091.md	Involved Roles
+docs/ISuite_Integrations_APIs/40-RemoteSystems/keys-provided-by-sap-9d8a60b.md	Keys Provided by SAP
+docs/ISuite_Integrations_APIs/40-RemoteSystems/keystore-b163513.md	Keystore
+docs/ISuite_Integrations_APIs/40-RemoteSystems/known-hosts-file-5d7e2e7.md	Known Hosts File
+docs/ISuite_Integrations_APIs/40-RemoteSystems/load-balancer-root-certificates-supported-by-sap-4509f60.md	Load Balancer Root Certificates Supported by SAP
+docs/ISuite_Integrations_APIs/40-RemoteSystems/maintaining-ssh-known-hosts-for-sftp-connectivity-514e383.md	Maintaining SSH Known Hosts for SFTP Connectivity
+docs/ISuite_Integrations_APIs/40-RemoteSystems/managing-service-instances-and-service-keys-using-an-api-6e5db60.md	Managing Service Instances and Service Keys Using an API
+docs/ISuite_Integrations_APIs/40-RemoteSystems/message-level-security-463a908.md	Message Level Security
+docs/ISuite_Integrations_APIs/40-RemoteSystems/oauth-2-0-3823134.md	OAUTH 2 0
+docs/ISuite_Integrations_APIs/40-RemoteSystems/oauth-authentication-with-client-credentials-grant-inbound-b9df724.md	OAUTH Authentication with Client Credentials Grant Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/oauth-with-client-credentials-grant-for-api-clients-20e26a8.md	OAUTH with Client Credentials Grant for API Clients
+docs/ISuite_Integrations_APIs/40-RemoteSystems/oauth-with-client-credentials-grant-for-integration-flow-processing-6c052ce.md	OAUTH with Client Credentials Grant for Integration Flow Processing
+docs/ISuite_Integrations_APIs/40-RemoteSystems/options-to-handle-signed-data-89f4220.md	Options to Handle Signed Data
+docs/ISuite_Integrations_APIs/40-RemoteSystems/outbound-message-level-security-with-openpgp-8641a15.md	Outbound Message Level Security with Openpgp
+docs/ISuite_Integrations_APIs/40-RemoteSystems/outbound-message-level-security-with-pkcs-7-xml-digitalsignature-57b2b19.md	Outbound Message Level Security with PKCS 7 XML Digitalsignature
+docs/ISuite_Integrations_APIs/40-RemoteSystems/outbound-on-premise-reverse-proxy-or-sap-cloud-connector-14567e1.md	Outbound on Premise Reverse Proxy or SAP Cloud Connector
+docs/ISuite_Integrations_APIs/40-RemoteSystems/outbound-sap-cloud-connector-642e87f.md	Outbound SAP Cloud Connector
+docs/ISuite_Integrations_APIs/40-RemoteSystems/outbound-sftp-with-public-key-authentication-d96b2d7.md	Outbound SFTP with Public Key Authentication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/pgp-keys-9e7e8f9.md	PGP Keys
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-keys-for-cms-pkcs-7-decryptor-inbound-1cdab75.md	Renewal of Keys for Cms PKCS 7 Decryptor Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-keys-for-cms-pkcs-7-encryptor-outbound-39afbfa.md	Renewal of Keys for Cms PKCS 7 Encryptor Outbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-keys-for-cms-pkcs-7-signer-outbound-fe4d37f.md	Renewal of Keys for Cms PKCS 7 Signer Outbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-keys-for-cms-pkcs-7-verifier-inbound-c573538.md	Renewal of Keys for Cms PKCS 7 Verifier Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-keys-for-xml-digital-signature-signer-outbound-aaeaa2f.md	Renewal of Keys for XML Digital Signature Signer Outbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-keys-for-xml-digital-signature-verifier-inbound-e35a3be.md	Renewal of Keys for XML Digital Signature Verifier Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-keys-provided-by-sap-5db16f5.md	Renewal of Keys Provided by SAP
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-load-balancer-server-certificate-1779401.md	Renewal of Load Balancer Server Certificate
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-openpgp-encryption-key-inbound-66cbb51.md	Renewal of Openpgp Encryption Key Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-openpgp-encryption-key-outbound-500bd53.md	Renewal of Openpgp Encryption Key Outbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-openpgp-signer-key-inbound-db96a4c.md	Renewal of Openpgp Signer Key Inbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-openpgp-signer-key-outbound-b2b54df.md	Renewal of Openpgp Signer Key Outbound
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-password-only-241428d.md	Renewal of Password Only
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-password-only-84dabed.md	Renewal of Password Only
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-receiver-back-end-server-certificate-3f4eb83.md	Renewal of Receiver Back End Server Certificate
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-sap-keys-without-any-downtime-2218fa4.md	Renewal of SAP Keys Without Any Downtime
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-sender-back-end-client-certificate-2d3cae7.md	Renewal of Sender Back End Client Certificate
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-tenant-client-root-certificate-ca-8dc5877.md	Renewal of Tenant Client Root Certificate Ca
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-the-sftp-client-key-on-tenant-5e16205.md	Renewal of the SFTP Client Key on Tenant
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-the-sftp-server-key-492687f.md	Renewal of the SFTP Server Key
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-the-tenant-client-certificate-6ec6824.md	Renewal of the Tenant Client Certificate
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-user-and-password-a1c26c8.md	Renewal of User and Password
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-user-and-password-da1eeb1.md	Renewal of User and Password
+docs/ISuite_Integrations_APIs/40-RemoteSystems/renewal-of-user-on-sftp-server-8c5436a.md	Renewal of User on SFTP Server
+docs/ISuite_Integrations_APIs/40-RemoteSystems/requirements-for-keystore-passwords-33469d3.md	Requirements for Keystore Passwords
+docs/ISuite_Integrations_APIs/40-RemoteSystems/role-based-authorization-62a0336.md	Role Based Authorization
+docs/ISuite_Integrations_APIs/40-RemoteSystems/securely-exchanging-key-material-908d93e.md	Securely Exchanging Key Material
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-083fc8d.md	Security Artifact Renewal
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-https-based-communication-184d37c.md	Security Artifact Renewal for HTTPS Based Communication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-message-encryption-signature-a9e3e4a.md	Security Artifact Renewal for Message Encryption Signature
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-openpgp-f3422c2.md	Security Artifact Renewal for Openpgp
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-pkcs-7-cms-99f6a97.md	Security Artifact Renewal for PKCS 7 Cms
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-sftp-based-communication-682ca61.md	Security Artifact Renewal for SFTP Based Communication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-transport-level-security-6925e3f.md	Security Artifact Renewal for Transport Level Security
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-ws-security-169b0b5.md	Security Artifact Renewal for WS Security
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-ws-security-tenant-decrypts-inbound-request-192762b.md	Security Artifact Renewal for WS Security Tenant Decrypts Inbound Request
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-ws-security-tenant-decrypts-outbound-response-90b85ec.md	Security Artifact Renewal for WS Security Tenant Decrypts Outbound Response
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-ws-security-tenant-encrypts-inbound-response-fdea960.md	Security Artifact Renewal for WS Security Tenant Encrypts Inbound Response
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-ws-security-tenant-encrypts-outbound-request-efb83b3.md	Security Artifact Renewal for WS Security Tenant Encrypts Outbound Request
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-ws-security-tenant-signs-inbound-response-a6ccced.md	Security Artifact Renewal for WS Security Tenant Signs Inbound Response
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-ws-security-tenant-signs-outbound-request-10c32fe.md	Security Artifact Renewal for WS Security Tenant Signs Outbound Request
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-ws-security-tenant-verifies-inbound-request-266470d.md	Security Artifact Renewal for WS Security Tenant Verifies Inbound Request
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-ws-security-tenant-verifies-outbound-response-289b653.md	Security Artifact Renewal for WS Security Tenant Verifies Outbound Response
+docs/ISuite_Integrations_APIs/40-RemoteSystems/security-artifact-renewal-for-xml-digital-signature-819e849.md	Security Artifact Renewal for XML Digital Signature
+docs/ISuite_Integrations_APIs/40-RemoteSystems/service-key-types-0fc1446.md	Service Key Types
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-inbound-http-connections-for-api-clients-8db3d51.md	Setting Up Inbound HTTP Connections for API Clients
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-inbound-http-connections-integration-flow-processing-0f92842.md	Setting Up Inbound HTTP Connections Integration Flow Processing
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-inbound-mail-connections-6ad4956.md	Setting Up Inbound MAIL Connections
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-inbound-sftp-connections-d8fb958.md	Setting Up Inbound SFTP Connections
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-inbound-sftp-connections-details-e72eba4.md	Setting Up Inbound SFTP Connections Details
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-message-level-security-use-cases-f01ecaa.md	Setting Up Message Level Security Use Cases
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-outbound-http-connections-92dd2a6.md	Setting Up Outbound HTTP Connections
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-outbound-http-connections-with-basic-authentication-2d808e7.md	Setting Up Outbound HTTP Connections with Basic Authentication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-outbound-http-connections-with-client-certificate-authentication-f7597d2.md	Setting Up Outbound HTTP Connections with Client Certificate Authentication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-outbound-http-connections-with-oauth-cb7abee.md	Setting Up Outbound HTTP Connections with OAUTH
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-outbound-mail-connections-8b112ba.md	Setting Up Outbound MAIL Connections
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-outbound-sftp-connections-6e4de95.md	Setting Up Outbound SFTP Connections
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-outbound-sftp-connections-details-15401a7.md	Setting Up Outbound SFTP Connections Details
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-principal-propagation-example-scenario-34eff84.md	Setting Up Principal Propagation Example Scenario
+docs/ISuite_Integrations_APIs/40-RemoteSystems/setting-up-sap-identity-authentication-service-as-custom-idp-for-basic-authentication-0668507.md	Setting Up SAP Identity Authentication Service as Custom Idp for Basic Authentication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/sftp-based-communication-f1a9be1.md	SFTP Based Communication
+docs/ISuite_Integrations_APIs/40-RemoteSystems/signing-and-verifying-a-message-using-pkcs-7-cms-bb76650.md	Signing and Verifying a Message Using PKCS 7 Cms
+docs/ISuite_Integrations_APIs/40-RemoteSystems/specific-use-cases-8fdb213.md	Specific Use Cases
+docs/ISuite_Integrations_APIs/40-RemoteSystems/specifying-service-instance-and-service-key-parameters-in-json-format-ae419b6.md	Specifying Service Instance and Service Key Parameters in JSON Format
+docs/ISuite_Integrations_APIs/40-RemoteSystems/starting-the-gpa-tool-a3e8e13.md	Starting the Gpa Tool
+docs/ISuite_Integrations_APIs/40-RemoteSystems/subject-issuer-dn-authorization-check-3c0fdde.md	Subject Issuer Dn Authorization Check
+docs/ISuite_Integrations_APIs/40-RemoteSystems/technical-landscape-for-on-premise-on-demand-integration-f69e177.md	Technical Landscape for on Premise on Demand Integration
+docs/ISuite_Integrations_APIs/40-RemoteSystems/update-service-instance-that-contains-deprecated-client-x509-grant-type-0a38373.md	Update Service Instance That Contains Deprecated Client X509 Grant Type
+docs/ISuite_Integrations_APIs/40-RemoteSystems/use-cases-4f32e7b.md	Use Cases
+docs/ISuite_Integrations_APIs/40-RemoteSystems/using-gpg4win-to-create-pgp-keys-1c78a98.md	Using Gpg4win to Create PGP Keys
+docs/ISuite_Integrations_APIs/40-RemoteSystems/using-sap-cloud-connector-with-cloud-integration-adapters-65a60e7.md	Using SAP Cloud Connector with Cloud Integration Adapters
+docs/ISuite_Integrations_APIs/40-RemoteSystems/using-the-connectivity-test-to-get-the-load-balancer-server-root-certificate-5d6cbf4.md	Using the Connectivity Test to Get the Load Balancer Server Root Certificate
+docs/ISuite_Integrations_APIs/40-RemoteSystems/using-the-gnu-privacy-guard-command-line-tool-e0baf73.md	Using the Gnu Privacy Guard Command Line Tool
+docs/ISuite_Integrations_APIs/40-RemoteSystems/x-509-certificates-8d38a83.md	X 509 Certificates
+docs/ISuite_Integrations_APIs/60-Security/adapters-authentication-methods-9f7cf82.md	Adapters Authentication Methods
+docs/ISuite_Integrations_APIs/60-Security/auditing-and-logging-information-86a75cd.md	Auditing and Logging Information
+docs/ISuite_Integrations_APIs/60-Security/auditing-and-logging-information-for-api-management-77024b3.md	Auditing and Logging Information for API Management
+docs/ISuite_Integrations_APIs/60-Security/auditing-and-logging-information-for-cloud-integration-d1c7bfe.md	Auditing and Logging Information for Cloud Integration
+docs/ISuite_Integrations_APIs/60-Security/data-protection-and-privacy-3df9abf.md	Data Protection and Privacy
+docs/ISuite_Integrations_APIs/60-Security/data-protection-and-privacy-for-api-management-d50613e.md	Data Protection and Privacy for API Management
+docs/ISuite_Integrations_APIs/60-Security/data-protection-and-privacy-for-cloud-integration-0e13ece.md	Data Protection and Privacy for Cloud Integration
+docs/ISuite_Integrations_APIs/60-Security/features-that-support-message-level-security-0c58bdc.md	Features That Support Message Level Security
+docs/ISuite_Integrations_APIs/60-Security/identity-and-access-management-77868c2.md	Identity and Access Management
+docs/ISuite_Integrations_APIs/60-Security/identity-and-access-management-for-api-management-016556f.md	Identity and Access Management for API Management
+docs/ISuite_Integrations_APIs/60-Security/identity-and-access-management-for-cloud-integration-f805b22.md	Identity and Access Management for Cloud Integration
+docs/ISuite_Integrations_APIs/60-Security/personas-for-cloud-integration-2937e5c.md	Personas for Cloud Integration
+docs/ISuite_Integrations_APIs/60-Security/rate-limits-on-sap-cloud-integration-4cac4a4.md	Rate Limits on SAP Cloud Integration
+docs/ISuite_Integrations_APIs/60-Security/recommendations-for-tasks-and-permissions-2986851.md	Recommendations for Tasks and Permissions
+docs/ISuite_Integrations_APIs/60-Security/security-a58b240.md	Security
+docs/ISuite_Integrations_APIs/60-Security/security-aspects-of-data-data-flow-55c45ab.md	Security Aspects of Data Data Flow
+docs/ISuite_Integrations_APIs/60-Security/security-aspects-of-data-data-flow-for-api-management-27a7f63.md	Security Aspects of Data Data Flow for API Management
+docs/ISuite_Integrations_APIs/60-Security/security-aspects-of-data-data-flow-for-cloud-integration-7895724.md	Security Aspects of Data Data Flow for Cloud Integration
+docs/ISuite_Integrations_APIs/60-Security/security-aspects-of-processes-51e36ff.md	Security Aspects of Processes
+docs/ISuite_Integrations_APIs/60-Security/service-to-view-user-details-on-developer-hub-a49c05f.md	Service to View User Details on Developer Hub
+docs/ISuite_Integrations_APIs/60-Security/specific-data-assets-0e4e511.md	Specific Data Assets
+docs/ISuite_Integrations_APIs/60-Security/tasks-and-permissions-for-cloud-integration-556d557.md	Tasks and Permissions for Cloud Integration
+docs/ISuite_Integrations_APIs/60-Security/technical-landscape-daea676.md	Technical Landscape
+docs/ISuite_Integrations_APIs/60-Security/types-of-stored-data-183637c.md	Types of Stored Data
+docs/ISuite_Integrations_APIs/APIM-Migration/clone-api-management-content-7abd887.md	Clone API Management Content
+docs/ISuite_Integrations_APIs/APIM-Migration/clone-api-management-content-between-cloud-foundry-environments-2e5d127.md	Clone API Management Content Between Cloud Foundry Environments
+docs/ISuite_Integrations_APIs/APIM-Migration/cloned-and-uncloned-entities-8973ca0.md	Cloned and Uncloned Entities
+docs/ISuite_Integrations_APIs/APIM-Migration/cloned-and-uncloned-entities-b2b393d.md	Cloned and Uncloned Entities
+docs/ISuite_Integrations_APIs/APIM-Migration/migrating-api-management-from-neo-to-the-multi-cloud-foundation-92f2da1.md	Migrating API Management from Neo to the Multi Cloud Foundation
+docs/ISuite_Integrations_APIs/APIM-Migration/migrating-api-management-subscription-created-using-the-starter-plan-service-instance-9778a36.md	Migrating API Management Subscription Created Using the Starter Plan Service Instance
+docs/ISuite_Integrations_APIs/APIM-Migration/migrating-api-management-subscription-created-using-the-starter-plan-service-instance-to-1f4ed86.md	Migrating API Management Subscription Created Using the Starter Plan Service Instance to
+docs/ISuite_Integrations_APIs/APIM-Migration/migration-of-api-management-content-between-cloud-foundry-environments-17f09f3.md	Migration of API Management Content Between Cloud Foundry Environments
+docs/ISuite_Integrations_APIs/APIM-Migration/migration-of-api-management-content-d66b3e5.md	Migration of API Management Content
+docs/ISuite_Integrations_APIs/APIM-Migration/post-cloning-tasks-116d82c.md	Post Cloning Tasks
+docs/ISuite_Integrations_APIs/APIM-Migration/post-cloning-tasks-49e9716.md	Post Cloning Tasks
+docs/ISuite_Integrations_APIs/APIM-Migration/prerequisites-c1904bc.md	Prerequisites
+docs/ISuite_Integrations_APIs/APIM-Migration/prerequisites-for-the-source-and-the-target-system-1b181dd.md	Prerequisites for the Source and the Target System
+docs/ISuite_Integrations_APIs/APIM-Migration/recommendations-ebe528a.md	Recommendations
+docs/ISuite_Integrations_APIs/APIM-Migration/recommendations-ff61cef.md	Recommendations
+docs/ISuite_Integrations_APIs/APIM-Migration/security-features-of-the-tenant-cloning-tool-41702e8.md	Security Features of the Tenant Cloning Tool
+docs/ISuite_Integrations_APIs/APIM-Migration/security-features-of-the-tenant-cloning-tool-a6969cc.md	Security Features of the Tenant Cloning Tool
+docs/ISuite_Integrations_APIs/APIM-Migration/tenant-cloning-tool-behavior-6d15ffd.md	Tenant Cloning Tool Behavior
+docs/ISuite_Integrations_APIs/APIM-Migration/tenant-cloning-tool-behavior-b23c603.md	Tenant Cloning Tool Behavior
+docs/ISuite_Integrations_APIs/IntegrationSettings/configure-runtime-profile-for-an-integration-flow-65cc0bc.md	Configure Runtime Profile for an Integration Flow
+docs/ISuite_Integrations_APIs/IntegrationSettings/configuring-connectivity-to-an-sap-process-orchestration-system-8c36fd2.md	Configuring Connectivity to an SAP Process Orchestration System
+docs/ISuite_Integrations_APIs/IntegrationSettings/creating-custom-tags-71c0448.md	Creating Custom Tags
+docs/ISuite_Integrations_APIs/IntegrationSettings/delay-software-update-ee8ba5b.md	Delay Software Update
+docs/ISuite_Integrations_APIs/IntegrationSettings/design-guidelines-4d1c84f.md	Design Guidelines
+docs/ISuite_Integrations_APIs/IntegrationSettings/git-access-ae173b0.md	Git Access
+docs/ISuite_Integrations_APIs/IntegrationSettings/importing-content-from-sap-process-orchestration-system-53db5fb.md	Importing Content from SAP Process Orchestration System
+docs/ISuite_Integrations_APIs/IntegrationSettings/importing-mapping-content-from-es-repository-e18fc05.md	Importing Mapping Content from Es Repository
+docs/ISuite_Integrations_APIs/IntegrationSettings/integration-settings-98091f7.md	Integration Settings
+docs/ISuite_Integrations_APIs/IntegrationSettings/malware-scanner-for-cloud-integration-37df657.md	Malware Scanner for Cloud Integration
+docs/ISuite_Integrations_APIs/IntegrationSettings/runtime-profiles-8007daa.md	Runtime Profiles
+docs/ISuite_Integrations_APIs/IntegrationSettings/set-default-runtime-profile-efebd50.md	Set Default Runtime Profile
+docs/ISuite_Integrations_APIs/about-headers-and-exchange-properties-0974c4f.md	About Headers and Exchange Properties
+docs/ISuite_Integrations_APIs/access-control-3f72aea.md	Access Control
+docs/ISuite_Integrations_APIs/access-entity-e5837f4.md	Access Entity
+docs/ISuite_Integrations_APIs/access-header-and-properties-in-message-mapping-4f2a8c9.md	Access Header and Properties in Message Mapping
+docs/ISuite_Integrations_APIs/access-header-and-properties-in-xpath-996ce78.md	Access Header and Properties in Xpath
+docs/ISuite_Integrations_APIs/access-header-and-properties-in-xslt-mapping-f917c39.md	Access Header and Properties in XSLT Mapping
+docs/ISuite_Integrations_APIs/access-headers-and-properties-4a03fcd.md	Access Headers and Properties
+docs/ISuite_Integrations_APIs/access-headers-and-properties-in-scripts-6bc5ed1.md	Access Headers and Properties in Scripts
+docs/ISuite_Integrations_APIs/access-logs-c1649cd.md	Access Logs
+docs/ISuite_Integrations_APIs/access-management-for-api-artifact-2a89115.md	Access Management for API Artifact
+docs/ISuite_Integrations_APIs/access-policies-e0009f3.md	Access Policies
+docs/ISuite_Integrations_APIs/access-policies-examples-f1dc1a7.md	Access Policies Examples
+docs/ISuite_Integrations_APIs/access-resources-appropriately-1ffeb94.md	Access Resources Appropriately
+docs/ISuite_Integrations_APIs/access-secure-parameters-in-scripts-fdf4ce3.md	Access Secure Parameters in Scripts
+docs/ISuite_Integrations_APIs/access-url-get-parameters-in-scripts-7ad2ac9.md	Access URL Get Parameters in Scripts
+docs/ISuite_Integrations_APIs/access-url-paths-in-scripts-f0620cb.md	Access URL Paths in Scripts
+docs/ISuite_Integrations_APIs/access-value-mappings-in-scripts-12536ee.md	Access Value Mappings in Scripts
+docs/ISuite_Integrations_APIs/accessibility-features-in-api-management-479e5b4.md	Accessibility Features in API Management
+docs/ISuite_Integrations_APIs/accessibility-features-in-cloud-integration-c7be6b6.md	Accessibility Features in Cloud Integration
+docs/ISuite_Integrations_APIs/accessibility-in-apis-and-integrations-5476bb5.md	Accessibility in APIS and Integrations
+docs/ISuite_Integrations_APIs/accessing-an-mcp-server-using-a-technical-user-token-c3c81a8.md	Accessing an Mcp Server Using a Technical User Token
+docs/ISuite_Integrations_APIs/accessing-an-mcp-server-using-an-idp-user-token-a9f4183.md	Accessing an Mcp Server Using an Idp User Token
+docs/ISuite_Integrations_APIs/accessing-api-management-apis-programmatically-24a2c37.md	Accessing API Management APIS Programmatically
+docs/ISuite_Integrations_APIs/accessing-developer-hub-apis-programmatically-dabee6e.md	Accessing Developer Hub APIS Programmatically
+docs/ISuite_Integrations_APIs/accessing-on-premise-application-using-cloud-connector-c94b890.md	Accessing on Premise Application Using Cloud Connector
+docs/ISuite_Integrations_APIs/accessing-on-premise-systems-through-api-management-2fc7a5b.md	Accessing on Premise Systems Through API Management
+docs/ISuite_Integrations_APIs/accessing-trust-and-key-managers-8518837.md	Accessing Trust and Key Managers
+docs/ISuite_Integrations_APIs/accessing-user-credentials-e4e4edc.md	Accessing User Credentials
+docs/ISuite_Integrations_APIs/activate-and-configure-the-api-management-capability-and-access-developer-hub-2111650.md	Activate and Configure the API Management Capability and Access Developer Hub
+docs/ISuite_Integrations_APIs/activate-and-configure-the-api-management-capability-f6eb433.md	Activate and Configure the API Management Capability
+docs/ISuite_Integrations_APIs/activate-integration-cell-1a627da.md	Activate Integration Cell
+docs/ISuite_Integrations_APIs/activating-a-new-key-pair-provided-by-sap-383be7a.md	Activating a New Key Pair Provided by SAP
+docs/ISuite_Integrations_APIs/activating-developer-hub-a0fb69b.md	Activating Developer Hub
+docs/ISuite_Integrations_APIs/adapter-development-prerequisites-5638d4a.md	Adapter Development Prerequisites
+docs/ISuite_Integrations_APIs/adapter-development-process-e600fd7.md	Adapter Development Process
+docs/ISuite_Integrations_APIs/adapting-standard-integration-content-to-your-requirements-35b53da.md	Adapting Standard Integration Content to Your Requirements
+docs/ISuite_Integrations_APIs/add-a-number-ranges-object-b1bd945.md	Add a Number Ranges Object
+docs/ISuite_Integrations_APIs/add-custom-attributes-to-a-product-e46a874.md	Add Custom Attributes to a Product
+docs/ISuite_Integrations_APIs/add-custom-attributes-to-an-application-39c3cbd.md	Add Custom Attributes to an Application
+docs/ISuite_Integrations_APIs/add-information-to-the-message-processing-log-e8e9283.md	Add Information to the Message Processing Log
+docs/ISuite_Integrations_APIs/add-input-parameters-headers-and-queries-5ae0d85.md	Add Input Parameters Headers and Queries
+docs/ISuite_Integrations_APIs/add-partner-414b97d.md	Add Partner
+docs/ISuite_Integrations_APIs/add-policies-to-artifacts-c2b3e56.md	Add Policies to Artifacts
+docs/ISuite_Integrations_APIs/add-quota-policy-to-api-endpoint-8d1b56b.md	Add Quota Policy to API Endpoint
+docs/ISuite_Integrations_APIs/add-resources-to-an-api-artifact-b5d0e4c.md	Add Resources to an API Artifact
+docs/ISuite_Integrations_APIs/add-responses-67f336d.md	Add Responses
+docs/ISuite_Integrations_APIs/adding-a-destination-node-in-cloud-transport-management-applications-681bb1a.md	Adding a Destination Node in Cloud Transport Management Applications
+docs/ISuite_Integrations_APIs/adding-a-source-node-in-transport-management-applications-dc24ea2.md	Adding a Source Node in Transport Management Applications
+docs/ISuite_Integrations_APIs/adding-externally-managed-apis-523ff94.md	Adding Externally Managed APIS
+docs/ISuite_Integrations_APIs/adding-input-parameters-headers-and-queries-d460d43.md	Adding Input Parameters Headers and Queries
+docs/ISuite_Integrations_APIs/adding-responses-ea40cd7.md	Adding Responses
+docs/ISuite_Integrations_APIs/adding-responses-without-a-body-61d83d6.md	Adding Responses Without a Body
+docs/ISuite_Integrations_APIs/adding-security-definitions-092f7f2.md	Adding Security Definitions
+docs/ISuite_Integrations_APIs/additional-attributes-in-openapi-specification-35f357c.md	Additional Attributes in Openapi Specification
+docs/ISuite_Integrations_APIs/additional-configurations-de7285c.md	Additional Configurations
+docs/ISuite_Integrations_APIs/additional-configurations-for-api-management-5ac63ab.md	Additional Configurations for API Management
+docs/ISuite_Integrations_APIs/additional-metadata-to-support-edge-integration-cell-f87349e.md	Additional Metadata to Support Edge Integration Cell
+docs/ISuite_Integrations_APIs/additional-use-cases-bc92c7a.md	Additional Use Cases
+docs/ISuite_Integrations_APIs/addressing-the-cisusers-entity-for-user-creation-d732274.md	Addressing the Cisusers Entity for User Creation
+docs/ISuite_Integrations_APIs/adobe-sign-receiver-adapter-e73852e.md	Adobe Sign Receiver Adapter
+docs/ISuite_Integrations_APIs/advanced-api-analytics-5973d4a.md	Advanced API Analytics
+docs/ISuite_Integrations_APIs/advanced-event-mesh-adapter-dd7e034.md	Advanced Event Mesh Adapter
+docs/ISuite_Integrations_APIs/aggregator-5f5e01b.md	Aggregator
+docs/ISuite_Integrations_APIs/aggregator-86f97fd.md	Aggregator
+docs/ISuite_Integrations_APIs/ai-assisted-error-resolution-f27f95d.md	Ai Assisted Error Resolution
+docs/ISuite_Integrations_APIs/ai-based-memory-profiling-8e83d46.md	Ai Based Memory Profiling
+docs/ISuite_Integrations_APIs/ai-receiver-adapter-66e89d2.md	Ai Receiver Adapter
+docs/ISuite_Integrations_APIs/amazon-dynamodb-receiver-adapter-36620d5.md	Amazon Dynamodb Receiver Adapter
+docs/ISuite_Integrations_APIs/amazon-eventbridge-receiver-adapter-ff3f9ed.md	Amazon Eventbridge Receiver Adapter
+docs/ISuite_Integrations_APIs/amazon-kinesis-adapter-986f02f.md	Amazon Kinesis Adapter
+docs/ISuite_Integrations_APIs/amazonwebservices-adapter-7208adf.md	Amazonwebservices Adapter
+docs/ISuite_Integrations_APIs/amazonwebservices-receiver-adapter-bc7d1aa.md	Amazonwebservices Receiver Adapter
+docs/ISuite_Integrations_APIs/amazonwebservices-sender-adapter-16772e3.md	Amazonwebservices Sender Adapter
+docs/ISuite_Integrations_APIs/amq-sender-for-sap-integration-suite-advanced-event-mesh-be1e496.md	Amq Sender for SAP Integration Suite Advanced Event Mesh
+docs/ISuite_Integrations_APIs/amqp-adapter-5cc1a71.md	AMQP Adapter
+docs/ISuite_Integrations_APIs/amqp-connectivity-tests-01cb360.md	AMQP Connectivity Tests
+docs/ISuite_Integrations_APIs/amqp-receiver-for-sap-event-mesh-0b7cc2f.md	AMQP Receiver for SAP Event Mesh
+docs/ISuite_Integrations_APIs/amqp-receiver-for-sap-integration-suite-advanced-event-mesh-5f229c0.md	AMQP Receiver for SAP Integration Suite Advanced Event Mesh
+docs/ISuite_Integrations_APIs/amqp-sender-for-sap-event-mesh-7d8a83f.md	AMQP Sender for SAP Event Mesh
+docs/ISuite_Integrations_APIs/analytics-dashboard-b9b2060.md	Analytics Dashboard
+docs/ISuite_Integrations_APIs/analytics-dashboard-ee416ac.md	Analytics Dashboard
+docs/ISuite_Integrations_APIs/analyze-api-proxies-7712c61.md	Analyze API Proxies
+docs/ISuite_Integrations_APIs/analyze-apis-and-mcp-servers-da4af34.md	Analyze APIS and Mcp Servers
+docs/ISuite_Integrations_APIs/analyze-apis-with-ai-assistance-724666b.md	Analyze APIS with Ai Assistance
+docs/ISuite_Integrations_APIs/analyze-message-usage-587a981.md	Analyze Message Usage
+docs/ISuite_Integrations_APIs/anaplan-receiver-adapter-364ab57.md	Anaplan Receiver Adapter
+docs/ISuite_Integrations_APIs/anomaly-detection-7a4fe7d.md	Anomaly Detection
+docs/ISuite_Integrations_APIs/anticipate-message-throughput-when-choosing-a-storage-option-5b38765.md	Anticipate Message Throughput When Choosing a Storage Option
+docs/ISuite_Integrations_APIs/api-analytics-6766dc3.md	API Analytics
+docs/ISuite_Integrations_APIs/api-artifact-a4f87b1.md	API Artifact
+docs/ISuite_Integrations_APIs/api-artifact-charts-05fe5c0.md	API Artifact Charts
+docs/ISuite_Integrations_APIs/api-artifact-versioning-3f2e06b.md	API Artifact Versioning
+docs/ISuite_Integrations_APIs/api-centric-integration-cf4b847.md	API Centric Integration
+docs/ISuite_Integrations_APIs/api-designer-51f3ca1.md	API Designer
+docs/ISuite_Integrations_APIs/api-details-014d6ad.md	API Details
+docs/ISuite_Integrations_APIs/api-direct-receiver-adapter-4a6419f.md	API Direct Receiver Adapter
+docs/ISuite_Integrations_APIs/api-direct-sender-adapter-755aa16.md	API Direct Sender Adapter
+docs/ISuite_Integrations_APIs/api-documentation-3fd9fc9.md	API Documentation
+docs/ISuite_Integrations_APIs/api-documentation-e26b332.md	API Documentation
+docs/ISuite_Integrations_APIs/api-lifecycle-5e8ea7d.md	API Lifecycle
+docs/ISuite_Integrations_APIs/api-management-de3fea6.md	API Management
+docs/ISuite_Integrations_APIs/api-management-service-plans-e064663.md	API Management Service Plans
+docs/ISuite_Integrations_APIs/api-providers-42e13b2.md	API Providers
+docs/ISuite_Integrations_APIs/api-proxy-8962643.md	API Proxy
+docs/ISuite_Integrations_APIs/api-proxy-flows-variables-9a4fb46.md	API Proxy Flows Variables
+docs/ISuite_Integrations_APIs/api-proxy-states-091cda4.md	API Proxy States
+docs/ISuite_Integrations_APIs/api-proxy-structure-4dfd54a.md	API Proxy Structure
+docs/ISuite_Integrations_APIs/api-revisions-58097ac.md	API Revisions
+docs/ISuite_Integrations_APIs/api-services-007d50f.md	API Services
+docs/ISuite_Integrations_APIs/api-validation-02ff41b.md	API Validation
+docs/ISuite_Integrations_APIs/api-versioning-b3cda3b.md	API Versioning
+docs/ISuite_Integrations_APIs/apply-a-balanced-encapsulation-of-the-integration-logics-e010db3.md	Apply a Balanced Encapsulation of the Integration Logics
+docs/ISuite_Integrations_APIs/apply-a-policy-template-2ceab71.md	Apply a Policy Template
+docs/ISuite_Integrations_APIs/apply-message-level-security-9036c0c.md	Apply Message Level Security
+docs/ISuite_Integrations_APIs/apply-the-highest-security-standards-201fd43.md	Apply the Highest Security Standards
+docs/ISuite_Integrations_APIs/apply-the-retry-pattern-97789c9.md	Apply the Retry Pattern
+docs/ISuite_Integrations_APIs/apply-the-retry-pattern-in-the-sender-applications-0e27ac9.md	Apply the Retry Pattern in the Sender Applications
+docs/ISuite_Integrations_APIs/apply-the-retry-pattern-with-jms-queue-da17d2d.md	Apply the Retry Pattern with JMS Queue
+docs/ISuite_Integrations_APIs/applying-chart-filters-a928a03.md	Applying Chart Filters
+docs/ISuite_Integrations_APIs/approve-the-pending-connection-requests-e296f80.md	Approve the Pending Connection Requests
+docs/ISuite_Integrations_APIs/archiving-data-bc71f88.md	Archiving Data
+docs/ISuite_Integrations_APIs/ariba-adapter-98da76c.md	ARIBA Adapter
+docs/ISuite_Integrations_APIs/artificial-intelligence-6a6727c.md	Artificial Intelligence
+docs/ISuite_Integrations_APIs/as2-adapter-d3af635.md	AS2 Adapter
+docs/ISuite_Integrations_APIs/as4-adapter-0f38750.md	AS4 Adapter
+docs/ISuite_Integrations_APIs/as4-receiver-adapter-3a2fde8.md	AS4 Receiver Adapter
+docs/ISuite_Integrations_APIs/as4-sender-adapter-a448605.md	AS4 Sender Adapter
+docs/ISuite_Integrations_APIs/assign-adapter-to-communication-channel-871498c.md	Assign Adapter to Communication Channel
+docs/ISuite_Integrations_APIs/assign-message-523efe6.md	Assign Message
+docs/ISuite_Integrations_APIs/assign-sender-and-receiver-components-f0eb056.md	Assign Sender and Receiver Components
+docs/ISuite_Integrations_APIs/assigning-role-collections-to-users-80bb02e.md	Assigning Role Collections to Users
+docs/ISuite_Integrations_APIs/assigning-role-collections-to-users-e1696c2.md	Assigning Role Collections to Users
+docs/ISuite_Integrations_APIs/attach-rate-plan-to-a-product-cc5c942.md	Attach Rate Plan to a Product
+docs/ISuite_Integrations_APIs/attachment-handling-e330378.md	Attachment Handling
+docs/ISuite_Integrations_APIs/authentication-bd2fbd5.md	Authentication
+docs/ISuite_Integrations_APIs/authentication-fa6eec4.md	Authentication
+docs/ISuite_Integrations_APIs/authorization-6658409.md	Authorization
+docs/ISuite_Integrations_APIs/avoiding-encoding-issues-3018480.md	Avoiding Encoding Issues
+docs/ISuite_Integrations_APIs/azure-cosmos-db-receiver-adapter-aa8222e.md	Azure Cosmos Db Receiver Adapter
+docs/ISuite_Integrations_APIs/azure-service-bus-adapter-2f3fae9.md	Azure Service Bus Adapter
+docs/ISuite_Integrations_APIs/azure-service-bus-receiver-adapter-e67db82.md	Azure Service Bus Receiver Adapter
+docs/ISuite_Integrations_APIs/azure-service-bus-sender-adapter-e80310f.md	Azure Service Bus Sender Adapter
+docs/ISuite_Integrations_APIs/azurestorage-adapter-037c06b.md	Azurestorage Adapter
+docs/ISuite_Integrations_APIs/azurestorage-receiver-adapter-for-blob-storage-b46e8d5.md	Azurestorage Receiver Adapter for Blob Storage
+docs/ISuite_Integrations_APIs/azurestorage-receiver-adapter-for-fileshare-storage-1ea5b2b.md	Azurestorage Receiver Adapter for Fileshare Storage
+docs/ISuite_Integrations_APIs/azurestorage-receiver-adapter-for-queue-storage-e683a21.md	Azurestorage Receiver Adapter for Queue Storage
+docs/ISuite_Integrations_APIs/azurestorage-receiver-adapter-for-table-storage-ab7c20f.md	Azurestorage Receiver Adapter for Table Storage
+docs/ISuite_Integrations_APIs/azurestorage-sender-adapter-for-blob-storage-7f7cf11.md	Azurestorage Sender Adapter for Blob Storage
+docs/ISuite_Integrations_APIs/azurestorage-sender-adapter-for-fileshare-storage-29a4e9a.md	Azurestorage Sender Adapter for Fileshare Storage
+docs/ISuite_Integrations_APIs/azurestorage-sender-adapter-for-queue-storage-5d8c0e6.md	Azurestorage Sender Adapter for Queue Storage
+docs/ISuite_Integrations_APIs/azurestorage-sender-adapter-for-table-storage-17ed66c.md	Azurestorage Sender Adapter for Table Storage
+docs/ISuite_Integrations_APIs/b2b-scenarios-56ccf98.md	B2B Scenarios
+docs/ISuite_Integrations_APIs/backing-up-keystore-entries-b8e03b7.md	Backing Up Keystore Entries
+docs/ISuite_Integrations_APIs/backup-and-restore-b48c40b.md	Backup and Restore
+docs/ISuite_Integrations_APIs/backup-and-restore-your-integration-artifacts-bd280ef.md	Backup and Restore Your Integration Artifacts
+docs/ISuite_Integrations_APIs/bamboohr-receiver-adapter-4f52e62.md	Bamboohr Receiver Adapter
+docs/ISuite_Integrations_APIs/basic-authentication-693c0d1.md	Basic Authentication
+docs/ISuite_Integrations_APIs/basic-concepts-of-integration-design-ca0f6f7.md	Basic Concepts of Integration Design
+docs/ISuite_Integrations_APIs/batch-payload-and-operation-760b267.md	Batch Payload and Operation
+docs/ISuite_Integrations_APIs/best-practices-b16cf85.md	Best Practices
+docs/ISuite_Integrations_APIs/bigcommerce-receiver-adapter-9f03542.md	Bigcommerce Receiver Adapter
+docs/ISuite_Integrations_APIs/bigcommerce-receiver-graphql-adapter-3dbf284.md	Bigcommerce Receiver Graphql Adapter
+docs/ISuite_Integrations_APIs/bigcommerce-receiver-rest-adapter-f36aab9.md	Bigcommerce Receiver REST Adapter
+docs/ISuite_Integrations_APIs/billing-service-1e20fb5.md	Billing Service
+docs/ISuite_Integrations_APIs/bind-to-data-source-2b6e865.md	Bind to Data Source
+docs/ISuite_Integrations_APIs/binding-to-odata-24ffe2d.md	Binding to ODATA
+docs/ISuite_Integrations_APIs/binding-to-odc-460e172.md	Binding to Odc
+docs/ISuite_Integrations_APIs/binding-to-rest-e0103db.md	Binding to REST
+docs/ISuite_Integrations_APIs/binding-to-soap-691301a.md	Binding to SOAP
+docs/ISuite_Integrations_APIs/blueprint-metadata-ab38cc8.md	Blueprint Metadata
+docs/ISuite_Integrations_APIs/box-adapter-e61ca98.md	Box Adapter
+docs/ISuite_Integrations_APIs/box-receiver-adapter-172dfbf.md	Box Receiver Adapter
+docs/ISuite_Integrations_APIs/build-and-deploy-status-d8934e0.md	Build and Deploy Status
+docs/ISuite_Integrations_APIs/build-api-proxies-74c042b.md	Build API Proxies
+docs/ISuite_Integrations_APIs/build-your-integrations-and-apis-facdfb6.md	Build Your Integrations and APIS
+docs/ISuite_Integrations_APIs/caching-policies-c8bf1a5.md	Caching Policies
+docs/ISuite_Integrations_APIs/call-flow-steps-80cad36.md	Call Flow Steps
+docs/ISuite_Integrations_APIs/cancel-api-management-service-subscription-df6df2b.md	Cancel API Management Service Subscription
+docs/ISuite_Integrations_APIs/central-monitoring-and-alerting-solutions-605fc6e.md	Central Monitoring and Alerting Solutions
+docs/ISuite_Integrations_APIs/centralized-developer-hub-38422de.md	Centralized Developer Hub
+docs/ISuite_Integrations_APIs/changing-the-alias-of-a-keystore-entry-72b0f88.md	Changing the Alias of a Keystore Entry
+docs/ISuite_Integrations_APIs/character-encodings-background-information-083c971.md	Character Encodings Background Information
+docs/ISuite_Integrations_APIs/checking-jms-resources-6a9c030.md	Checking JMS Resources
+docs/ISuite_Integrations_APIs/checking-out-the-message-processing-log-5612032.md	Checking Out the Message Processing Log
+docs/ISuite_Integrations_APIs/classic-api-management-1b17d18.md	Classic API Management
+docs/ISuite_Integrations_APIs/classic-api-management-faqs-2d16070.md	Classic API Management Faqs
+docs/ISuite_Integrations_APIs/cloud-connector-connectivity-tests-58c0ff0.md	Cloud Connector Connectivity Tests
+docs/ISuite_Integrations_APIs/cloud-integration-a33f27b.md	Cloud Integration
+docs/ISuite_Integrations_APIs/combine-xml-files-via-poll-enrich-7b97105.md	Combine XML Files via Poll Enrich
+docs/ISuite_Integrations_APIs/commonly-used-functions-faced99.md	Commonly Used Functions
+docs/ISuite_Integrations_APIs/communication-between-integration-flows-ab5db7b.md	Communication Between Integration Flows
+docs/ISuite_Integrations_APIs/communication-of-integration-flows-d58e6a6.md	Communication of Integration Flows
+docs/ISuite_Integrations_APIs/community-packages-ea91ec9.md	Community Packages
+docs/ISuite_Integrations_APIs/component-metadata-550b19e.md	Component Metadata
+docs/ISuite_Integrations_APIs/components-of-api-management-e02ae53.md	Components of API Management
+docs/ISuite_Integrations_APIs/composed-message-processor-353a119.md	Composed Message Processor
+docs/ISuite_Integrations_APIs/comprehensive-breakdown-of-role-collections-in-api-management-f3049e2.md	Comprehensive Breakdown of Role Collections in API Management
+docs/ISuite_Integrations_APIs/concatenating-files-via-poll-enrich-694a60b.md	Concatenating Files via Poll Enrich
+docs/ISuite_Integrations_APIs/concurrent-rate-limit-8f22baa.md	Concurrent Rate Limit
+docs/ISuite_Integrations_APIs/condition-strings-6656100.md	Condition Strings
+docs/ISuite_Integrations_APIs/configuration-variables-12d3ea6.md	Configuration Variables
+docs/ISuite_Integrations_APIs/configure-a-btp-destination-for-api-discovery-from-an-sap-gateway-system-internet-based-9bb2c8a.md	Configure a Btp Destination for API Discovery from an SAP Gateway System Internet Based
+docs/ISuite_Integrations_APIs/configure-a-btp-destination-for-api-discovery-from-an-sap-gateway-system-on-premise-7e84b0e.md	Configure a Btp Destination for API Discovery from an SAP Gateway System on Premise
+docs/ISuite_Integrations_APIs/configure-a-btp-destination-for-api-invocation-of-a-discovered-api-internet-based-adbd94c.md	Configure a Btp Destination for API Invocation of a Discovered API Internet Based
+docs/ISuite_Integrations_APIs/configure-a-btp-destination-for-api-invocation-of-a-discovered-api-on-premise-37e70f4.md	Configure a Btp Destination for API Invocation of a Discovered API on Premise
+docs/ISuite_Integrations_APIs/configure-a-destination-to-connect-an-mcp-server-to-a-remote-mcp-server-1c8b388.md	Configure a Destination to Connect an Mcp Server to a Remote Mcp Server
+docs/ISuite_Integrations_APIs/configure-adapter-in-communication-channels-1f06633.md	Configure Adapter in Communication Channels
+docs/ISuite_Integrations_APIs/configure-adapters-d0a6bc8.md	Configure Adapters
+docs/ISuite_Integrations_APIs/configure-an-api-artifact-79aee17.md	Configure an API Artifact
+docs/ISuite_Integrations_APIs/configure-an-mcp-server-created-from-an-api-artifact-81b30d1.md	Configure an Mcp Server Created from an API Artifact
+docs/ISuite_Integrations_APIs/configure-an-mcp-server-created-from-an-http-endpoint-f58f7b0.md	Configure an Mcp Server Created from an HTTP Endpoint
+docs/ISuite_Integrations_APIs/configure-an-mcp-server-created-from-an-rfc-based-backend-8e51574.md	Configure an Mcp Server Created from an RFC Based Backend
+docs/ISuite_Integrations_APIs/configure-apis-fdf5373.md	Configure APIS
+docs/ISuite_Integrations_APIs/configure-csv-to-xml-converter-fe33888.md	Configure CSV to XML Converter
+docs/ISuite_Integrations_APIs/configure-externalized-parameters-024b8fd.md	Configure Externalized Parameters
+docs/ISuite_Integrations_APIs/configure-externalized-parameters-of-an-integration-flow-462a478.md	Configure Externalized Parameters of an Integration Flow
+docs/ISuite_Integrations_APIs/configure-governance-settings-for-apis-and-events-7446560.md	Configure Governance Settings for APIS and Events
+docs/ISuite_Integrations_APIs/configure-integration-flow-components-3171795.md	Configure Integration Flow Components
+docs/ISuite_Integrations_APIs/configure-jdbc-drivers-77c7d95.md	Configure JDBC Drivers
+docs/ISuite_Integrations_APIs/configure-load-balancing-during-import-2cd47e2.md	Configure Load Balancing During Import
+docs/ISuite_Integrations_APIs/configure-mcp-server-access-using-an-external-identity-provider-fbea412.md	Configure Mcp Server Access Using an External Identity Provider
+docs/ISuite_Integrations_APIs/configure-mcp-server-access-using-default-authentication-xsuaa-dc283ab.md	Configure Mcp Server Access Using Default Authentication Xsuaa
+docs/ISuite_Integrations_APIs/configure-receiver-channel-with-ebms3-pull-7cdde30.md	Configure Receiver Channel with Ebms3 Pull
+docs/ISuite_Integrations_APIs/configure-receiver-channel-with-ebms3-push-449f6e9.md	Configure Receiver Channel with Ebms3 Push
+docs/ISuite_Integrations_APIs/configure-simulation-45a71f8.md	Configure Simulation
+docs/ISuite_Integrations_APIs/configure-the-advanced-event-mesh-receiver-adapter-881f656.md	Configure the Advanced Event Mesh Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-advanced-event-mesh-sender-adapter-abd2efc.md	Configure the Advanced Event Mesh Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-amqp-receiver-adapter-d5660c1.md	Configure the AMQP Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-amqp-sender-adapter-99ce674.md	Configure the AMQP Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-ariba-receiver-adapter-49dffa3.md	Configure the ARIBA Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-ariba-sender-adapter-0629b58.md	Configure the ARIBA Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-as2-mdn-sender-adapter-c54effe.md	Configure the AS2 MDN Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-as2-receiver-adapter-9db62be.md	Configure the AS2 Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-as2-sender-adapter-5d7ee17.md	Configure the AS2 Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-azurestorage-receiver-adapter-30f59b0.md	Configure the Azurestorage Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-azurestorage-sender-adapter-d42134a.md	Configure the Azurestorage Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-dropbox-receiver-adapter-16ef7b4.md	Configure the Dropbox Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-dropbox-sender-adapter-de61991.md	Configure the Dropbox Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-ftp-receiver-adapter-c16d331.md	Configure the FTP Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-ftp-sender-adapter-239042f.md	Configure the FTP Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-ftp-sender-adapter-used-with-the-poll-enrich-step-3eca3f8.md	Configure the FTP Sender Adapter Used with the Poll Enrich Step
+docs/ISuite_Integrations_APIs/configure-the-google-cloud-storage-receiver-adapter-5a8ddef.md	Configure the Google Cloud Storage Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-google-cloud-storage-sender-adapter-ec213ce.md	Configure the Google Cloud Storage Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-google-pub-sub-receiver-adapter-30df22d.md	Configure the Google Pub Sub Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-google-pub-sub-sender-adapter-845ec21.md	Configure the Google Pub Sub Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-ibm-mq-jms-receiver-adapter-029bc1b.md	Configure the Ibm Mq JMS Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-ibm-mq-jms-sender-adapter-d655ab4.md	Configure the Ibm Mq JMS Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-ibm-mq-rest-receiver-adapter-45610e7.md	Configure the Ibm Mq REST Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-ibm-mq-rest-sender-adapter-35cd02d.md	Configure the Ibm Mq REST Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-idoc-receiver-adapter-018aa88.md	Configure the IDOC Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-idoc-sender-adapter-bf769d6.md	Configure the IDOC Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-jms-receiver-adapter-79edc04.md	Configure the JMS Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-jms-sender-adapter-161791b.md	Configure the JMS Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-kafka-receiver-adapter-fc6ee1f.md	Configure the KAFKA Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-kafka-sender-adapter-0d849e5.md	Configure the KAFKA Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-mail-receiver-adapter-f68d5e0.md	Configure the MAIL Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-mail-sender-adapter-e23e9cc.md	Configure the MAIL Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-microsoft-onedrive-receiver-adapter-4158749.md	Configure the Microsoft Onedrive Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-microsoft-onedrive-sender-adapter-0724136.md	Configure the Microsoft Onedrive Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-microsoft-sharepoint-receiver-adapter-b12b33a.md	Configure the Microsoft Sharepoint Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-microsoft-sharepoint-sender-adapter-ce41e85.md	Configure the Microsoft Sharepoint Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-nfs-receiver-adapter-0ed683b.md	Configure the Nfs Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-nfs-sender-adapter-c255074.md	Configure the Nfs Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-odata-sender-adapter-de7aee5.md	Configure the ODATA Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-odata-v2-receiver-adapter-c5c2e38.md	Configure the ODATA V2 Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-odata-v4-receiver-adapter-cd66a12.md	Configure the ODATA V4 Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-oftp-receiver-adapter-8a6b283.md	Configure the Oftp Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-oftp-sender-adapter-3420f2a.md	Configure the Oftp Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-processdirect-receiver-adapter-5b7327d.md	Configure the Processdirect Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-processdirect-sender-adapter-e340d4c.md	Configure the Processdirect Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-rabbitmq-receiver-adapter-e9dfc37.md	Configure the Rabbitmq Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-rabbitmq-sender-adapter-4e3c554.md	Configure the Rabbitmq Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-rnif-receiver-adapter-556d7e3.md	Configure the Rnif Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-rnif-sender-adapter-8dbb4ac.md	Configure the Rnif Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-salesforce-pub-sub-receiver-adapter-6862ff5.md	Configure the Salesforce Pub Sub Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-salesforce-pub-sub-sender-adapter-fdb114c.md	Configure the Salesforce Pub Sub Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-sender-channel-with-ebms3-pull-4f5ddb3.md	Configure the Sender Channel with Ebms3 Pull
+docs/ISuite_Integrations_APIs/configure-the-sender-channel-with-ebms3-push-3dc3907.md	Configure the Sender Channel with Ebms3 Push
+docs/ISuite_Integrations_APIs/configure-the-sender-channel-with-ebms3-receipt-428ae65.md	Configure the Sender Channel with Ebms3 Receipt
+docs/ISuite_Integrations_APIs/configure-the-sftp-receiver-adapter-4ef52cf.md	Configure the SFTP Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-sftp-sender-adapter-2de9ee5.md	Configure the SFTP Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-sftp-sender-adapter-used-with-the-poll-enrich-step-1f15fe2.md	Configure the SFTP Sender Adapter Used with the Poll Enrich Step
+docs/ISuite_Integrations_APIs/configure-the-slack-receiver-adapter-7c2ea64.md	Configure the Slack Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-slack-sender-adapter-1d93850.md	Configure the Slack Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-smb-receiver-adapter-ddd0d59.md	Configure the Smb Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-smb-sender-adapter-95bf6e9.md	Configure the Smb Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-soap-sap-rm-receiver-adapter-8366495.md	Configure the SOAP SAP Rm Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-soap-sap-rm-sender-adapter-6962234.md	Configure the SOAP SAP Rm Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-soap-soap-1-x-receiver-adapter-57f7b34.md	Configure the SOAP SOAP 1 X Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-soap-soap-1-x-sender-adapter-a178913.md	Configure the SOAP SOAP 1 X Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-splunk-receiver-adapter-e8e6ba6.md	Configure the Splunk Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-splunk-sender-adapter-271ad20.md	Configure the Splunk Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-successfactors-odata-v2-receiver-adapter-d16dd12.md	Configure the Successfactors ODATA V2 Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-successfactors-rest-receiver-adapter-9cff562.md	Configure the Successfactors REST Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-successfactors-rest-sender-adapter-9f0646b.md	Configure the Successfactors REST Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-successfactors-soap-receiver-adapter-360ef42.md	Configure the Successfactors SOAP Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-successfactors-soap-sender-adapter-874e4b1.md	Configure the Successfactors SOAP Sender Adapter
+docs/ISuite_Integrations_APIs/configure-the-visibility-of-api-composition-navigator-f5bd17d.md	Configure the Visibility of API Composition Navigator
+docs/ISuite_Integrations_APIs/configure-the-xi-receiver-adapter-5d2670f.md	Configure the XI Receiver Adapter
+docs/ISuite_Integrations_APIs/configure-the-xi-sender-adapter-41a1a57.md	Configure the XI Sender Adapter
+docs/ISuite_Integrations_APIs/configure-xml-to-csv-converter-9025222.md	Configure XML to CSV Converter
+docs/ISuite_Integrations_APIs/configuring-a-custom-domain-for-a-virtual-host-6b9e5a3.md	Configuring a Custom Domain for a Virtual Host
+docs/ISuite_Integrations_APIs/configuring-a-default-domain-for-a-virtual-host-1085228.md	Configuring a Default Domain for a Virtual Host
+docs/ISuite_Integrations_APIs/configuring-additional-virtual-host-26c7416.md	Configuring Additional Virtual Host
+docs/ISuite_Integrations_APIs/configuring-additional-virtual-host-in-cloud-foundry-environment-a7b91e5.md	Configuring Additional Virtual Host in Cloud Foundry Environment
+docs/ISuite_Integrations_APIs/configuring-an-odata-api-24e85c6.md	Configuring an ODATA API
+docs/ISuite_Integrations_APIs/configuring-apis-for-anomaly-detection-9e7e5d1.md	Configuring APIS for Anomaly Detection
+docs/ISuite_Integrations_APIs/configuring-archiving-settings-c38760d.md	Configuring Archiving Settings
+docs/ISuite_Integrations_APIs/configuring-data-types-97ad101.md	Configuring Data Types
+docs/ISuite_Integrations_APIs/configuring-destination-c1ac580.md	Configuring Destination
+docs/ISuite_Integrations_APIs/configuring-fault-message-type-6dfaa7a.md	Configuring Fault Message Type
+docs/ISuite_Integrations_APIs/configuring-load-balancing-503a3aa.md	Configuring Load Balancing
+docs/ISuite_Integrations_APIs/configuring-message-types-2eb71b8.md	Configuring Message Types
+docs/ISuite_Integrations_APIs/configuring-mutual-tls-for-custom-domain-virtual-host-2453233.md	Configuring Mutual TLS for Custom Domain Virtual Host
+docs/ISuite_Integrations_APIs/configuring-mutual-tls-for-default-domain-virtual-host-9faf7ce.md	Configuring Mutual TLS for Default Domain Virtual Host
+docs/ISuite_Integrations_APIs/configuring-permissions-for-products-e4636bf.md	Configuring Permissions for Products
+docs/ISuite_Integrations_APIs/configuring-service-interface-53d5c97.md	Configuring Service Interface
+docs/ISuite_Integrations_APIs/configuring-the-processdirect-sender-adapter-4787d80.md	Configuring the Processdirect Sender Adapter
+docs/ISuite_Integrations_APIs/configuring-value-mapping-40c1827.md	Configuring Value Mapping
+docs/ISuite_Integrations_APIs/connecting-an-sap-process-orchestration-system-4120ecb.md	Connecting an SAP Process Orchestration System
+docs/ISuite_Integrations_APIs/connecting-pre-exit-and-post-exit-integration-flows-with-the-standard-integration-flow-f6280a3.md	Connecting Pre Exit and Post Exit Integration Flows with the Standard Integration Flow
+docs/ISuite_Integrations_APIs/connecting-the-source-and-the-destination-nodes-4840f03.md	Connecting the Source and the Destination Nodes
+docs/ISuite_Integrations_APIs/connecting-to-sap-gateway-system-for-api-discovery-a0092ee.md	Connecting to SAP Gateway System for API Discovery
+docs/ISuite_Integrations_APIs/connecting-to-sap-s-4hana-business-system-for-api-discovery-309929d.md	Connecting to SAP S 4hana Business System for API Discovery
+docs/ISuite_Integrations_APIs/connectivity-options-93d82e8.md	Connectivity Options
+docs/ISuite_Integrations_APIs/consider-basic-layout-principles-32e4f6e.md	Consider Basic Layout Principles
+docs/ISuite_Integrations_APIs/consume-a-public-http-service-with-query-parameters-342c20a.md	Consume a Public HTTP Service with Query Parameters
+docs/ISuite_Integrations_APIs/consume-apis-within-subscriptions-d4f6fda.md	Consume APIS Within Subscriptions
+docs/ISuite_Integrations_APIs/consuming-a-reusable-api-artifact-291f424.md	Consuming a Reusable API Artifact
+docs/ISuite_Integrations_APIs/consuming-a-script-collection-1b801fa.md	Consuming a Script Collection
+docs/ISuite_Integrations_APIs/consuming-fault-message-type-in-service-interface-3613e60.md	Consuming Fault Message Type in Service Interface
+docs/ISuite_Integrations_APIs/consuming-function-library-in-message-mapping-d4dcb4a.md	Consuming Function Library in Message Mapping
+docs/ISuite_Integrations_APIs/consuming-imported-archives-e7562a7.md	Consuming Imported Archives
+docs/ISuite_Integrations_APIs/consuming-integration-adapters-from-sap-business-accelerator-hub-b9250fb.md	Consuming Integration Adapters from SAP Business Accelerator Hub
+docs/ISuite_Integrations_APIs/consuming-message-mapping-artifact-in-an-integration-flow-948a2c9.md	Consuming Message Mapping Artifact in an Integration Flow
+docs/ISuite_Integrations_APIs/consuming-message-types-in-message-mapping-34f6345.md	Consuming Message Types in Message Mapping
+docs/ISuite_Integrations_APIs/consuming-non-osgi-jar-0b4364a.md	Consuming Non Osgi Jar
+docs/ISuite_Integrations_APIs/content-based-routing-90f35f3.md	Content Based Routing
+docs/ISuite_Integrations_APIs/content-enricher-0e7ba7f.md	Content Enricher
+docs/ISuite_Integrations_APIs/content-filter-6fd4a86.md	Content Filter
+docs/ISuite_Integrations_APIs/content-modifier-basics-b0576a8.md	Content Modifier Basics
+docs/ISuite_Integrations_APIs/content-transport-cb7d2f1.md	Content Transport
+docs/ISuite_Integrations_APIs/content-transport-e3c79d6.md	Content Transport
+docs/ISuite_Integrations_APIs/content-transport-sequence-of-steps-example-1ca3d1e.md	Content Transport Sequence of Steps Example
+docs/ISuite_Integrations_APIs/content-transport-using-cloud-transport-management-d458b17.md	Content Transport Using Cloud Transport Management
+docs/ISuite_Integrations_APIs/content-transport-using-cts-3cdfb51.md	Content Transport Using Cts
+docs/ISuite_Integrations_APIs/content-transport-using-manual-export-and-import-fd23e14.md	Content Transport Using Manual Export and Import
+docs/ISuite_Integrations_APIs/content-transport-using-mtar-download-c111710.md	Content Transport Using Mtar Download
+docs/ISuite_Integrations_APIs/control-the-number-of-simultaneously-opened-database-connections-90628e9.md	Control the Number of Simultaneously Opened Database Connections
+docs/ISuite_Integrations_APIs/conversion-rules-for-json-to-xml-conversion-232a9cf.md	Conversion Rules for JSON to XML Conversion
+docs/ISuite_Integrations_APIs/conversion-rules-for-xml-to-json-conversion-66d099d.md	Conversion Rules for XML to JSON Conversion
+docs/ISuite_Integrations_APIs/convert-data-c5507d7.md	Convert Data
+docs/ISuite_Integrations_APIs/converting-externally-managed-apis-to-internally-managed-apis-1fc41ac.md	Converting Externally Managed APIS to Internally Managed APIS
+docs/ISuite_Integrations_APIs/copy-an-api-artifact-820c9e8.md	Copy an API Artifact
+docs/ISuite_Integrations_APIs/copy-an-api-proxy-23974d6.md	Copy an API Proxy
+docs/ISuite_Integrations_APIs/copy-an-mcp-server-b9c517e.md	Copy an Mcp Server
+docs/ISuite_Integrations_APIs/copy-partner-entity-d110a04.md	Copy Partner Entity
+docs/ISuite_Integrations_APIs/copying-the-integration-package-and-deploying-the-integration-flows-2cb1d31.md	Copying the Integration Package and Deploying the Integration Flows
+docs/ISuite_Integrations_APIs/coupa-receiver-adapter-648ac01.md	Coupa Receiver Adapter
+docs/ISuite_Integrations_APIs/create-a-connection-request-for-the-centralized-developer-hub-c7bda8c.md	Create a Connection Request for the Centralized Developer Hub
+docs/ISuite_Integrations_APIs/create-a-deploy-service-destination-in-cloud-transport-management-service-subaccount-09b1eec.md	Create a Deploy Service Destination in Cloud Transport Management Service Subaccount
+docs/ISuite_Integrations_APIs/create-a-destination-for-approving-and-rejecting-subscriptions-71230dc.md	Create a Destination for Approving and Rejecting Subscriptions
+docs/ISuite_Integrations_APIs/create-a-destination-to-connect-advanced-event-mesh-with-developer-hub-cf493ed.md	Create a Destination to Connect Advanced Event Mesh with Developer Hub
+docs/ISuite_Integrations_APIs/create-a-key-value-map-90d8d41.md	Create a Key Value Map
+docs/ISuite_Integrations_APIs/create-a-policy-c90b895.md	Create a Policy
+docs/ISuite_Integrations_APIs/create-a-policy-template-c5d1872.md	Create a Policy Template
+docs/ISuite_Integrations_APIs/create-a-product-d769622.md	Create a Product
+docs/ISuite_Integrations_APIs/create-a-rate-plan-cfe6a30.md	Create a Rate Plan
+docs/ISuite_Integrations_APIs/create-a-reusable-api-artifact-0112688.md	Create a Reusable API Artifact
+docs/ISuite_Integrations_APIs/create-a-script-8938a24.md	Create a Script
+docs/ISuite_Integrations_APIs/create-alternative-partner-7e6baf3.md	Create Alternative Partner
+docs/ISuite_Integrations_APIs/create-an-api-artifact-by-referring-to-an-api-provider-2d21e65.md	Create an API Artifact by Referring to an API Provider
+docs/ISuite_Integrations_APIs/create-an-api-artifact-using-a-destination-a0bdfd4.md	Create an API Artifact Using a Destination
+docs/ISuite_Integrations_APIs/create-an-api-artifact-using-a-discoverable-system-bd5c1f4.md	Create an API Artifact Using a Discoverable System
+docs/ISuite_Integrations_APIs/create-an-api-artifact-using-a-target-url-or-an-openapi-specification-914f57e.md	Create an API Artifact Using a Target URL or an Openapi Specification
+docs/ISuite_Integrations_APIs/create-an-api-provider-6b263e2.md	Create an API Provider
+docs/ISuite_Integrations_APIs/create-an-api-proxy-based-on-an-existing-api-proxy-54831ca.md	Create an API Proxy Based on an Existing API Proxy
+docs/ISuite_Integrations_APIs/create-an-api-proxy-by-providing-a-direct-target-endpoint-url-d0f5087.md	Create an API Proxy by Providing a Direct Target Endpoint URL
+docs/ISuite_Integrations_APIs/create-an-api-proxy-by-referring-to-an-api-provider-system-84628b9.md	Create an API Proxy by Referring to an API Provider System
+docs/ISuite_Integrations_APIs/create-an-api-proxy-c0842d5.md	Create an API Proxy
+docs/ISuite_Integrations_APIs/create-an-api-proxy-using-the-api-designer-26e1bbd.md	Create an API Proxy Using the API Designer
+docs/ISuite_Integrations_APIs/create-an-mcp-server-by-referring-to-an-rfc-based-backend-cbb8b78.md	Create an Mcp Server by Referring to an RFC Based Backend
+docs/ISuite_Integrations_APIs/create-an-mcp-server-from-an-api-artifact-9f18140.md	Create an Mcp Server from an API Artifact
+docs/ISuite_Integrations_APIs/create-an-mcp-server-from-an-api-proxy-40b31a0.md	Create an Mcp Server from an API Proxy
+docs/ISuite_Integrations_APIs/create-an-mcp-server-from-an-http-endpoint-b59f141.md	Create an Mcp Server from an HTTP Endpoint
+docs/ISuite_Integrations_APIs/create-an-mcp-server-using-a-remote-mcp-server-as-the-source-742216d.md	Create an Mcp Server Using a Remote Mcp Server as the Source
+docs/ISuite_Integrations_APIs/create-an-odata-model-35fe18a.md	Create an ODATA Model
+docs/ISuite_Integrations_APIs/create-and-deploy-a-rest-api-artifact-fec774c.md	Create and Deploy a REST API Artifact
+docs/ISuite_Integrations_APIs/create-and-deploy-a-soap-api-artifact-1a439af.md	Create and Deploy a SOAP API Artifact
+docs/ISuite_Integrations_APIs/create-and-deploy-an-odata-api-artifact-8bc912d.md	Create and Deploy an ODATA API Artifact
+docs/ISuite_Integrations_APIs/create-and-work-with-custom-reports-46bea5d.md	Create and Work with Custom Reports
+docs/ISuite_Integrations_APIs/create-and-work-with-custom-reports-daf54fd.md	Create and Work with Custom Reports
+docs/ISuite_Integrations_APIs/create-attachments-d1f16db.md	Create Attachments
+docs/ISuite_Integrations_APIs/create-custom-dimensions-and-measures-ba211be.md	Create Custom Dimensions and Measures
+docs/ISuite_Integrations_APIs/create-mpl-attachments-in-scripts-17dba92.md	Create MPL Attachments in Scripts
+docs/ISuite_Integrations_APIs/create-new-custom-tags-configuration-31e8308.md	Create New Custom Tags Configuration
+docs/ISuite_Integrations_APIs/create-new-parameters-in-externalization-editor-417e4e8.md	Create New Parameters in Externalization Editor
+docs/ISuite_Integrations_APIs/create-or-update-or-read-an-application-using-subscription-key-e2645b5.md	Create or Update or Read an Application Using Subscription Key
+docs/ISuite_Integrations_APIs/create-partner-directory-entity-f41418f.md	Create Partner Directory Entity
+docs/ISuite_Integrations_APIs/create-rate-plans-5f7d522.md	Create Rate Plans
+docs/ISuite_Integrations_APIs/create-the-soap-sender-channel-7b8f5fd.md	Create the SOAP Sender Channel
+docs/ISuite_Integrations_APIs/create-xslt-mapping-5ce1f15.md	Create XSLT Mapping
+docs/ISuite_Integrations_APIs/creating-a-custom-role-collection-for-fine-grained-access-control-4a26b60.md	Creating a Custom Role Collection for Fine Grained Access Control
+docs/ISuite_Integrations_APIs/creating-a-function-libraries-artifact-950b897.md	Creating a Function Libraries Artifact
+docs/ISuite_Integrations_APIs/creating-a-key-pair-ssh-key-pair-b8a8601.md	Creating a Key Pair SSH Key Pair
+docs/ISuite_Integrations_APIs/creating-a-script-collection-824bff0.md	Creating a Script Collection
+docs/ISuite_Integrations_APIs/creating-a-versioned-api-57abb00.md	Creating a Versioned API
+docs/ISuite_Integrations_APIs/creating-additional-request-reply-policy-for-api-artifact-f08b086.md	Creating Additional Request Reply Policy for API Artifact
+docs/ISuite_Integrations_APIs/creating-an-api-artifact-c2fe62c.md	Creating an API Artifact
+docs/ISuite_Integrations_APIs/creating-an-api-proxy-using-sap-cloud-integration-api-provider-aefbd74.md	Creating an API Proxy Using SAP Cloud Integration API Provider
+docs/ISuite_Integrations_APIs/creating-an-exception-response-for-soap-based-adapters-45ed5c0.md	Creating an Exception Response for SOAP Based Adapters
+docs/ISuite_Integrations_APIs/creating-an-imported-archives-artifact-e555caf.md	Creating an Imported Archives Artifact
+docs/ISuite_Integrations_APIs/creating-an-instance-of-api-portal-api-management-6129172.md	Creating an Instance of API Portal API Management
+docs/ISuite_Integrations_APIs/creating-an-instance-of-content-agent-359ecd7.md	Creating an Instance of Content Agent
+docs/ISuite_Integrations_APIs/creating-an-instance-of-sap-cloud-transport-management-service-69a41e2.md	Creating an Instance of SAP Cloud Transport Management Service
+docs/ISuite_Integrations_APIs/creating-an-integration-flow-da53d93.md	Creating an Integration Flow
+docs/ISuite_Integrations_APIs/creating-an-integration-package-9126d79.md	Creating an Integration Package
+docs/ISuite_Integrations_APIs/creating-an-mcp-server-256409f.md	Creating an Mcp Server
+docs/ISuite_Integrations_APIs/creating-an-odata-api-6670029.md	Creating an ODATA API
+docs/ISuite_Integrations_APIs/creating-and-assigning-a-custom-role-collection-9d827cd.md	Creating and Assigning a Custom Role Collection
+docs/ISuite_Integrations_APIs/creating-and-modifying-rfc-destination-3b55fa7.md	Creating and Modifying RFC Destination
+docs/ISuite_Integrations_APIs/creating-api-management-destination-3fd86c7.md	Creating API Management Destination
+docs/ISuite_Integrations_APIs/creating-api-revisions-0a0d7d4.md	Creating API Revisions
+docs/ISuite_Integrations_APIs/creating-content-assembly-service-destination-3a6a81e.md	Creating Content Assembly Service Destination
+docs/ISuite_Integrations_APIs/creating-custom-roles-for-access-policies-7db3c87.md	Creating Custom Roles for Access Policies
+docs/ISuite_Integrations_APIs/creating-data-types-d5bbbee.md	Creating Data Types
+docs/ISuite_Integrations_APIs/creating-fault-message-type-789b394.md	Creating Fault Message Type
+docs/ISuite_Integrations_APIs/creating-http-destinations-and-transport-route-94057be.md	Creating HTTP Destinations and Transport Route
+docs/ISuite_Integrations_APIs/creating-message-mapping-as-a-flow-step-3d5cb7f.md	Creating Message Mapping as a Flow Step
+docs/ISuite_Integrations_APIs/creating-message-mapping-as-an-artifact-1d52a7b.md	Creating Message Mapping as an Artifact
+docs/ISuite_Integrations_APIs/creating-message-type-1a33a60.md	Creating Message Type
+docs/ISuite_Integrations_APIs/creating-scripts-in-a-script-collection-ed9b52c.md	Creating Scripts in a Script Collection
+docs/ISuite_Integrations_APIs/creating-service-interface-artifact-0247b79.md	Creating Service Interface Artifact
+docs/ISuite_Integrations_APIs/creating-the-custom-integration-flow-with-the-post-exit-mapping-988e5e3.md	Creating the Custom Integration Flow with the Post Exit Mapping
+docs/ISuite_Integrations_APIs/creating-the-custom-mapping-4af8ea7.md	Creating the Custom Mapping
+docs/ISuite_Integrations_APIs/creating-the-post-exit-integration-flow-12398d4.md	Creating the Post Exit Integration Flow
+docs/ISuite_Integrations_APIs/creating-the-pre-exit-integration-flow-418a960.md	Creating the Pre Exit Integration Flow
+docs/ISuite_Integrations_APIs/creating-the-references-ddc5fdf.md	Creating the References
+docs/ISuite_Integrations_APIs/creating-the-standard-integration-flow-4da82ad.md	Creating the Standard Integration Flow
+docs/ISuite_Integrations_APIs/creating-transport-management-destination-6c94d89.md	Creating Transport Management Destination
+docs/ISuite_Integrations_APIs/creating-value-mapping-25eff9b.md	Creating Value Mapping
+docs/ISuite_Integrations_APIs/csrf-token-handling-in-api-management-9881a45.md	Csrf Token Handling in API Management
+docs/ISuite_Integrations_APIs/custom-attributes-90a5a6d.md	Custom Attributes
+docs/ISuite_Integrations_APIs/custom-views-and-charts-900eca5.md	Custom Views and Charts
+docs/ISuite_Integrations_APIs/customize-the-visual-format-of-developer-hub-2eacd52.md	Customize the Visual Format of Developer Hub
+docs/ISuite_Integrations_APIs/customizing-an-analysis-78bde6f.md	Customizing an Analysis
+docs/ISuite_Integrations_APIs/data-storages-31efe35.md	Data Storages
+docs/ISuite_Integrations_APIs/data-store-example-requests-e88d7d2.md	Data Store Example Requests
+docs/ISuite_Integrations_APIs/data-store-sender-adapter-4f5ef3f.md	Data Store Sender Adapter
+docs/ISuite_Integrations_APIs/data-store-variables-and-jms-queues-when-to-use-which-option-6bc21cb.md	Data Store Variables and JMS Queues When to Use Which Option
+docs/ISuite_Integrations_APIs/data-store-variables-versus-header-properties-when-to-use-which-option-61f4045.md	Data Store Variables Versus Header Properties When to Use Which Option
+docs/ISuite_Integrations_APIs/decision-help-for-choosing-the-right-content-transport-option-19e0e73.md	Decision Help for Choosing the Right Content Transport Option
+docs/ISuite_Integrations_APIs/decode-jwt-2d79eba.md	Decode Jwt
+docs/ISuite_Integrations_APIs/decouple-processing-3ef92e4.md	Decouple Processing
+docs/ISuite_Integrations_APIs/decouple-sender-and-flows-using-data-store-5467c77.md	Decouple Sender and Flows Using Data Store
+docs/ISuite_Integrations_APIs/decouple-sender-and-flows-using-data-store-and-polling-consumer-b77bbdf.md	Decouple Sender and Flows Using Data Store and Polling Consumer
+docs/ISuite_Integrations_APIs/decouple-sender-and-flows-using-jms-message-queues-3c26902.md	Decouple Sender and Flows Using JMS Message Queues
+docs/ISuite_Integrations_APIs/decouple-sender-and-flows-using-persistence-c5591df.md	Decouple Sender and Flows Using Persistence
+docs/ISuite_Integrations_APIs/decouple-sender-and-flows-without-persistence-31d4dec.md	Decouple Sender and Flows Without Persistence
+docs/ISuite_Integrations_APIs/decoupling-development-from-transport-using-externalized-parameters-9064b09.md	Decoupling Development from Transport Using Externalized Parameters
+docs/ISuite_Integrations_APIs/decoupling-using-sap-integration-suite-advanced-event-mesh-df7b472.md	Decoupling Using SAP Integration Suite Advanced Event Mesh
+docs/ISuite_Integrations_APIs/decoupling-via-data-store-d115669.md	Decoupling via Data Store
+docs/ISuite_Integrations_APIs/decoupling-via-jms-queue-ecbde19.md	Decoupling via JMS Queue
+docs/ISuite_Integrations_APIs/default-adapters-for-api-artifacts-719d07c.md	Default Adapters for API Artifacts
+docs/ISuite_Integrations_APIs/define-a-decoder-c95697a.md	Define a Decoder
+docs/ISuite_Integrations_APIs/define-a-local-script-step-03b32eb.md	Define a Local Script Step
+docs/ISuite_Integrations_APIs/define-a-mime-multipart-encoder-8c12a8e.md	Define a Mime Multipart Encoder
+docs/ISuite_Integrations_APIs/define-a-send-step-9b83f10.md	Define a Send Step
+docs/ISuite_Integrations_APIs/define-a-timer-start-event-ae14ad7.md	Define a Timer Start Event
+docs/ISuite_Integrations_APIs/define-aggregator-aa23816.md	Define Aggregator
+docs/ISuite_Integrations_APIs/define-an-encoder-89f8bdd.md	Define an Encoder
+docs/ISuite_Integrations_APIs/define-an-escalation-event-f5b3ac8.md	Define an Escalation Event
+docs/ISuite_Integrations_APIs/define-call-steps-376619d.md	Define Call Steps
+docs/ISuite_Integrations_APIs/define-content-enricher-8827f9f.md	Define Content Enricher
+docs/ISuite_Integrations_APIs/define-content-modifier-8f04a70.md	Define Content Modifier
+docs/ISuite_Integrations_APIs/define-data-store-delete-operations-5efa3ac.md	Define Data Store Delete Operations
+docs/ISuite_Integrations_APIs/define-data-store-get-operations-232ac46.md	Define Data Store Get Operations
+docs/ISuite_Integrations_APIs/define-data-store-operations-79f63a4.md	Define Data Store Operations
+docs/ISuite_Integrations_APIs/define-data-store-select-operations-8cfe004.md	Define Data Store Select Operations
+docs/ISuite_Integrations_APIs/define-data-store-write-operations-46260ee.md	Define Data Store Write Operations
+docs/ISuite_Integrations_APIs/define-edi-extractor-5fc2323.md	Define EDI Extractor
+docs/ISuite_Integrations_APIs/define-edi-splitter-584a3be.md	Define EDI Splitter
+docs/ISuite_Integrations_APIs/define-edi-to-xml-converter-6a3d12b.md	Define EDI to XML Converter
+docs/ISuite_Integrations_APIs/define-edi-validator-9bf3b96.md	Define EDI Validator
+docs/ISuite_Integrations_APIs/define-end-message-event-4774b5f.md	Define End Message Event
+docs/ISuite_Integrations_APIs/define-error-configuration-77d0041.md	Define Error Configuration
+docs/ISuite_Integrations_APIs/define-events-4c33ae8.md	Define Events
+docs/ISuite_Integrations_APIs/define-exception-subprocess-690e078.md	Define Exception Subprocess
+docs/ISuite_Integrations_APIs/define-external-call-aac251e.md	Define External Call
+docs/ISuite_Integrations_APIs/define-filter-733f8dc.md	Define Filter
+docs/ISuite_Integrations_APIs/define-gather-and-join-94ef1f2.md	Define Gather and Join
+docs/ISuite_Integrations_APIs/define-general-splitter-a6c1916.md	Define General Splitter
+docs/ISuite_Integrations_APIs/define-id-mapping-2367101.md	Define ID Mapping
+docs/ISuite_Integrations_APIs/define-idempotent-process-call-84c85d7.md	Define Idempotent Process Call
+docs/ISuite_Integrations_APIs/define-idoc-splitter-4f250e4.md	Define IDOC Splitter
+docs/ISuite_Integrations_APIs/define-integration-processes-d704f5c.md	Define Integration Processes
+docs/ISuite_Integrations_APIs/define-iterating-splitter-d61d6ec.md	Define Iterating Splitter
+docs/ISuite_Integrations_APIs/define-json-to-xml-converter-5a7c0cd.md	Define JSON to XML Converter
+docs/ISuite_Integrations_APIs/define-local-call-2933938.md	Define Local Call
+docs/ISuite_Integrations_APIs/define-local-integration-process-520341a.md	Define Local Integration Process
+docs/ISuite_Integrations_APIs/define-looping-process-call-f58c2ba.md	Define Looping Process Call
+docs/ISuite_Integrations_APIs/define-message-digest-e5d2867.md	Define Message Digest
+docs/ISuite_Integrations_APIs/define-message-persistence-steps-cd48445.md	Define Message Persistence Steps
+docs/ISuite_Integrations_APIs/define-message-transformer-steps-e223071.md	Define Message Transformer Steps
+docs/ISuite_Integrations_APIs/define-multicast-17de3ea.md	Define Multicast
+docs/ISuite_Integrations_APIs/define-pgp-decryptor-d0dc511.md	Define PGP Decryptor
+docs/ISuite_Integrations_APIs/define-pgp-encryptor-7a07766.md	Define PGP Encryptor
+docs/ISuite_Integrations_APIs/define-pkcs-7-cms-decryptor-51d903b.md	Define PKCS 7 Cms Decryptor
+docs/ISuite_Integrations_APIs/define-pkcs-7-cms-splitter-6c1649b.md	Define PKCS 7 Cms Splitter
+docs/ISuite_Integrations_APIs/define-poll-enrich-f8c8c1d.md	Define Poll Enrich
+docs/ISuite_Integrations_APIs/define-process-call-cf0251e.md	Define Process Call
+docs/ISuite_Integrations_APIs/define-process-shapes-b573574.md	Define Process Shapes
+docs/ISuite_Integrations_APIs/define-proper-transaction-handling-1c31963.md	Define Proper Transaction Handling
+docs/ISuite_Integrations_APIs/define-request-reply-dc39fdd.md	Define Request Reply
+docs/ISuite_Integrations_APIs/define-router-d7fddbd.md	Define Router
+docs/ISuite_Integrations_APIs/define-routing-steps-ad0a19a.md	Define Routing Steps
+docs/ISuite_Integrations_APIs/define-security-related-steps-0f71687.md	Define Security Related Steps
+docs/ISuite_Integrations_APIs/define-settings-for-the-integration-flow-3a6446c.md	Define Settings for the Integration Flow
+docs/ISuite_Integrations_APIs/define-splitter-dabea9d.md	Define Splitter
+docs/ISuite_Integrations_APIs/define-tar-splitter-0f49759.md	Define Tar Splitter
+docs/ISuite_Integrations_APIs/define-terminate-message-event-bc3fee4.md	Define Terminate Message Event
+docs/ISuite_Integrations_APIs/define-transaction-handling-2a5d4bc.md	Define Transaction Handling
+docs/ISuite_Integrations_APIs/define-validator-steps-20e23e7.md	Define Validator Steps
+docs/ISuite_Integrations_APIs/define-write-variables-de04b75.md	Define Write Variables
+docs/ISuite_Integrations_APIs/define-xml-modifier-af16d64.md	Define XML Modifier
+docs/ISuite_Integrations_APIs/define-xml-to-edi-converter-707973f.md	Define XML to EDI Converter
+docs/ISuite_Integrations_APIs/define-xml-to-json-converter-a60a282.md	Define XML to JSON Converter
+docs/ISuite_Integrations_APIs/define-zip-splitter-4c0e3b8.md	Define Zip Splitter
+docs/ISuite_Integrations_APIs/defining-access-policies-b0d7950.md	Defining Access Policies
+docs/ISuite_Integrations_APIs/defining-the-content-modifier-a51751f.md	Defining the Content Modifier
+docs/ISuite_Integrations_APIs/defining-the-local-integration-process-88faa5c.md	Defining the Local Integration Process
+docs/ISuite_Integrations_APIs/defining-the-router-process-call-and-filter-steps-6e5b9f6.md	Defining the Router Process Call and Filter Steps
+docs/ISuite_Integrations_APIs/defining-the-standard-message-mapping-c0e0f6d.md	Defining the Standard Message Mapping
+docs/ISuite_Integrations_APIs/delete-a-key-value-map-24fbb01.md	Delete a Key Value Map
+docs/ISuite_Integrations_APIs/delete-a-policy-template-f8b3c9b.md	Delete a Policy Template
+docs/ISuite_Integrations_APIs/delete-a-rate-plan-d4181ad.md	Delete a Rate Plan
+docs/ISuite_Integrations_APIs/delete-an-api-artifact-81694d6.md	Delete an API Artifact
+docs/ISuite_Integrations_APIs/delete-an-api-proxy-5cd89a3.md	Delete an API Proxy
+docs/ISuite_Integrations_APIs/delete-an-eligible-virtual-host-102257d.md	Delete an Eligible Virtual Host
+docs/ISuite_Integrations_APIs/delete-an-mcp-server-ad240bd.md	Delete an Mcp Server
+docs/ISuite_Integrations_APIs/delete-data-of-unregistered-users-d548233.md	Delete Data of Unregistered Users
+docs/ISuite_Integrations_APIs/delete-partner-83a9bfd.md	Delete Partner
+docs/ISuite_Integrations_APIs/delete-partner-entity-25aed52.md	Delete Partner Entity
+docs/ISuite_Integrations_APIs/deleting-an-api-management-api-portal-service-instance-59408e8.md	Deleting an API Management API Portal Service Instance
+docs/ISuite_Integrations_APIs/deleting-keystore-entries-a483eef.md	Deleting Keystore Entries
+docs/ISuite_Integrations_APIs/deleting-the-references-bd809db.md	Deleting the References
+docs/ISuite_Integrations_APIs/delta-synchronization-012be7e.md	Delta Synchronization
+docs/ISuite_Integrations_APIs/delta-synchronization-via-date-now-xpath-698307a.md	Delta Synchronization via Date Now Xpath
+docs/ISuite_Integrations_APIs/delta-synchronization-via-timestamp-in-payload-28a6006.md	Delta Synchronization via Timestamp in Payload
+docs/ISuite_Integrations_APIs/deploy-an-api-artifact-b70e7ec.md	Deploy an API Artifact
+docs/ISuite_Integrations_APIs/deploy-an-api-proxy-525f0dd.md	Deploy an API Proxy
+docs/ISuite_Integrations_APIs/deploy-an-mcp-server-017ba42.md	Deploy an Mcp Server
+docs/ISuite_Integrations_APIs/deploying-a-pgp-public-keyring-7f04458.md	Deploying a PGP Public Keyring
+docs/ISuite_Integrations_APIs/deploying-a-pgp-secret-keyring-9d8e1a9.md	Deploying a PGP Secret Keyring
+docs/ISuite_Integrations_APIs/deploying-a-script-collection-95cb2d9.md	Deploying a Script Collection
+docs/ISuite_Integrations_APIs/deploying-a-secure-parameter-artifact-23d824a.md	Deploying a Secure Parameter Artifact
+docs/ISuite_Integrations_APIs/deploying-a-secure-parameter-artifact-4641d6c.md	Deploying a Secure Parameter Artifact
+docs/ISuite_Integrations_APIs/deploying-a-user-credentials-artifact-6912d63.md	Deploying a User Credentials Artifact
+docs/ISuite_Integrations_APIs/deploying-an-oauth2-authorization-code-081bfd7.md	Deploying an Oauth2 Authorization Code
+docs/ISuite_Integrations_APIs/deploying-an-oauth2-client-authorization-code-with-generic-provider-72c8fa7.md	Deploying an Oauth2 Client Authorization Code with Generic Provider
+docs/ISuite_Integrations_APIs/deploying-an-oauth2-client-authorization-code-with-microsoft-365-as-provider-04a94b1.md	Deploying an Oauth2 Client Authorization Code with Microsoft 365 as Provider
+docs/ISuite_Integrations_APIs/deploying-an-oauth2-client-credentials-artifact-801b106.md	Deploying an Oauth2 Client Credentials Artifact
+docs/ISuite_Integrations_APIs/deploying-an-oauth2-password-credentials-37c919d.md	Deploying an Oauth2 Password Credentials
+docs/ISuite_Integrations_APIs/deploying-an-oauth2-saml-bearer-assertion-3ee6582.md	Deploying an Oauth2 SAML Bearer Assertion
+docs/ISuite_Integrations_APIs/deploying-an-odata-api-5f59721.md	Deploying an ODATA API
+docs/ISuite_Integrations_APIs/deploying-an-ssh-known-hosts-artifact-46da324.md	Deploying an SSH Known Hosts Artifact
+docs/ISuite_Integrations_APIs/deployment-status-view-40add87.md	Deployment Status View
+docs/ISuite_Integrations_APIs/design-api-centric-integration-artifacts-94957bc.md	Design API Centric Integration Artifacts
+docs/ISuite_Integrations_APIs/design-guidelines-for-api-artifact-7e704f7.md	Design Guidelines for API Artifact
+docs/ISuite_Integrations_APIs/design-guidelines-view-d62dfe0.md	Design Guidelines View
+docs/ISuite_Integrations_APIs/designing-oauth-v2-0-policies-68f0246.md	Designing OAUTH V2 0 Policies
+docs/ISuite_Integrations_APIs/designing-quota-policy-2539fb2.md	Designing Quota Policy
+docs/ISuite_Integrations_APIs/designtime-artifact-locks-5b3ecb8.md	Designtime Artifact Locks
+docs/ISuite_Integrations_APIs/develop-adapters-using-archetype-0a84b13.md	Develop Adapters Using Archetype
+docs/ISuite_Integrations_APIs/develop-api-based-integration-artifacts-997501d.md	Develop API Based Integration Artifacts
+docs/ISuite_Integrations_APIs/developer-hub-41f7c45.md	Developer Hub
+docs/ISuite_Integrations_APIs/developing-an-odata-api-project-d961654.md	Developing an ODATA API Project
+docs/ISuite_Integrations_APIs/developing-custom-adapters-7392cc4.md	Developing Custom Adapters
+docs/ISuite_Integrations_APIs/different-methods-of-creating-an-api-proxy-4ac0431.md	Different Methods of Creating an API Proxy
+docs/ISuite_Integrations_APIs/disabling-anomaly-detection-1d6756e.md	Disabling Anomaly Detection
+docs/ISuite_Integrations_APIs/discover-and-publish-apis-from-business-systems-0cea56f.md	Discover and Publish APIS from Business Systems
+docs/ISuite_Integrations_APIs/discover-and-publish-apis-from-integration-suite-on-developer-hub-dc3b6c9.md	Discover and Publish APIS from Integration Suite on Developer Hub
+docs/ISuite_Integrations_APIs/discover-and-publish-apis-from-sap-integration-suite-81b3323.md	Discover and Publish APIS from SAP Integration Suite
+docs/ISuite_Integrations_APIs/discover-and-publish-apis-with-external-authentication-bdeda0a.md	Discover and Publish APIS with External Authentication
+docs/ISuite_Integrations_APIs/discover-and-publish-events-from-advanced-event-mesh-188fff2.md	Discover and Publish Events from Advanced Event Mesh
+docs/ISuite_Integrations_APIs/discover-and-publish-events-from-various-business-systems-e865133.md	Discover and Publish Events from Various Business Systems
+docs/ISuite_Integrations_APIs/discover-and-publish-mcp-servers-from-sap-integration-suite-9db32d0.md	Discover and Publish Mcp Servers from SAP Integration Suite
+docs/ISuite_Integrations_APIs/discover-and-publish-mcp-servers-with-external-authentication-a3e462a.md	Discover and Publish Mcp Servers with External Authentication
+docs/ISuite_Integrations_APIs/displaying-properties-of-a-keystore-entry-24585ba.md	Displaying Properties of a Keystore Entry
+docs/ISuite_Integrations_APIs/displaying-properties-of-a-pgp-key-13b3dc9.md	Displaying Properties of a PGP Key
+docs/ISuite_Integrations_APIs/docusign-receiver-adapter-8f3c523.md	Docusign Receiver Adapter
+docs/ISuite_Integrations_APIs/don-t-throw-exception-on-failure-0e6ec4f.md	Don T Throw Exception on Failure
+docs/ISuite_Integrations_APIs/download-a-variable-94e6799.md	Download a Variable
+docs/ISuite_Integrations_APIs/download-bill-details-from-developer-hub-ae61972.md	Download Bill Details from Developer Hub
+docs/ISuite_Integrations_APIs/download-bill-details-from-sap-integration-suite-329040d.md	Download Bill Details from SAP Integration Suite
+docs/ISuite_Integrations_APIs/downloading-a-key-pair-from-the-key-history-8e89659.md	Downloading a Key Pair from the Key History
+docs/ISuite_Integrations_APIs/downloading-a-keystore-c6b910b.md	Downloading a Keystore
+docs/ISuite_Integrations_APIs/downloading-a-new-key-pair-provided-by-sap-b3c989e.md	Downloading a New Key Pair Provided by SAP
+docs/ISuite_Integrations_APIs/downloading-backed-up-keystore-entries-3a67f8a.md	Downloading Backed Up Keystore Entries
+docs/ISuite_Integrations_APIs/downloading-single-keystore-entries-ca8a663.md	Downloading Single Keystore Entries
+docs/ISuite_Integrations_APIs/dropbox-adapter-578148d.md	Dropbox Adapter
+docs/ISuite_Integrations_APIs/dynamic-configuration-via-partner-directory-a9cc79d.md	Dynamic Configuration via Partner Directory
+docs/ISuite_Integrations_APIs/dynamic-parameters-example-5705f2b.md	Dynamic Parameters Example
+docs/ISuite_Integrations_APIs/dynamically-address-receivers-dde6b3a.md	Dynamically Address Receivers
+docs/ISuite_Integrations_APIs/dynamically-configure-integration-flow-parameters-fff5b2a.md	Dynamically Configure Integration Flow Parameters
+docs/ISuite_Integrations_APIs/dynamically-reading-xsd-files-from-the-partner-directory-9331745.md	Dynamically Reading Xsd Files from the Partner Directory
+docs/ISuite_Integrations_APIs/dynamically-reading-xslt-mappings-from-the-partner-directory-66a551a.md	Dynamically Reading XSLT Mappings from the Partner Directory
+docs/ISuite_Integrations_APIs/edge-integration-cell-f8479cb.md	Edge Integration Cell
+docs/ISuite_Integrations_APIs/edit-an-api-proxy-a64b952.md	Edit an API Proxy
+docs/ISuite_Integrations_APIs/edit-an-event-product-7945bef.md	Edit an Event Product
+docs/ISuite_Integrations_APIs/edit-partner-entity-858af76.md	Edit Partner Entity
+docs/ISuite_Integrations_APIs/editing-an-integration-flow-ccd062a.md	Editing an Integration Flow
+docs/ISuite_Integrations_APIs/editing-an-integration-package-155164d.md	Editing an Integration Package
+docs/ISuite_Integrations_APIs/editing-an-odata-model-478632d.md	Editing an ODATA Model
+docs/ISuite_Integrations_APIs/editing-data-type-7136a31.md	Editing Data Type
+docs/ISuite_Integrations_APIs/editing-the-security-fields-for-the-imported-api-entities-0c184e3.md	Editing the Security Fields for the Imported API Entities
+docs/ISuite_Integrations_APIs/editing-value-mapping-6c8847f.md	Editing Value Mapping
+docs/ISuite_Integrations_APIs/elements-of-an-integration-flow-e49dbee.md	Elements of an Integration Flow
+docs/ISuite_Integrations_APIs/elster-receiver-adapter-e374ef7.md	Elster Receiver Adapter
+docs/ISuite_Integrations_APIs/empty-transaction-id-8d46d94.md	Empty Transaction ID
+docs/ISuite_Integrations_APIs/enable-archiving-0fbbe93.md	Enable Archiving
+docs/ISuite_Integrations_APIs/enable-dynamic-routing-49cbe91.md	Enable Dynamic Routing
+docs/ISuite_Integrations_APIs/enable-dynamic-routing-manually-ade825f.md	Enable Dynamic Routing Manually
+docs/ISuite_Integrations_APIs/enable-streaming-of-requests-and-responses-in-an-api-proxy-b43d826.md	Enable Streaming of Requests and Responses in an API Proxy
+docs/ISuite_Integrations_APIs/enabling-adk-persistency-958480b.md	Enabling Adk Persistency
+docs/ISuite_Integrations_APIs/enabling-anomaly-detection-intelligent-recommendations-and-api-call-predictions-98534a0.md	Enabling Anomaly Detection Intelligent Recommendations and API Call Predictions
+docs/ISuite_Integrations_APIs/enabling-authentication-for-servlet-based-adapters-3c6458c.md	Enabling Authentication for Servlet Based Adapters
+docs/ISuite_Integrations_APIs/enabling-connection-status-for-integration-flow-3972bf8.md	Enabling Connection Status for Integration Flow
+docs/ISuite_Integrations_APIs/enabling-content-transport-cloud-foundry-environment-452c677.md	Enabling Content Transport Cloud Foundry Environment
+docs/ISuite_Integrations_APIs/enabling-content-transport-using-sap-cloud-transport-management-service-4f55441.md	Enabling Content Transport Using SAP Cloud Transport Management Service
+docs/ISuite_Integrations_APIs/enabling-cors-support-03e1136.md	Enabling Cors Support
+docs/ISuite_Integrations_APIs/enabling-endpoint-visualization-for-custom-adapter-add7636.md	Enabling Endpoint Visualization for Custom Adapter
+docs/ISuite_Integrations_APIs/enabling-scheduler-support-for-adk-sender-adapter-d423a4b.md	Enabling Scheduler Support for Adk Sender Adapter
+docs/ISuite_Integrations_APIs/enabling-tracing-for-custom-adapter-a7cafa6.md	Enabling Tracing for Custom Adapter
+docs/ISuite_Integrations_APIs/encode-and-decode-content-2ba8448.md	Encode and Decode Content
+docs/ISuite_Integrations_APIs/encode-dynamic-parameters-d278350.md	Encode Dynamic Parameters
+docs/ISuite_Integrations_APIs/encrypt-and-sign-the-message-content-with-pkcs-7-cms-encryptor-21fd211.md	Encrypt and Sign the Message Content with PKCS 7 Cms Encryptor
+docs/ISuite_Integrations_APIs/endpoint-property-reference-c196cf0.md	Endpoint Property Reference
+docs/ISuite_Integrations_APIs/endpoint-visualization-6c3fb22.md	Endpoint Visualization
+docs/ISuite_Integrations_APIs/ensure-upgrade-readiness-6adb0ca.md	Ensure Upgrade Readiness
+docs/ISuite_Integrations_APIs/ensure-valid-syntax-afab3a1.md	Ensure Valid Syntax
+docs/ISuite_Integrations_APIs/error-classification-3eada96.md	Error Classification
+docs/ISuite_Integrations_APIs/error-response-fe19d58.md	Error Response
+docs/ISuite_Integrations_APIs/error-variables-edf281e.md	Error Variables
+docs/ISuite_Integrations_APIs/escalation-end-event-behavior-39b4b01.md	Escalation End Event Behavior
+docs/ISuite_Integrations_APIs/establish-the-connection-between-the-agent-and-the-mcp-server-dd58b69.md	Establish the Connection Between the Agent and the Mcp Server
+docs/ISuite_Integrations_APIs/establishing-trust-between-sap-cloud-identity-account-and-btp-offerings-7208200.md	Establishing Trust Between SAP Cloud Identity Account and Btp Offerings
+docs/ISuite_Integrations_APIs/establishing-trust-between-sap-hana-cloud-platform-account-and-sap-cloud-identity-c597708.md	Establishing Trust Between SAP Hana Cloud Platform Account and SAP Cloud Identity
+docs/ISuite_Integrations_APIs/event-flow-step-ea36d8d.md	Event Flow Step
+docs/ISuite_Integrations_APIs/example-scenario-sharing-a-variable-across-two-integration-flows-303562c.md	Example Scenario Sharing a Variable Across Two Integration Flows
+docs/ISuite_Integrations_APIs/example-scenario-with-mime-multipart-encoder-decoder-80baed3.md	Example Scenario with Mime Multipart Encoder Decoder
+docs/ISuite_Integrations_APIs/example-transformation-to-a-json-message-without-root-element-tag-35e2b13.md	Example Transformation to a JSON Message Without Root Element Tag
+docs/ISuite_Integrations_APIs/example-transformations-from-json-format-to-xml-format-with-and-without-namespace-mapping-7f3ba39.md	Example Transformations from JSON Format to XML Format with and Without Namespace Mapping
+docs/ISuite_Integrations_APIs/example-transformations-from-xml-format-to-json-format-with-and-without-namespace-mapping-2430dd4.md	Example Transformations from XML Format to JSON Format with and Without Namespace Mapping
+docs/ISuite_Integrations_APIs/example-using-a-global-data-store-and-a-global-variable-773a7ec.md	Example Using a Global Data Store and a Global Variable
+docs/ISuite_Integrations_APIs/examples-6f56308.md	Examples
+docs/ISuite_Integrations_APIs/examples-c8ba267.md	Examples
+docs/ISuite_Integrations_APIs/examples-eb2e601.md	Examples
+docs/ISuite_Integrations_APIs/exception-raised-during-the-transport-ba86ff5.md	Exception Raised During the Transport
+docs/ISuite_Integrations_APIs/executing-the-scenario-909ec34.md	Executing the Scenario
+docs/ISuite_Integrations_APIs/export-a-policy-template-d27df04.md	Export a Policy Template
+docs/ISuite_Integrations_APIs/export-an-api-definition-420abb6.md	Export an API Definition
+docs/ISuite_Integrations_APIs/export-and-import-of-api-definition-901fbde.md	Export and Import of API Definition
+docs/ISuite_Integrations_APIs/export-certificate-1133cca.md	Export Certificate
+docs/ISuite_Integrations_APIs/export-public-key-in-openssh-format-dbf276e.md	Export Public Key in Openssh Format
+docs/ISuite_Integrations_APIs/exporting-integration-packages-95c0299.md	Exporting Integration Packages
+docs/ISuite_Integrations_APIs/expose-an-endpoint-for-a-scheduled-integration-flow-d4bb40c.md	Expose an Endpoint for a Scheduled Integration Flow
+docs/ISuite_Integrations_APIs/external-callout-for-api-artifact-a0b3712.md	External Callout for API Artifact
+docs/ISuite_Integrations_APIs/external-logging-ad719c1.md	External Logging
+docs/ISuite_Integrations_APIs/externalize-parameters-for-api-artifact-ce0a468.md	Externalize Parameters for API Artifact
+docs/ISuite_Integrations_APIs/externalize-parameters-of-an-integration-flow-45b2a07.md	Externalize Parameters of an Integration Flow
+docs/ISuite_Integrations_APIs/externalize-volatile-configurations-300277d.md	Externalize Volatile Configurations
+docs/ISuite_Integrations_APIs/externalized-parameters-view-27a0216.md	Externalized Parameters View
+docs/ISuite_Integrations_APIs/externally-managed-apis-848015d.md	Externally Managed APIS
+docs/ISuite_Integrations_APIs/extract-084e6f2.md	Extract
+docs/ISuite_Integrations_APIs/extract-variables-dad6ef6.md	Extract Variables
+docs/ISuite_Integrations_APIs/facebook-receiver-adapter-3dcc408.md	Facebook Receiver Adapter
+docs/ISuite_Integrations_APIs/features-that-support-quality-of-service-exactly-once-7e7c236.md	Features That Support Quality of Service Exactly Once
+docs/ISuite_Integrations_APIs/fetch-the-partner-info-from-the-partner-directory-a44a1f9.md	Fetch the Partner Info from the Partner Directory
+docs/ISuite_Integrations_APIs/file-resource-79299d3.md	File Resource
+docs/ISuite_Integrations_APIs/find-your-way-around-advanced-api-analytics-dashboard-1f96ba3.md	Find Your Way Around Advanced API Analytics Dashboard
+docs/ISuite_Integrations_APIs/first-steps-create-entities-in-the-partner-directory-d32359a.md	First Steps Create Entities in the Partner Directory
+docs/ISuite_Integrations_APIs/first-steps-import-the-postman-collections-0f4cf38.md	First Steps Import the Postman Collections
+docs/ISuite_Integrations_APIs/fix-script-incompatibilities-7397c42.md	Fix Script Incompatibilities
+docs/ISuite_Integrations_APIs/flow-08b40d9.md	Flow
+docs/ISuite_Integrations_APIs/flow-variables-47f27da.md	Flow Variables
+docs/ISuite_Integrations_APIs/formatting-guidelines-for-csv-files-used-in-value-mapping-8fa8203.md	Formatting Guidelines for CSV Files Used in Value Mapping
+docs/ISuite_Integrations_APIs/ftp-adapter-4464f89.md	FTP Adapter
+docs/ISuite_Integrations_APIs/ftp-connectivity-tests-59eef0d.md	FTP Connectivity Tests
+docs/ISuite_Integrations_APIs/general-and-iterating-splitter-b49d088.md	General and Iterating Splitter
+docs/ISuite_Integrations_APIs/general-and-iterating-splitter-examples-698e594.md	General and Iterating Splitter Examples
+docs/ISuite_Integrations_APIs/general-scripting-guidelines-fcbf0f2.md	General Scripting Guidelines
+docs/ISuite_Integrations_APIs/generate-a-key-pair-4d3dd24.md	Generate a Key Pair
+docs/ISuite_Integrations_APIs/generate-a-personal-access-token-pat-with-required-permissions-7436351.md	Generate a Personal Access Token Pat with Required Permissions
+docs/ISuite_Integrations_APIs/generate-access-token-f6f84ee.md	Generate Access Token
+docs/ISuite_Integrations_APIs/generate-authorization-code-46d9bb6.md	Generate Authorization Code
+docs/ISuite_Integrations_APIs/generate-f9100ff.md	Generate
+docs/ISuite_Integrations_APIs/generate-jwt-c28be0e.md	Generate Jwt
+docs/ISuite_Integrations_APIs/generate-openapi-specification-with-ai-assistance-5ec68db.md	Generate Openapi Specification with Ai Assistance
+docs/ISuite_Integrations_APIs/generating-abap-proxy-c6fcf31.md	Generating Abap Proxy
+docs/ISuite_Integrations_APIs/generating-integration-flows-with-ai-assistance-e0b9e8a.md	Generating Integration Flows with Ai Assistance
+docs/ISuite_Integrations_APIs/generating-xsd-wsdl-for-function-modules-using-esr-process-integration-57a6b6e.md	Generating Xsd Wsdl for Function Modules Using Esr Process Integration
+docs/ISuite_Integrations_APIs/generic-receiver-83a6970.md	Generic Receiver
+docs/ISuite_Integrations_APIs/generic-use-case-70c7774.md	Generic Use Case
+docs/ISuite_Integrations_APIs/get-all-data-store-entries-for-a-data-store-acbef52.md	Get All Data Store Entries for a Data Store
+docs/ISuite_Integrations_APIs/get-all-data-store-entries-for-a-specific-message-id-7de679d.md	Get All Data Store Entries for a Specific Message ID
+docs/ISuite_Integrations_APIs/get-all-data-stores-with-overdue-messages-5173f5c.md	Get All Data Stores with Overdue Messages
+docs/ISuite_Integrations_APIs/get-all-keystore-entries-2b67349.md	Get All Keystore Entries
+docs/ISuite_Integrations_APIs/get-alternative-partner-by-key-fields-b8bd3fb.md	Get Alternative Partner by Key Fields
+docs/ISuite_Integrations_APIs/get-alternative-partners-filter-with-select-ce79cf7.md	Get Alternative Partners Filter with Select
+docs/ISuite_Integrations_APIs/get-custom-header-properties-b90b0b5.md	Get Custom Header Properties
+docs/ISuite_Integrations_APIs/get-custom-tags-defined-on-the-tenant-a947374.md	Get Custom Tags Defined on the Tenant
+docs/ISuite_Integrations_APIs/get-keystore-entry-by-alias-e4526db.md	Get Keystore Entry by Alias
+docs/ISuite_Integrations_APIs/get-keystore-properties-and-entries-bad4cc5.md	Get Keystore Properties and Entries
+docs/ISuite_Integrations_APIs/get-message-processing-logs-for-a-dedicated-time-period-71cb264.md	Get Message Processing Logs for a Dedicated Time Period
+docs/ISuite_Integrations_APIs/get-message-store-entry-properties-a43d59e.md	Get Message Store Entry Properties
+docs/ISuite_Integrations_APIs/get-runtime-status-of-deployed-integration-flow-49c7336.md	Get Runtime Status of Deployed Integration Flow
+docs/ISuite_Integrations_APIs/get-single-data-store-entry-8b86912.md	Get Single Data Store Entry
+docs/ISuite_Integrations_APIs/get-started-with-integration-cell-c4b531d.md	Get Started with Integration Cell
+docs/ISuite_Integrations_APIs/getting-started-0a80259.md	Getting Started
+docs/ISuite_Integrations_APIs/getting-support-for-api-management-on-integration-cell-56c4a70.md	Getting Support for API Management on Integration Cell
+docs/ISuite_Integrations_APIs/git-access-f26175e.md	Git Access
+docs/ISuite_Integrations_APIs/git-pull-013867f.md	Git Pull
+docs/ISuite_Integrations_APIs/git-pull-5a8fdb9.md	Git Pull
+docs/ISuite_Integrations_APIs/git-push-1860d2a.md	Git Push
+docs/ISuite_Integrations_APIs/git-push-97b5594.md	Git Push
+docs/ISuite_Integrations_APIs/go-to-sap-integration-suite-00dca00.md	Go to SAP Integration Suite
+docs/ISuite_Integrations_APIs/google-bigquery-receiver-adapter-722ed6c.md	Google Bigquery Receiver Adapter
+docs/ISuite_Integrations_APIs/google-cloud-storage-adapter-6d7d104.md	Google Cloud Storage Adapter
+docs/ISuite_Integrations_APIs/google-pub-sub-adapter-b75f708.md	Google Pub Sub Adapter
+docs/ISuite_Integrations_APIs/google-workspace-adapter-d15c6a5.md	Google Workspace Adapter
+docs/ISuite_Integrations_APIs/govern-and-manage-the-mcp-server-created-by-connecting-to-a-remote-or-third-paty-mcp-serv-edb5d69.md	Govern and Manage the Mcp Server Created by Connecting to a Remote or Third Paty Mcp Serv
+docs/ISuite_Integrations_APIs/graphical-model-viewer-features-a53aeed.md	Graphical Model Viewer Features
+docs/ISuite_Integrations_APIs/guidelines-and-best-practices-for-content-transport-8a8aa38.md	Guidelines and Best Practices for Content Transport
+docs/ISuite_Integrations_APIs/guidelines-and-best-practices-for-message-monitoring-6f598b4.md	Guidelines and Best Practices for Message Monitoring
+docs/ISuite_Integrations_APIs/guidelines-for-modifying-content-6a7c9a1.md	Guidelines for Modifying Content
+docs/ISuite_Integrations_APIs/guidelines-on-role-assignments-fc409e8.md	Guidelines on Role Assignments
+docs/ISuite_Integrations_APIs/guidelines-to-design-enterprise-grade-integration-flows-a8cd981.md	Guidelines to Design Enterprise Grade Integration Flows
+docs/ISuite_Integrations_APIs/guidelines-to-implement-specific-integration-patterns-eaf929e.md	Guidelines to Implement Specific Integration Patterns
+docs/ISuite_Integrations_APIs/handle-errors-gracefully-42c95f7.md	Handle Errors Gracefully
+docs/ISuite_Integrations_APIs/handle-errors-in-successful-responses-f066020.md	Handle Errors in Successful Responses
+docs/ISuite_Integrations_APIs/handle-exceptions-445a0c6.md	Handle Exceptions
+docs/ISuite_Integrations_APIs/handle-exceptions-ca95c61.md	Handle Exceptions
+docs/ISuite_Integrations_APIs/handle-exceptions-e29a49d.md	Handle Exceptions
+docs/ISuite_Integrations_APIs/handle-exceptions-in-dependent-integration-flows-3973cc3.md	Handle Exceptions in Dependent Integration Flows
+docs/ISuite_Integrations_APIs/handle-exceptions-in-dependent-integration-flows-simple-scenario-984e51a.md	Handle Exceptions in Dependent Integration Flows Simple Scenario
+docs/ISuite_Integrations_APIs/handle-exceptions-in-subprocess-simple-scenario-e8b10b6.md	Handle Exceptions in Subprocess Simple Scenario
+docs/ISuite_Integrations_APIs/handle-exceptions-when-using-the-splitter-pattern-74e431c.md	Handle Exceptions When Using the Splitter Pattern
+docs/ISuite_Integrations_APIs/handle-idoc-bulk-messages-e35e389.md	Handle IDOC Bulk Messages
+docs/ISuite_Integrations_APIs/handling-faults-using-faultrules-and-defaultfaultrule-8be5a7b.md	Handling Faults Using Faultrules and Defaultfaultrule
+docs/ISuite_Integrations_APIs/handling-integration-artifacts-across-multiple-tenants-2a1d598.md	Handling Integration Artifacts Across Multiple Tenants
+docs/ISuite_Integrations_APIs/handling-prepackaged-sap-to-sap-integration-content-2dc4d87.md	Handling Prepackaged SAP to SAP Integration Content
+docs/ISuite_Integrations_APIs/handling-url-redirects-in-an-api-proxy-using-policies-9e63c01.md	Handling URL Redirects in an API Proxy Using Policies
+docs/ISuite_Integrations_APIs/headers-and-exchange-properties-provided-by-the-integration-framework-d0fcb09.md	Headers and Exchange Properties Provided by the Integration Framework
+docs/ISuite_Integrations_APIs/how-model-context-protocol-mcp-server-enables-ai-integration-572e7fd.md	How Model Context Protocol Mcp Server Enables Ai Integration
+docs/ISuite_Integrations_APIs/how-streaming-in-the-xml-to-json-converter-works-4e05044.md	How Streaming in the XML to JSON Converter Works
+docs/ISuite_Integrations_APIs/how-to-work-with-the-example-integration-flows-03e6959.md	How to Work with the Example Integration Flows
+docs/ISuite_Integrations_APIs/http-calls-and-uri-components-ca75e12.md	HTTP Calls and Uri Components
+docs/ISuite_Integrations_APIs/http-receiver-adapter-2da452e.md	HTTP Receiver Adapter
+docs/ISuite_Integrations_APIs/http-receiver-for-an-api-artifact-5866acf.md	HTTP Receiver for an API Artifact
+docs/ISuite_Integrations_APIs/https-sender-adapter-0ae4a78.md	HTTPS Sender Adapter
+docs/ISuite_Integrations_APIs/https-sender-adapter-for-api-artifact-4a0ac44.md	HTTPS Sender Adapter for API Artifact
+docs/ISuite_Integrations_APIs/hubspot-receiver-adapter-48cfaa8.md	Hubspot Receiver Adapter
+docs/ISuite_Integrations_APIs/ibm-mq-adapter-e0bb2df.md	Ibm Mq Adapter
+docs/ISuite_Integrations_APIs/ibm-mq-receiver-adapter-8c17acf.md	Ibm Mq Receiver Adapter
+docs/ISuite_Integrations_APIs/ibm-mq-sender-adapter-95f259b.md	Ibm Mq Sender Adapter
+docs/ISuite_Integrations_APIs/id-mapping-example-581ecfc.md	ID Mapping Example
+docs/ISuite_Integrations_APIs/id-mapping-with-as2-sender-adapter-fe142b3.md	ID Mapping with AS2 Sender Adapter
+docs/ISuite_Integrations_APIs/id-mapping-with-multicast-55f2d4a.md	ID Mapping with Multicast
+docs/ISuite_Integrations_APIs/id-mapping-with-splitter-441e51d.md	ID Mapping with Splitter
+docs/ISuite_Integrations_APIs/idempotent-process-call-handles-duplicates-da18f73.md	Idempotent Process Call Handles Duplicates
+docs/ISuite_Integrations_APIs/idempotent-process-call-handles-duplicates-with-alternative-response-a870621.md	Idempotent Process Call Handles Duplicates with Alternative Response
+docs/ISuite_Integrations_APIs/idempotent-process-call-handles-duplicates-with-jms-and-data-store-operations-727724f.md	Idempotent Process Call Handles Duplicates with JMS and Data Store Operations
+docs/ISuite_Integrations_APIs/idoc-adapter-6042250.md	IDOC Adapter
+docs/ISuite_Integrations_APIs/idoc-receiver-handles-duplicates-8f8feea.md	IDOC Receiver Handles Duplicates
+docs/ISuite_Integrations_APIs/idoc-receiver-handles-duplicates-based-on-unique-id-in-payload-bb441a9.md	IDOC Receiver Handles Duplicates Based on Unique ID in Payload
+docs/ISuite_Integrations_APIs/idoc-receiver-handles-duplicates-with-decoupling-via-jms-queue-776b640.md	IDOC Receiver Handles Duplicates with Decoupling via JMS Queue
+docs/ISuite_Integrations_APIs/idoc-sender-scenario-7266628.md	IDOC Sender Scenario
+docs/ISuite_Integrations_APIs/imap-connectivity-tests-44e8e8e.md	IMAP Connectivity Tests
+docs/ISuite_Integrations_APIs/import-a-policy-template-52263ad.md	Import a Policy Template
+docs/ISuite_Integrations_APIs/import-an-api-definition-9342a93.md	Import an API Definition
+docs/ISuite_Integrations_APIs/import-and-publish-apis-from-external-gateways-961d39e.md	Import and Publish APIS from External Gateways
+docs/ISuite_Integrations_APIs/import-and-update-certificate-be3a0b9.md	Import and Update Certificate
+docs/ISuite_Integrations_APIs/import-back-up-a-keystore-bcff852.md	Import Back Up a Keystore
+docs/ISuite_Integrations_APIs/import-events-as-asyncapi-specification-a717c7b.md	Import Events as Asyncapi Specification
+docs/ISuite_Integrations_APIs/import-from-data-source-a416c96.md	Import from Data Source
+docs/ISuite_Integrations_APIs/import-function-library-from-es-repository-d6e7585.md	Import Function Library from Es Repository
+docs/ISuite_Integrations_APIs/import-integration-adapters-386d7d0.md	Import Integration Adapters
+docs/ISuite_Integrations_APIs/import-integration-flows-from-git-repository-223f83c.md	Import Integration Flows from Git Repository
+docs/ISuite_Integrations_APIs/import-integration-flows-from-git-repository-fc9fac2.md	Import Integration Flows from Git Repository
+docs/ISuite_Integrations_APIs/import-service-interface-from-enterprise-service-repository-1629d6a.md	Import Service Interface from Enterprise Service Repository
+docs/ISuite_Integrations_APIs/important-concepts-of-api-management-414808b.md	Important Concepts of API Management
+docs/ISuite_Integrations_APIs/important-notes-on-security-risks-and-mailbox-settings-34aa095.md	Important Notes on Security Risks and Mailbox Settings
+docs/ISuite_Integrations_APIs/importing-custom-integration-adapter-482286e.md	Importing Custom Integration Adapter
+docs/ISuite_Integrations_APIs/importing-data-type-from-enterprise-service-repository-af14cac.md	Importing Data Type from Enterprise Service Repository
+docs/ISuite_Integrations_APIs/importing-fault-message-type-04af225.md	Importing Fault Message Type
+docs/ISuite_Integrations_APIs/importing-from-odata-578a396.md	Importing from ODATA
+docs/ISuite_Integrations_APIs/importing-from-odc-2ecdaf9.md	Importing from Odc
+docs/ISuite_Integrations_APIs/importing-from-soap-f7d228c.md	Importing from SOAP
+docs/ISuite_Integrations_APIs/importing-integration-packages-b6a1a61.md	Importing Integration Packages
+docs/ISuite_Integrations_APIs/importing-message-type-from-the-enterprise-service-repository-13a0318.md	Importing Message Type from the Enterprise Service Repository
+docs/ISuite_Integrations_APIs/importing-value-mapping-from-integration-directory-26dd264.md	Importing Value Mapping from Integration Directory
+docs/ISuite_Integrations_APIs/include-only-used-import-statements-1220ae1.md	Include Only Used Import Statements
+docs/ISuite_Integrations_APIs/inspect-a4d5e49.md	Inspect
+docs/ISuite_Integrations_APIs/inspect-content-size-f72b7ff.md	Inspect Content Size
+docs/ISuite_Integrations_APIs/inspect-data-store-usage-fcc08f6.md	Inspect Data Store Usage
+docs/ISuite_Integrations_APIs/inspect-database-connection-usage-567eb42.md	Inspect Database Connection Usage
+docs/ISuite_Integrations_APIs/inspect-database-transaction-usage-6736a37.md	Inspect Database Transaction Usage
+docs/ISuite_Integrations_APIs/inspect-integration-flows-by-system-memory-usage-2a2e1f2.md	Inspect Integration Flows by System Memory Usage
+docs/ISuite_Integrations_APIs/inspect-monitoring-storage-usage-216dc43.md	Inspect Monitoring Storage Usage
+docs/ISuite_Integrations_APIs/inspect-resource-consumption-for-individual-integration-flow-3380bd6.md	Inspect Resource Consumption for Individual Integration Flow
+docs/ISuite_Integrations_APIs/inspect-system-memory-usage-e9617dd.md	Inspect System Memory Usage
+docs/ISuite_Integrations_APIs/inspect-temporary-storage-7cdfaa7.md	Inspect Temporary Storage
+docs/ISuite_Integrations_APIs/inspect-top-consuming-integration-flows-c8fd522.md	Inspect Top Consuming Integration Flows
+docs/ISuite_Integrations_APIs/inspect-top-data-stores-by-message-size-00431bf.md	Inspect Top Data Stores by Message Size
+docs/ISuite_Integrations_APIs/inspect-top-data-stores-by-usage-55670e6.md	Inspect Top Data Stores by Usage
+docs/ISuite_Integrations_APIs/inspect-top-integration-flows-by-database-connection-usage-79c5a05.md	Inspect Top Integration Flows by Database Connection Usage
+docs/ISuite_Integrations_APIs/inspect-top-integration-flows-by-maximum-transaction-duration-ab67942.md	Inspect Top Integration Flows by Maximum Transaction Duration
+docs/ISuite_Integrations_APIs/inspect-top-integration-flows-by-message-processing-log-count-696b65e.md	Inspect Top Integration Flows by Message Processing Log Count
+docs/ISuite_Integrations_APIs/inspect-top-integration-flows-by-storage-usage-9183e3b.md	Inspect Top Integration Flows by Storage Usage
+docs/ISuite_Integrations_APIs/inspect-top-integration-flows-with-failed-connection-attempts-5d9d214.md	Inspect Top Integration Flows with Failed Connection Attempts
+docs/ISuite_Integrations_APIs/install-and-configure-mendelson-cfa038e.md	Install and Configure Mendelson
+docs/ISuite_Integrations_APIs/integrating-with-github-162c3c7.md	Integrating with Github
+docs/ISuite_Integrations_APIs/integration-adapter-example-requests-b996c4f.md	Integration Adapter Example Requests
+docs/ISuite_Integrations_APIs/integration-artifact-types-bf932e0.md	Integration Artifact Types
+docs/ISuite_Integrations_APIs/integration-capabilities-e32cede.md	Integration Capabilities
+docs/ISuite_Integrations_APIs/integration-cell-bd33000.md	Integration Cell
+docs/ISuite_Integrations_APIs/integration-content-d1679a8.md	Integration Content
+docs/ISuite_Integrations_APIs/integration-content-example-requests-60cc8f1.md	Integration Content Example Requests
+docs/ISuite_Integrations_APIs/integration-content-migration-agent-28a8698.md	Integration Content Migration Agent
+docs/ISuite_Integrations_APIs/integration-development-b18936e.md	Integration Development
+docs/ISuite_Integrations_APIs/integration-flow-deployed-on-multiple-worker-nodes-95bb34a.md	Integration Flow Deployed on Multiple Worker Nodes
+docs/ISuite_Integrations_APIs/integration-flow-design-guidelines-6803389.md	Integration Flow Design Guidelines
+docs/ISuite_Integrations_APIs/integration-flow-example-requests-d4c9711.md	Integration Flow Example Requests
+docs/ISuite_Integrations_APIs/integration-flow-extension-concepts-41b238c.md	Integration Flow Extension Concepts
+docs/ISuite_Integrations_APIs/integration-flow-extension-d374172.md	Integration Flow Extension
+docs/ISuite_Integrations_APIs/integration-package-example-requests-24a39f0.md	Integration Package Example Requests
+docs/ISuite_Integrations_APIs/integration-scenarios-89ab77b.md	Integration Scenarios
+docs/ISuite_Integrations_APIs/interaction-of-the-involved-integration-flows-44be68d.md	Interaction of the Involved Integration Flows
+docs/ISuite_Integrations_APIs/invalidate-cache-82fab59.md	Invalidate Cache
+docs/ISuite_Integrations_APIs/invoke-an-api-artifact-by-obtaining-credentials-through-process-integration-runtime-b63baa2.md	Invoke an API Artifact by Obtaining Credentials Through Process Integration Runtime
+docs/ISuite_Integrations_APIs/invoke-an-api-artifact-by-obtaining-credentials-via-developer-hub-e79810f.md	Invoke an API Artifact by Obtaining Credentials via Developer Hub
+docs/ISuite_Integrations_APIs/invoke-an-mcp-server-artifact-by-obtaining-credentials-through-process-integration-runtim-f3c6e2e.md	Invoke an Mcp Server Artifact by Obtaining Credentials Through Process Integration Runtim
+docs/ISuite_Integrations_APIs/invoke-an-mcp-server-artifact-by-obtaining-credentials-via-developer-hub-bffa481.md	Invoke an Mcp Server Artifact by Obtaining Credentials via Developer Hub
+docs/ISuite_Integrations_APIs/invoke-an-mcp-server-from-joule-work-desktop-9fb76ec.md	Invoke an Mcp Server from Joule Work Desktop
+docs/ISuite_Integrations_APIs/invoke-the-api-endpoint-url-946b72a.md	Invoke the API Endpoint URL
+docs/ISuite_Integrations_APIs/invoke-the-mcp-server-endpoint-url-02b55b0.md	Invoke the Mcp Server Endpoint URL
+docs/ISuite_Integrations_APIs/invoking-an-odata-api-0174c4a.md	Invoking an ODATA API
+docs/ISuite_Integrations_APIs/ip-filter-3a8b424.md	IP Filter
+docs/ISuite_Integrations_APIs/java-script-object-model-e4d04da.md	Java Script Object Model
+docs/ISuite_Integrations_APIs/javascript-5b63ed7.md	Javascript
+docs/ISuite_Integrations_APIs/jdbc-for-db2-on-premise-9515cf8.md	JDBC for Db2 on Premise
+docs/ISuite_Integrations_APIs/jdbc-for-mariadb-cloud-1d320d6.md	JDBC for Mariadb Cloud
+docs/ISuite_Integrations_APIs/jdbc-for-mariadb-on-premise-1cfb512.md	JDBC for Mariadb on Premise
+docs/ISuite_Integrations_APIs/jdbc-for-microsoft-sql-server-cloud-4173d0a.md	JDBC for Microsoft Sql Server Cloud
+docs/ISuite_Integrations_APIs/jdbc-for-microsoft-sql-server-on-premise-9745e40.md	JDBC for Microsoft Sql Server on Premise
+docs/ISuite_Integrations_APIs/jdbc-for-oracle-cloud-f868182.md	JDBC for Oracle Cloud
+docs/ISuite_Integrations_APIs/jdbc-for-oracle-on-premise-e6db38a.md	JDBC for Oracle on Premise
+docs/ISuite_Integrations_APIs/jdbc-for-postgres-on-premise-d31edb4.md	JDBC for Postgres on Premise
+docs/ISuite_Integrations_APIs/jdbc-for-postgresql-cloud-4d5b488.md	JDBC for Postgresql Cloud
+docs/ISuite_Integrations_APIs/jdbc-for-sap-ase-platform-on-premise-dad011d.md	JDBC for SAP Ase Platform on Premise
+docs/ISuite_Integrations_APIs/jdbc-for-sap-ase-service-cloud-d96c7c5.md	JDBC for SAP Ase Service Cloud
+docs/ISuite_Integrations_APIs/jdbc-for-sap-hana-cloud-187a8e8.md	JDBC for SAP Hana Cloud
+docs/ISuite_Integrations_APIs/jdbc-for-sap-hana-platform-on-premise-ff29388.md	JDBC for SAP Hana Platform on Premise
+docs/ISuite_Integrations_APIs/jdbc-receiver-adapter-88be644.md	JDBC Receiver Adapter
+docs/ISuite_Integrations_APIs/jira-receiver-adapter-d15b560.md	Jira Receiver Adapter
+docs/ISuite_Integrations_APIs/jms-adapter-0993f2a.md	JMS Adapter
+docs/ISuite_Integrations_APIs/jms-resource-limits-and-optimizing-their-usage-4857054.md	JMS Resource Limits and Optimizing Their Usage
+docs/ISuite_Integrations_APIs/jms-resource-limits-for-edge-integration-cell-17366b3.md	JMS Resource Limits for Edge Integration Cell
+docs/ISuite_Integrations_APIs/jms-resources-example-requests-c6c00d5.md	JMS Resources Example Requests
+docs/ISuite_Integrations_APIs/jms-send-step-in-local-integration-process-a5644c8.md	JMS Send Step in Local Integration Process
+docs/ISuite_Integrations_APIs/json-threat-protection-952cbd7.md	JSON Threat Protection
+docs/ISuite_Integrations_APIs/json-threat-protection-c4991a6.md	JSON Threat Protection
+docs/ISuite_Integrations_APIs/json-to-xml-908598d.md	JSON to XML
+docs/ISuite_Integrations_APIs/json-web-tokens-bb1e955.md	JSON Web Tokens
+docs/ISuite_Integrations_APIs/kafka-adapter-3e7b995.md	KAFKA Adapter
+docs/ISuite_Integrations_APIs/kafka-connectivity-tests-292ae03.md	KAFKA Connectivity Tests
+docs/ISuite_Integrations_APIs/keep-modifications-separate-from-prepackaged-integration-content-1f4c046.md	Keep Modifications Separate from Prepackaged Integration Content
+docs/ISuite_Integrations_APIs/keep-readability-in-mind-578fa77.md	Keep Readability in Mind
+docs/ISuite_Integrations_APIs/key-components-of-an-api-19c0654.md	Key Components of an API
+docs/ISuite_Integrations_APIs/key-performance-indicators-for-archiving-runs-7279d38.md	Key Performance Indicators for Archiving Runs
+docs/ISuite_Integrations_APIs/key-personas-for-api-centric-integrations-73b3e92.md	Key Personas for API Centric Integrations
+docs/ISuite_Integrations_APIs/key-value-map-3722a39.md	Key Value Map
+docs/ISuite_Integrations_APIs/key-value-map-operations-b72dc3f.md	Key Value Map Operations
+docs/ISuite_Integrations_APIs/known-limitations-for-importing-message-mappings-from-enterprise-services-repository-esr-85a12a8.md	Known Limitations for Importing Message Mappings from Enterprise Services Repository Esr
+docs/ISuite_Integrations_APIs/known-limitations-of-migration-tooling-7a552d4.md	Known Limitations of Migration Tooling
+docs/ISuite_Integrations_APIs/ldap-receiver-adapter-06a753f.md	LDAP Receiver Adapter
+docs/ISuite_Integrations_APIs/leanix-receiver-adapter-e49c1de.md	Leanix Receiver Adapter
+docs/ISuite_Integrations_APIs/learn-the-basics-ebc6034.md	Learn the Basics
+docs/ISuite_Integrations_APIs/limit-size-of-deployed-integration-content-417f82b.md	Limit Size of Deployed Integration Content
+docs/ISuite_Integrations_APIs/limit-size-of-incoming-messages-8319e33.md	Limit Size of Incoming Messages
+docs/ISuite_Integrations_APIs/limitations-08d4522.md	Limitations
+docs/ISuite_Integrations_APIs/limitations-for-json-to-xml-conversion-3a02829.md	Limitations for JSON to XML Conversion
+docs/ISuite_Integrations_APIs/limitations-for-xml-to-json-conversion-4bf5a05.md	Limitations for XML to JSON Conversion
+docs/ISuite_Integrations_APIs/limits-in-api-centric-integration-e7613e9.md	Limits in API Centric Integration
+docs/ISuite_Integrations_APIs/limits-in-api-management-f70f425.md	Limits in API Management
+docs/ISuite_Integrations_APIs/list-of-method-groups-95929c6.md	List of Method Groups
+docs/ISuite_Integrations_APIs/load-balancing-across-api-providers-7ac0c09.md	Load Balancing Across API Providers
+docs/ISuite_Integrations_APIs/local-odata-api-access-for-edge-integration-cell-a17fa4d.md	Local ODATA API Access for Edge Integration Cell
+docs/ISuite_Integrations_APIs/log-level-configuration-for-analytics-5405323.md	Log Level Configuration for Analytics
+docs/ISuite_Integrations_APIs/log-the-behavior-of-an-integration-flow-5a3ec6d.md	Log the Behavior of an Integration Flow
+docs/ISuite_Integrations_APIs/lookup-cache-dcb1507.md	Lookup Cache
+docs/ISuite_Integrations_APIs/mail-adapter-f1145cc.md	MAIL Adapter
+docs/ISuite_Integrations_APIs/mail-sender-for-imap-5b94e42.md	MAIL Sender for IMAP
+docs/ISuite_Integrations_APIs/mail-sender-for-pop3-c52a4da.md	MAIL Sender for POP3
+docs/ISuite_Integrations_APIs/manage-access-ad1b441.md	Manage Access
+docs/ISuite_Integrations_APIs/manage-certificates-c665875.md	Manage Certificates
+docs/ISuite_Integrations_APIs/manage-content-4b89a8b.md	Manage Content
+docs/ISuite_Integrations_APIs/manage-domain-categories-bd9691d.md	Manage Domain Categories
+docs/ISuite_Integrations_APIs/manage-governance-settings-3c87658.md	Manage Governance Settings
+docs/ISuite_Integrations_APIs/manage-integration-content-09a7223.md	Manage Integration Content
+docs/ISuite_Integrations_APIs/manage-large-batch-sizes-825d2cf.md	Manage Large Batch Sizes
+docs/ISuite_Integrations_APIs/manage-locks-e3fb788.md	Manage Locks
+docs/ISuite_Integrations_APIs/manage-notifications-df32457.md	Manage Notifications
+docs/ISuite_Integrations_APIs/manage-product-subscriptions-452fcef.md	Manage Product Subscriptions
+docs/ISuite_Integrations_APIs/manage-products-4dd3d90.md	Manage Products
+docs/ISuite_Integrations_APIs/manage-references-b5968b2.md	Manage References
+docs/ISuite_Integrations_APIs/manage-scheduled-requests-7236981.md	Manage Scheduled Requests
+docs/ISuite_Integrations_APIs/manage-security-6e7c44c.md	Manage Security
+docs/ISuite_Integrations_APIs/manage-stores-59f8e3a.md	Manage Stores
+docs/ISuite_Integrations_APIs/managing-access-policies-318d107.md	Managing Access Policies
+docs/ISuite_Integrations_APIs/managing-api-endpoints-ac794e4.md	Managing API Endpoints
+docs/ISuite_Integrations_APIs/managing-cloud-foundry-microservices-through-api-management-e609a3e.md	Managing Cloud Foundry Microservices Through API Management
+docs/ISuite_Integrations_APIs/managing-cluster-lock-in-custom-adapters-b0106a1.md	Managing Cluster Lock in Custom Adapters
+docs/ISuite_Integrations_APIs/managing-data-stores-ac39f1d.md	Managing Data Stores
+docs/ISuite_Integrations_APIs/managing-jdbc-data-sources-4c873fa.md	Managing JDBC Data Sources
+docs/ISuite_Integrations_APIs/managing-jdbc-material-32ee7cd.md	Managing JDBC Material
+docs/ISuite_Integrations_APIs/managing-keystore-entries-2dc8942.md	Managing Keystore Entries
+docs/ISuite_Integrations_APIs/managing-message-queues-cdcce24.md	Managing Message Queues
+docs/ISuite_Integrations_APIs/managing-messages-stored-in-queues-6733197.md	Managing Messages Stored in Queues
+docs/ISuite_Integrations_APIs/managing-number-ranges-b6e17fa.md	Managing Number Ranges
+docs/ISuite_Integrations_APIs/managing-partner-directory-entries-3d6eee7.md	Managing Partner Directory Entries
+docs/ISuite_Integrations_APIs/managing-pgp-keys-cd478a7.md	Managing PGP Keys
+docs/ISuite_Integrations_APIs/managing-queues-f116962.md	Managing Queues
+docs/ISuite_Integrations_APIs/managing-security-material-b8ccb53.md	Managing Security Material
+docs/ISuite_Integrations_APIs/managing-the-access-request-of-the-users-8b79ee8.md	Managing the Access Request of the Users
+docs/ISuite_Integrations_APIs/managing-the-access-request-of-the-users-e0ef283.md	Managing the Access Request of the Users
+docs/ISuite_Integrations_APIs/managing-the-lifecycle-of-keys-7d24b61.md	Managing the Lifecycle of Keys
+docs/ISuite_Integrations_APIs/managing-unused-bindings-585639c.md	Managing Unused Bindings
+docs/ISuite_Integrations_APIs/managing-user-roles-4e86f0d.md	Managing User Roles
+docs/ISuite_Integrations_APIs/managing-variables-ca93653.md	Managing Variables
+docs/ISuite_Integrations_APIs/mapping-extension-step-by-step-demo-example-2c3a543.md	Mapping Extension Step by Step Demo Example
+docs/ISuite_Integrations_APIs/mapping-extension-step-by-step-example-from-sap-hybris-c4c-7749fb7.md	Mapping Extension Step by Step Example from SAP Hybris C4c
+docs/ISuite_Integrations_APIs/mapping-flow-step-e6b35d1.md	Mapping Flow Step
+docs/ISuite_Integrations_APIs/mass-create-change-delete-operations-in-one-transaction-for-stringparameter-binaryparamet-fe81049.md	Mass Create Change Delete Operations in One Transaction for Stringparameter Binaryparamet
+docs/ISuite_Integrations_APIs/master-data-update-with-jms-send-steps-1c3e583.md	Master Data Update with JMS Send Steps
+docs/ISuite_Integrations_APIs/master-data-update-with-xi-send-steps-5fb0541.md	Master Data Update with XI Send Steps
+docs/ISuite_Integrations_APIs/mcp-server-9eb9239.md	Mcp Server
+docs/ISuite_Integrations_APIs/mcp-server-charts-c2f3acc.md	Mcp Server Charts
+docs/ISuite_Integrations_APIs/message-filter-bd52346.md	Message Filter
+docs/ISuite_Integrations_APIs/message-headers-e26ab8c.md	Message Headers
+docs/ISuite_Integrations_APIs/message-locks-bce9ae0.md	Message Locks
+docs/ISuite_Integrations_APIs/message-logging-policy-6407ae7.md	Message Logging Policy
+docs/ISuite_Integrations_APIs/message-mapping-459ccdf.md	Message Mapping
+docs/ISuite_Integrations_APIs/message-mapping-ec59f97.md	Message Mapping
+docs/ISuite_Integrations_APIs/message-monitoring-8398448.md	Message Monitoring
+docs/ISuite_Integrations_APIs/message-persistence-flow-steps-e18e75a.md	Message Persistence Flow Steps
+docs/ISuite_Integrations_APIs/message-processing-log-adapter-tracing-a9db4ea.md	Message Processing Log Adapter Tracing
+docs/ISuite_Integrations_APIs/message-processing-log-b32f8cd.md	Message Processing Log
+docs/ISuite_Integrations_APIs/message-processing-log-text-view-718309a.md	Message Processing Log Text View
+docs/ISuite_Integrations_APIs/message-processing-logs-827a2d7.md	Message Processing Logs
+docs/ISuite_Integrations_APIs/message-processing-logs-example-requests-27bc167.md	Message Processing Logs Example Requests
+docs/ISuite_Integrations_APIs/message-status-733a57b.md	Message Status
+docs/ISuite_Integrations_APIs/message-stores-1aab5e9.md	Message Stores
+docs/ISuite_Integrations_APIs/message-stores-example-requests-02c57df.md	Message Stores Example Requests
+docs/ISuite_Integrations_APIs/message-transformer-flow-steps-01de28e.md	Message Transformer Flow Steps
+docs/ISuite_Integrations_APIs/message-validation-policy-e68da2f.md	Message Validation Policy
+docs/ISuite_Integrations_APIs/message-variables-aaf8bae.md	Message Variables
+docs/ISuite_Integrations_APIs/microsoft-dynamics-crm-receiver-adapter-ee724c8.md	Microsoft Dynamics Crm Receiver Adapter
+docs/ISuite_Integrations_APIs/microsoft-onedrive-adapter-dbbaf69.md	Microsoft Onedrive Adapter
+docs/ISuite_Integrations_APIs/microsoft-onenote-receiver-adapter-4ecc717.md	Microsoft Onenote Receiver Adapter
+docs/ISuite_Integrations_APIs/microsoft-outlook-adapter-7d148b0.md	Microsoft Outlook Adapter
+docs/ISuite_Integrations_APIs/microsoft-outlook-receiver-adapter-0d61459.md	Microsoft Outlook Receiver Adapter
+docs/ISuite_Integrations_APIs/microsoft-outlook-sender-adapter-47704aa.md	Microsoft Outlook Sender Adapter
+docs/ISuite_Integrations_APIs/microsoft-sharepoint-adapter-c943b90.md	Microsoft Sharepoint Adapter
+docs/ISuite_Integrations_APIs/microsoft-teams-receiver-adapter-1f333c3.md	Microsoft Teams Receiver Adapter
+docs/ISuite_Integrations_APIs/migrate-integration-objects-from-sap-process-orchestration-and-sap-process-integration-7e7909e.md	Migrate Integration Objects from SAP Process Orchestration and SAP Process Integration
+docs/ISuite_Integrations_APIs/migration-approaches-9ddb257.md	Migration Approaches
+docs/ISuite_Integrations_APIs/migration-patterns-40c080f.md	Migration Patterns
+docs/ISuite_Integrations_APIs/migration-tooling-6061016.md	Migration Tooling
+docs/ISuite_Integrations_APIs/mime-multipart-encoder-handling-message-headers-examples-b446281.md	Mime Multipart Encoder Handling Message Headers Examples
+docs/ISuite_Integrations_APIs/mime-multipart-messages-3816537.md	Mime Multipart Messages
+docs/ISuite_Integrations_APIs/modernize-2cd9ca4.md	Modernize
+docs/ISuite_Integrations_APIs/modes-of-the-quota-policy-61b36a1.md	Modes of the Quota Policy
+docs/ISuite_Integrations_APIs/modify-an-openapi-specification-using-the-code-editor-4923e5e.md	Modify an Openapi Specification Using the Code Editor
+docs/ISuite_Integrations_APIs/modify-an-openapi-specification-using-the-visual-editor-f3c95cd.md	Modify an Openapi Specification Using the Visual Editor
+docs/ISuite_Integrations_APIs/modify-content-fc0d3c4.md	Modify Content
+docs/ISuite_Integrations_APIs/modifying-successfactors-soap-entity-and-operation-a6ee603.md	Modifying Successfactors SOAP Entity and Operation
+docs/ISuite_Integrations_APIs/modularizing-supported-patterns-59515e5.md	Modularizing Supported Patterns
+docs/ISuite_Integrations_APIs/monetize-49b7841.md	Monetize
+docs/ISuite_Integrations_APIs/monetize-apis-fcdc89b.md	Monetize APIS
+docs/ISuite_Integrations_APIs/mongodb-receiver-adapter-58b75fc.md	Mongodb Receiver Adapter
+docs/ISuite_Integrations_APIs/monitor-apis-and-mcp-servers-399b6c6.md	Monitor APIS and Mcp Servers
+docs/ISuite_Integrations_APIs/monitor-integrations-05446d0.md	Monitor Integrations
+docs/ISuite_Integrations_APIs/monitor-message-processing-314df3f.md	Monitor Message Processing
+docs/ISuite_Integrations_APIs/monitor-message-status-overview-0cde046.md	Monitor Message Status Overview
+docs/ISuite_Integrations_APIs/monitor-the-health-of-certificates-using-sap-cloud-alm-7bd9d9f.md	Monitor the Health of Certificates Using SAP Cloud Alm
+docs/ISuite_Integrations_APIs/monitor-with-ai-0f656c7.md	Monitor with Ai
+docs/ISuite_Integrations_APIs/monitoring-scenarios-that-include-message-queues-35c4caf.md	Monitoring Scenarios That Include Message Queues
+docs/ISuite_Integrations_APIs/monitoring-system-log-files-4002376.md	Monitoring System Log Files
+docs/ISuite_Integrations_APIs/multi-value-http-headers-in-an-api-proxy-5eb7100.md	Multi Value HTTP Headers in an API Proxy
+docs/ISuite_Integrations_APIs/naming-conventions-7c00e9b.md	Naming Conventions
+docs/ISuite_Integrations_APIs/netsuite-receiver-adapter-618127a.md	Netsuite Receiver Adapter
+docs/ISuite_Integrations_APIs/nfs-adapter-c05869d.md	Nfs Adapter
+docs/ISuite_Integrations_APIs/non-rfc-compliant-behavior-oauthv2-policy-7a98cc9.md	Non RFC Compliant Behavior Oauthv2 Policy
+docs/ISuite_Integrations_APIs/oauth-2-0-grant-types-308a18a.md	OAUTH 2 0 Grant Types
+docs/ISuite_Integrations_APIs/oauth-v2-0-09b5abb.md	OAUTH V2 0
+docs/ISuite_Integrations_APIs/oauth-v2-0-get-2e507ea.md	OAUTH V2 0 Get
+docs/ISuite_Integrations_APIs/oauth-v2-0-set-161c1e3.md	OAUTH V2 0 Set
+docs/ISuite_Integrations_APIs/odata-adapter-2d82511.md	ODATA Adapter
+docs/ISuite_Integrations_APIs/odata-api-a617d6f.md	ODATA API
+docs/ISuite_Integrations_APIs/odata-model-editor-features-7d298e2.md	ODATA Model Editor Features
+docs/ISuite_Integrations_APIs/odata-receiver-adapter-for-api-artifact-c34c22f.md	ODATA Receiver Adapter for API Artifact
+docs/ISuite_Integrations_APIs/odata-sender-adapter-for-api-artifact-a636209.md	ODATA Sender Adapter for API Artifact
+docs/ISuite_Integrations_APIs/odc-receiver-adapter-3cdbc29.md	Odc Receiver Adapter
+docs/ISuite_Integrations_APIs/oftp-adapter-for-edge-integration-cell-04b392f.md	Oftp Adapter for Edge Integration Cell
+docs/ISuite_Integrations_APIs/onboarding-an-application-developer-786d107.md	Onboarding an Application Developer
+docs/ISuite_Integrations_APIs/open-connectors-3446d59.md	Open Connectors
+docs/ISuite_Integrations_APIs/openapi-specification-3-0-3ce080d.md	Openapi Specification 3 0
+docs/ISuite_Integrations_APIs/openapi-specification-3-0-db3537a.md	Openapi Specification 3 0
+docs/ISuite_Integrations_APIs/openapi-specification-editors-2bf94eb.md	Openapi Specification Editors
+docs/ISuite_Integrations_APIs/openconnectors-receiver-adapter-1a27cee.md	Openconnectors Receiver Adapter
+docs/ISuite_Integrations_APIs/operation-mapping-05b9569.md	Operation Mapping
+docs/ISuite_Integrations_APIs/operations-and-methods-a5ffb3f.md	Operations and Methods
+docs/ISuite_Integrations_APIs/operations-cockpit-api-da1abc0.md	Operations Cockpit API
+docs/ISuite_Integrations_APIs/optimize-groovy-scripts-with-ai-3b7a5a1.md	Optimize Groovy Scripts with Ai
+docs/ISuite_Integrations_APIs/optimize-integration-flow-design-for-streaming-396941a.md	Optimize Integration Flow Design for Streaming
+docs/ISuite_Integrations_APIs/optimize-memory-footprint-dc24074.md	Optimize Memory Footprint
+docs/ISuite_Integrations_APIs/optimize-performance-491c80d.md	Optimize Performance
+docs/ISuite_Integrations_APIs/options-to-protect-mail-connections-94bd058.md	Options to Protect MAIL Connections
+docs/ISuite_Integrations_APIs/other-issues-e6755e1.md	Other Issues
+docs/ISuite_Integrations_APIs/outbound-headers-in-the-rnif-adapter-6586e51.md	Outbound Headers in the Rnif Adapter
+docs/ISuite_Integrations_APIs/outsource-exception-handling-into-a-separate-integration-flow-7f3bb85.md	Outsource Exception Handling Into a Separate Integration Flow
+docs/ISuite_Integrations_APIs/outsource-integration-logic-into-separate-integration-flows-0bcf78d.md	Outsource Integration Logic Into Separate Integration Flows
+docs/ISuite_Integrations_APIs/overriding-the-default-update-operation-for-api-proxy-of-type-odata-4a12c59.md	Overriding the Default Update Operation for API Proxy of Type ODATA
+docs/ISuite_Integrations_APIs/overview-of-integration-flow-editor-db10beb.md	Overview of Integration Flow Editor
+docs/ISuite_Integrations_APIs/packaging-integration-content-in-sap-integration-suite-89da0a2.md	Packaging Integration Content in SAP Integration Suite
+docs/ISuite_Integrations_APIs/parameterizable-integration-flow-components-1aa4ba7.md	Parameterizable Integration Flow Components
+docs/ISuite_Integrations_APIs/parameterizing-integration-flows-using-the-partner-directory-b7812a5.md	Parameterizing Integration Flows Using the Partner Directory
+docs/ISuite_Integrations_APIs/parameters-that-support-dynamic-configuration-c9bba0e.md	Parameters That Support Dynamic Configuration
+docs/ISuite_Integrations_APIs/parse-json-af0da64.md	Parse JSON
+docs/ISuite_Integrations_APIs/participant-flow-step-52c4e0f.md	Participant Flow Step
+docs/ISuite_Integrations_APIs/partner-authorization-inbound-c0c9950.md	Partner Authorization Inbound
+docs/ISuite_Integrations_APIs/partner-directory-0fe80dc.md	Partner Directory
+docs/ISuite_Integrations_APIs/partner-directory-cache-1577f77.md	Partner Directory Cache
+docs/ISuite_Integrations_APIs/partner-directory-concepts-f917d6e.md	Partner Directory Concepts
+docs/ISuite_Integrations_APIs/partner-directory-entity-types-950f4b2.md	Partner Directory Entity Types
+docs/ISuite_Integrations_APIs/partner-directory-example-requests-30e9cd6.md	Partner Directory Example Requests
+docs/ISuite_Integrations_APIs/path-variables-4821925.md	Path Variables
+docs/ISuite_Integrations_APIs/payload-and-operation-71b20d4.md	Payload and Operation
+docs/ISuite_Integrations_APIs/perform-additional-tasks-in-api-designer-a92cf80.md	Perform Additional Tasks in API Designer
+docs/ISuite_Integrations_APIs/perform-additional-tasks-in-api-specification-42f0f99.md	Perform Additional Tasks in API Specification
+docs/ISuite_Integrations_APIs/perform-an-xslt-mapping-c6bf239.md	Perform an XSLT Mapping
+docs/ISuite_Integrations_APIs/perform-odata-batch-requests-b0372d4.md	Perform ODATA Batch Requests
+docs/ISuite_Integrations_APIs/performing-connectivity-tests-d5b2fae.md	Performing Connectivity Tests
+docs/ISuite_Integrations_APIs/permissions-eaa8779.md	Permissions
+docs/ISuite_Integrations_APIs/persist-messages-8c35f3f.md	Persist Messages
+docs/ISuite_Integrations_APIs/persistence-0c93d55.md	Persistence
+docs/ISuite_Integrations_APIs/pipeline-approach-efc40f8.md	Pipeline Approach
+docs/ISuite_Integrations_APIs/policies-7e4f3e5.md	Policies
+docs/ISuite_Integrations_APIs/policy-template-structure-a0210da.md	Policy Template Structure
+docs/ISuite_Integrations_APIs/policy-types-c918e28.md	Policy Types
+docs/ISuite_Integrations_APIs/poll-and-merge-folder-497bf08.md	Poll and Merge Folder
+docs/ISuite_Integrations_APIs/poll-file-by-done-file-800de6e.md	Poll File by Done File
+docs/ISuite_Integrations_APIs/poll-folder-by-fixed-done-file-0041751.md	Poll Folder by Fixed Done File
+docs/ISuite_Integrations_APIs/pop3-connectivity-tests-40eb051.md	POP3 Connectivity Tests
+docs/ISuite_Integrations_APIs/populate-cache-17d6ad5.md	Populate Cache
+docs/ISuite_Integrations_APIs/possible-errors-during-external-logging-activation-b79f4be.md	Possible Errors During External Logging Activation
+docs/ISuite_Integrations_APIs/post-exit-mapping-0f17497.md	Post Exit Mapping
+docs/ISuite_Integrations_APIs/predefined-integration-flow-for-function-imports-12a5f97.md	Predefined Integration Flow for Function Imports
+docs/ISuite_Integrations_APIs/predefined-integration-flow-for-query-operations-eae8a72.md	Predefined Integration Flow for Query Operations
+docs/ISuite_Integrations_APIs/predefined-integration-flows-d41a54f.md	Predefined Integration Flows
+docs/ISuite_Integrations_APIs/predefined-integration-flows-for-create-and-read-operations-aa8cb37.md	Predefined Integration Flows for Create and Read Operations
+docs/ISuite_Integrations_APIs/predefined-integration-flows-for-odata-585b5af.md	Predefined Integration Flows for ODATA
+docs/ISuite_Integrations_APIs/predefined-integration-flows-for-odc-677fcba.md	Predefined Integration Flows for Odc
+docs/ISuite_Integrations_APIs/predefined-integration-flows-for-rest-f86d30e.md	Predefined Integration Flows for REST
+docs/ISuite_Integrations_APIs/predefined-integration-flows-for-soap-383f7d1.md	Predefined Integration Flows for SOAP
+docs/ISuite_Integrations_APIs/predefined-integration-flows-for-update-and-delete-operations-16e913c.md	Predefined Integration Flows for Update and Delete Operations
+docs/ISuite_Integrations_APIs/predictions-823bcd7.md	Predictions
+docs/ISuite_Integrations_APIs/prerequisites-8e37f79.md	Prerequisites
+docs/ISuite_Integrations_APIs/prerequisites-and-operational-considerations-9efec9e.md	Prerequisites and Operational Considerations
+docs/ISuite_Integrations_APIs/principal-propagation-between-two-different-subaccounts-in-cloud-foundry-environment-4159fb0.md	Principal Propagation Between Two Different Subaccounts in Cloud Foundry Environment
+docs/ISuite_Integrations_APIs/principal-propagation-e2f3313.md	Principal Propagation
+docs/ISuite_Integrations_APIs/principal-propagation-from-the-neo-to-the-cloud-foundry-environment-da0e97b.md	Principal Propagation from the Neo to the Cloud Foundry Environment
+docs/ISuite_Integrations_APIs/principal-propagation-from-the-same-cloud-foundry-subaccount-0e3d3e7.md	Principal Propagation from the Same Cloud Foundry Subaccount
+docs/ISuite_Integrations_APIs/problems-view-7614a1f.md	Problems View
+docs/ISuite_Integrations_APIs/process-flow-step-70d971d.md	Process Flow Step
+docs/ISuite_Integrations_APIs/processdirect-adapter-7445718.md	Processdirect Adapter
+docs/ISuite_Integrations_APIs/protect-data-integrity-e0ef25c.md	Protect Data Integrity
+docs/ISuite_Integrations_APIs/protocol-contains-unique-id-2a887b3.md	Protocol Contains Unique ID
+docs/ISuite_Integrations_APIs/protocol-contains-unique-id-3fa98eb.md	Protocol Contains Unique ID
+docs/ISuite_Integrations_APIs/protocol-contains-unique-id-751c2c9.md	Protocol Contains Unique ID
+docs/ISuite_Integrations_APIs/protocol-contains-unique-id-99a34c3.md	Protocol Contains Unique ID
+docs/ISuite_Integrations_APIs/protocol-doesn-t-contain-unique-id-44e3344.md	Protocol Doesn T Contain Unique ID
+docs/ISuite_Integrations_APIs/protocol-doesn-t-contain-unique-id-7191e9b.md	Protocol Doesn T Contain Unique ID
+docs/ISuite_Integrations_APIs/proxy-endpoint-properties-1705a92.md	Proxy Endpoint Properties
+docs/ISuite_Integrations_APIs/publish-api-proxies-75a4a11.md	Publish API Proxies
+docs/ISuite_Integrations_APIs/publish-events-from-advanced-event-mesh-f5b9344.md	Publish Events from Advanced Event Mesh
+docs/ISuite_Integrations_APIs/publish-sap-s-4hana-apis-from-business-systems-08aff91.md	Publish SAP S 4hana APIS from Business Systems
+docs/ISuite_Integrations_APIs/python-script-8703aa8.md	Python Script
+docs/ISuite_Integrations_APIs/quality-of-service-2b9acb2.md	Quality of Service
+docs/ISuite_Integrations_APIs/quality-of-service-exactly-once-f96cf27.md	Quality of Service Exactly Once
+docs/ISuite_Integrations_APIs/quality-of-service-exactly-once-in-order-e1ef22e.md	Quality of Service Exactly Once in Order
+docs/ISuite_Integrations_APIs/query-options-99f4b70.md	Query Options
+docs/ISuite_Integrations_APIs/query-parameters-supported-for-integrationdesigntimeartifact-requests-1d74aa6.md	Query Parameters Supported for Integrationdesigntimeartifact Requests
+docs/ISuite_Integrations_APIs/quota-1f742c1.md	Quota
+docs/ISuite_Integrations_APIs/quota-2aecf15.md	Quota
+docs/ISuite_Integrations_APIs/rabbitmq-adapter-8b2f994.md	Rabbitmq Adapter
+docs/ISuite_Integrations_APIs/raise-fault-c7f2e8d.md	Raise Fault
+docs/ISuite_Integrations_APIs/rate-plan-service-f4537ce.md	Rate Plan Service
+docs/ISuite_Integrations_APIs/read-and-modify-message-header-message-body-and-exchange-properties-5822f32.md	Read and Modify Message Header Message Body and Exchange Properties
+docs/ISuite_Integrations_APIs/read-and-modify-partner-directory-content-ab10d02.md	Read and Modify Partner Directory Content
+docs/ISuite_Integrations_APIs/read-and-modify-soap-headers-8a2827d.md	Read and Modify SOAP Headers
+docs/ISuite_Integrations_APIs/read-attachment-based-on-filter-criteria-f7f513f.md	Read Attachment Based on Filter Criteria
+docs/ISuite_Integrations_APIs/read-multiple-attachments-4b2f07f.md	Read Multiple Attachments
+docs/ISuite_Integrations_APIs/read-multiple-attachments-based-on-filter-criteria-b9c2354.md	Read Multiple Attachments Based on Filter Criteria
+docs/ISuite_Integrations_APIs/read-security-related-artifacts-8dd981e.md	Read Security Related Artifacts
+docs/ISuite_Integrations_APIs/reading-the-references-4f3d168.md	Reading the References
+docs/ISuite_Integrations_APIs/receiver-is-idempotent-9892432.md	Receiver Is Idempotent
+docs/ISuite_Integrations_APIs/receiver-is-idempotent-f5b22ba.md	Receiver Is Idempotent
+docs/ISuite_Integrations_APIs/receiver-isn-t-idempotent-5955d3f.md	Receiver Isn T Idempotent
+docs/ISuite_Integrations_APIs/receiver-isn-t-idempotent-c6104e5.md	Receiver Isn T Idempotent
+docs/ISuite_Integrations_APIs/recipient-list-06594b9.md	Recipient List
+docs/ISuite_Integrations_APIs/reduce-size-of-odata-content-enricher-response-8a76692.md	Reduce Size of ODATA Content Enricher Response
+docs/ISuite_Integrations_APIs/reduce-the-memory-consumption-for-splitter-scenarios-de974b8.md	Reduce the Memory Consumption for Splitter Scenarios
+docs/ISuite_Integrations_APIs/region-specific-ip-addresses-available-for-api-management-cloud-foundry-environment-683a97c.md	Region Specific IP Addresses Available for API Management Cloud Foundry Environment
+docs/ISuite_Integrations_APIs/registering-on-developer-hub-c85fafe.md	Registering on Developer Hub
+docs/ISuite_Integrations_APIs/regular-expression-protection-0118f91.md	Regular Expression Protection
+docs/ISuite_Integrations_APIs/relax-dependencies-to-external-components-3ea1e33.md	Relax Dependencies to External Components
+docs/ISuite_Integrations_APIs/remove-sensitive-or-secret-content-before-logging-or-forwarding-4686862.md	Remove Sensitive or Secret Content Before Logging or Forwarding
+docs/ISuite_Integrations_APIs/rename-the-alias-of-a-keystore-entry-4024577.md	Rename the Alias of a Keystore Entry
+docs/ISuite_Integrations_APIs/replace-body-with-content-of-attachment-14e6810.md	Replace Body with Content of Attachment
+docs/ISuite_Integrations_APIs/replace-concurrent-rate-limit-policy-with-alternative-policies-b70e0d2.md	Replace Concurrent Rate Limit Policy with Alternative Policies
+docs/ISuite_Integrations_APIs/request-message-variables-ad60e66.md	Request Message Variables
+docs/ISuite_Integrations_APIs/request-to-modify-threshold-value-for-charts-b55f89d.md	Request to Modify Threshold Value for Charts
+docs/ISuite_Integrations_APIs/request-to-modify-threshold-value-for-charts-d4533f7.md	Request to Modify Threshold Value for Charts
+docs/ISuite_Integrations_APIs/requests-for-string-parameter-binary-parameter-and-authorized-user-47b6999.md	Requests for String Parameter Binary Parameter and Authorized User
+docs/ISuite_Integrations_APIs/requests-for-usercredentialparameter-79c06dd.md	Requests for Usercredentialparameter
+docs/ISuite_Integrations_APIs/resequencer-068cfc7.md	Resequencer
+docs/ISuite_Integrations_APIs/reset-quota-e18ccb8.md	Reset Quota
+docs/ISuite_Integrations_APIs/response-cache-8df3fac.md	Response Cache
+docs/ISuite_Integrations_APIs/response-headers-88db307.md	Response Headers
+docs/ISuite_Integrations_APIs/response-message-variables-11bebe1.md	Response Message Variables
+docs/ISuite_Integrations_APIs/responses-with-a-body-37f9ad1.md	Responses with a Body
+docs/ISuite_Integrations_APIs/restore-an-entry-from-the-sap-key-history-keystore-to-the-new-sap-keys-keystore-a0bd675.md	Restore an Entry from the SAP Key History Keystore to the New SAP Keys Keystore
+docs/ISuite_Integrations_APIs/restoring-a-key-pair-from-the-key-history-43965e7.md	Restoring a Key Pair from the Key History
+docs/ISuite_Integrations_APIs/restoring-application-id-across-sap-integration-suite-landscapes-d0d1a3c.md	Restoring Application ID Across SAP Integration Suite Landscapes
+docs/ISuite_Integrations_APIs/restoring-backed-up-keystore-entries-bfbbf91.md	Restoring Backed Up Keystore Entries
+docs/ISuite_Integrations_APIs/restrict-an-api-to-http-methods-f3486cb.md	Restrict an API to HTTP Methods
+docs/ISuite_Integrations_APIs/restrict-usage-to-supported-frameworks-and-libraries-d8a70aa.md	Restrict Usage to Supported Frameworks and Libraries
+docs/ISuite_Integrations_APIs/restricting-access-to-api-products-using-custom-role-attribute-0495246.md	Restricting Access to API Products Using Custom Role Attribute
+docs/ISuite_Integrations_APIs/restricting-access-to-api-products-using-custom-role-attribute-09fb892.md	Restricting Access to API Products Using Custom Role Attribute
+docs/ISuite_Integrations_APIs/reusable-api-artifact-26a9db1.md	Reusable API Artifact
+docs/ISuite_Integrations_APIs/reuse-imported-archives-objects-from-es-repository-4196091.md	Reuse Imported Archives Objects from Es Repository
+docs/ISuite_Integrations_APIs/revoke-access-ce609bb.md	Revoke Access
+docs/ISuite_Integrations_APIs/rfc-adapter-98a3c19.md	RFC Adapter
+docs/ISuite_Integrations_APIs/rfc-receiver-adapter-5c76048.md	RFC Receiver Adapter
+docs/ISuite_Integrations_APIs/rfc-sender-adapter-for-edge-integration-cell-f5568be.md	RFC Sender Adapter for Edge Integration Cell
+docs/ISuite_Integrations_APIs/rnif-adapter-0714e22.md	Rnif Adapter
+docs/ISuite_Integrations_APIs/role-collections-in-api-management-7010b58.md	Role Collections in API Management
+docs/ISuite_Integrations_APIs/routing-flow-step-3846eef.md	Routing Flow Step
+docs/ISuite_Integrations_APIs/run-an-integration-flow-under-well-defined-boundary-conditions-f8cf974.md	Run an Integration Flow Under Well Defined Boundary Conditions
+docs/ISuite_Integrations_APIs/runtime-artifacts-and-error-information-example-requests-3db463e.md	Runtime Artifacts and Error Information Example Requests
+docs/ISuite_Integrations_APIs/runtime-status-c14a7b1.md	Runtime Status
+docs/ISuite_Integrations_APIs/runtimes-in-api-centric-integration-9a3f0e3.md	Runtimes in API Centric Integration
+docs/ISuite_Integrations_APIs/salesforce-adapter-9a7e201.md	Salesforce Adapter
+docs/ISuite_Integrations_APIs/salesforce-pub-sub-adapter-c27c5ee.md	Salesforce Pub Sub Adapter
+docs/ISuite_Integrations_APIs/salesforce-receiver-adapter-a548be9.md	Salesforce Receiver Adapter
+docs/ISuite_Integrations_APIs/salesforce-sender-adapter-ba6420d.md	Salesforce Sender Adapter
+docs/ISuite_Integrations_APIs/saml-assertion-policy-3882208.md	SAML Assertion Policy
+docs/ISuite_Integrations_APIs/sap-analytics-cloud-for-sap-integration-suite-fb3648a.md	SAP Analytics Cloud for SAP Integration Suite
+docs/ISuite_Integrations_APIs/sap-integration-suite-handles-retry-035a1c9.md	SAP Integration Suite Handles Retry
+docs/ISuite_Integrations_APIs/sap-master-data-integration-receiver-adapter-e91e373.md	SAP Master Data Integration Receiver Adapter
+docs/ISuite_Integrations_APIs/scatter-gather-987eef2.md	Scatter Gather
+docs/ISuite_Integrations_APIs/script-example-for-exception-handling-in-http-receiver-a443efe.md	Script Example for Exception Handling in HTTP Receiver
+docs/ISuite_Integrations_APIs/script-example-for-exception-handling-in-odata-v2-receiver-adapter-361c5e8.md	Script Example for Exception Handling in ODATA V2 Receiver Adapter
+docs/ISuite_Integrations_APIs/script-use-cases-148851b.md	Script Use Cases
+docs/ISuite_Integrations_APIs/scripts-fa29f02.md	Scripts
+docs/ISuite_Integrations_APIs/sdk-api-c5c7933.md	Sdk API
+docs/ISuite_Integrations_APIs/security-content-e01d3f0.md	Security Content
+docs/ISuite_Integrations_APIs/security-content-example-requests-acb89ef.md	Security Content Example Requests
+docs/ISuite_Integrations_APIs/security-policies-aebf968.md	Security Policies
+docs/ISuite_Integrations_APIs/security-related-flow-steps-0c5db6d.md	Security Related Flow Steps
+docs/ISuite_Integrations_APIs/security-specification-for-api-artifact-6224cf2.md	Security Specification for API Artifact
+docs/ISuite_Integrations_APIs/sender-and-receiver-with-sap-rm-protocol-9f3e2b6.md	Sender and Receiver with SAP Rm Protocol
+docs/ISuite_Integrations_APIs/sender-and-receiver-with-soap-protocol-cd4c6e0.md	Sender and Receiver with SOAP Protocol
+docs/ISuite_Integrations_APIs/sender-handles-retry-48b120a.md	Sender Handles Retry
+docs/ISuite_Integrations_APIs/sender-with-sap-rm-protocol-and-receiver-with-xi-protocol-5f35b5c.md	Sender with SAP Rm Protocol and Receiver with XI Protocol
+docs/ISuite_Integrations_APIs/sender-with-xi-protocol-and-receiver-with-sap-rm-protocol-090abf3.md	Sender with XI Protocol and Receiver with SAP Rm Protocol
+docs/ISuite_Integrations_APIs/service-callout-6b40873.md	Service Callout
+docs/ISuite_Integrations_APIs/service-types-for-api-artifacts-4dd2dde.md	Service Types for API Artifacts
+docs/ISuite_Integrations_APIs/serviceendpoints-example-requests-26797fb.md	Serviceendpoints Example Requests
+docs/ISuite_Integrations_APIs/servicenow-receiver-adapter-1e3bcf4.md	Servicenow Receiver Adapter
+docs/ISuite_Integrations_APIs/set-a-proper-timeout-3535f15.md	Set a Proper Timeout
+docs/ISuite_Integrations_APIs/set-the-mapping-context-7a238c0.md	Set the Mapping Context
+docs/ISuite_Integrations_APIs/set-up-the-soap-client-and-start-message-processing-4844baa.md	Set Up the SOAP Client and Start Message Processing
+docs/ISuite_Integrations_APIs/setting-and-getting-soap-headers-65c70da.md	Setting and Getting SOAP Headers
+docs/ISuite_Integrations_APIs/setting-log-levels-4e6d3fc.md	Setting Log Levels
+docs/ISuite_Integrations_APIs/setting-up-api-management-f34e86c.md	Setting Up API Management
+docs/ISuite_Integrations_APIs/setting-up-api-management-with-sap-cloud-identity-services-1e88d9c.md	Setting Up API Management with SAP Cloud Identity Services
+docs/ISuite_Integrations_APIs/setting-up-external-governance-8b4f848.md	Setting Up External Governance
+docs/ISuite_Integrations_APIs/setting-up-oauth-for-cloud-integration-in-cloud-foundry-641c56b.md	Setting Up OAUTH for Cloud Integration in Cloud Foundry
+docs/ISuite_Integrations_APIs/setting-up-the-key-pairs-and-certificates-620967b.md	Setting Up the Key Pairs and Certificates
+docs/ISuite_Integrations_APIs/sftp-adapter-e3dce88.md	SFTP Adapter
+docs/ISuite_Integrations_APIs/sftp-sender-scenario-3d7fd37.md	SFTP Sender Scenario
+docs/ISuite_Integrations_APIs/shadow-users-a0f5fe5.md	Shadow Users
+docs/ISuite_Integrations_APIs/shopify-graphql-receiver-adapter-484c676.md	Shopify Graphql Receiver Adapter
+docs/ISuite_Integrations_APIs/shopify-receiver-adapter-0dca1d7.md	Shopify Receiver Adapter
+docs/ISuite_Integrations_APIs/shopify-rest-receiver-adapter-34865bc.md	Shopify REST Receiver Adapter
+docs/ISuite_Integrations_APIs/sign-the-message-content-with-pkcs-7-cms-signer-cc09e03.md	Sign the Message Content with PKCS 7 Cms Signer
+docs/ISuite_Integrations_APIs/sign-the-message-content-with-simple-signer-9879fc3.md	Sign the Message Content with Simple Signer
+docs/ISuite_Integrations_APIs/sign-the-message-content-with-xml-digital-signature-9a013db.md	Sign the Message Content with XML Digital Signature
+docs/ISuite_Integrations_APIs/signing-the-message-content-with-xades-bes-1-9aac1e2.md	Signing the Message Content with Xades Bes 1
+docs/ISuite_Integrations_APIs/signing-the-message-content-with-xades-bes-2-2c569fc.md	Signing the Message Content with Xades Bes 2
+docs/ISuite_Integrations_APIs/signing-the-message-content-with-xades-epes-5976731.md	Signing the Message Content with Xades Epes
+docs/ISuite_Integrations_APIs/signing-the-message-content-with-xml-advanced-electronic-signature-874e032.md	Signing the Message Content with XML Advanced Electronic Signature
+docs/ISuite_Integrations_APIs/simple-integration-flow-using-a-message-digest-step-8b5a7ce.md	Simple Integration Flow Using a Message Digest Step
+docs/ISuite_Integrations_APIs/simulate-message-mapping-2718106.md	Simulate Message Mapping
+docs/ISuite_Integrations_APIs/simulation-of-an-integration-flow-2e2210b.md	Simulation of an Integration Flow
+docs/ISuite_Integrations_APIs/slack-adapter-5f97d4a.md	Slack Adapter
+docs/ISuite_Integrations_APIs/smb-adapter-e48d2cb.md	Smb Adapter
+docs/ISuite_Integrations_APIs/smoke-test-scenario-93fa2ce.md	Smoke Test Scenario
+docs/ISuite_Integrations_APIs/smtp-connectivity-tests-8f8e028.md	SMTP Connectivity Tests
+docs/ISuite_Integrations_APIs/snowflake-receiver-adapter-1299e68.md	Snowflake Receiver Adapter
+docs/ISuite_Integrations_APIs/soap-receiver-adapter-for-api-artifact-2a69e87.md	SOAP Receiver Adapter for API Artifact
+docs/ISuite_Integrations_APIs/soap-sap-rm-adapter-6bd724f.md	SOAP SAP Rm Adapter
+docs/ISuite_Integrations_APIs/soap-sender-adapter-example-integration-flow-ad2409e.md	SOAP Sender Adapter Example Integration Flow
+docs/ISuite_Integrations_APIs/soap-sender-adapter-for-api-artifact-f0e2535.md	SOAP Sender Adapter for API Artifact
+docs/ISuite_Integrations_APIs/soap-soap-1-x-adapter-b847968.md	SOAP SOAP 1 X Adapter
+docs/ISuite_Integrations_APIs/special-use-cases-sap-rm-vs-xi-vs-idoc-5f7fa93.md	Special Use Cases SAP Rm vs XI vs IDOC
+docs/ISuite_Integrations_APIs/specific-use-cases-for-ldap-adapter-dd49f1f.md	Specific Use Cases for LDAP Adapter
+docs/ISuite_Integrations_APIs/specify-proper-session-handling-06a28e0.md	Specify Proper Session Handling
+docs/ISuite_Integrations_APIs/specify-the-runtime-configuration-0c1c96e.md	Specify the Runtime Configuration
+docs/ISuite_Integrations_APIs/spike-arrest-bf441dc.md	Spike Arrest
+docs/ISuite_Integrations_APIs/splitter-4b475ea.md	Splitter
+docs/ISuite_Integrations_APIs/splitter-with-multiple-receivers-jms-adapter-type-fc2755c.md	Splitter with Multiple Receivers JMS Adapter Type
+docs/ISuite_Integrations_APIs/splunk-adapter-f9ae7e6.md	Splunk Adapter
+docs/ISuite_Integrations_APIs/ssh-connectivity-tests-da7dfd0.md	SSH Connectivity Tests
+docs/ISuite_Integrations_APIs/standard-approach-1b75b4a.md	Standard Approach
+docs/ISuite_Integrations_APIs/standard-mapping-56c3bf5.md	Standard Mapping
+docs/ISuite_Integrations_APIs/static-and-dynamic-settings-f21c01f.md	Static and Dynamic Settings
+docs/ISuite_Integrations_APIs/statistics-collector-policy-1dee3c9.md	Statistics Collector Policy
+docs/ISuite_Integrations_APIs/store-retrieve-messages-in-from-the-data-store-604f7b1.md	Store Retrieve Messages in from the Data Store
+docs/ISuite_Integrations_APIs/subscribe-only-a-single-tenant-to-sap-business-accelerator-hub-185a52a.md	Subscribe Only a Single Tenant to SAP Business Accelerator Hub
+docs/ISuite_Integrations_APIs/subscribe-to-a-product-to-consume-apis-and-events-in-an-application-f74f47d.md	Subscribe to a Product to Consume APIS and Events in an Application
+docs/ISuite_Integrations_APIs/subscribe-to-products-containing-apis-deployed-on-classic-api-management-5272510.md	Subscribe to Products Containing APIS Deployed on Classic API Management
+docs/ISuite_Integrations_APIs/subscribe-to-products-to-make-mcp-servers-agent-ready-2df6934.md	Subscribe to Products to Make Mcp Servers Agent Ready
+docs/ISuite_Integrations_APIs/subscribing-to-notification-alerts-88e96f4.md	Subscribing to Notification Alerts
+docs/ISuite_Integrations_APIs/successfactors-odata-adapter-d50e062.md	Successfactors ODATA Adapter
+docs/ISuite_Integrations_APIs/successfactors-odata-v2-adapter-b27829c.md	Successfactors ODATA V2 Adapter
+docs/ISuite_Integrations_APIs/successfactors-odata-v4-receiver-adapter-cd091fc.md	Successfactors ODATA V4 Receiver Adapter
+docs/ISuite_Integrations_APIs/successfactors-rest-adapter-9df8cc6.md	Successfactors REST Adapter
+docs/ISuite_Integrations_APIs/successfactors-soap-adapter-28b29d6.md	Successfactors SOAP Adapter
+docs/ISuite_Integrations_APIs/sugarcrm-receiver-adapter-d96ddf7.md	Sugarcrm Receiver Adapter
+docs/ISuite_Integrations_APIs/support-components-bd2d883.md	Support Components
+docs/ISuite_Integrations_APIs/supported-adapters-for-external-callout-in-api-artifacts-641600e.md	Supported Adapters for External Callout in API Artifacts
+docs/ISuite_Integrations_APIs/supported-components-46b27d1.md	Supported Components
+docs/ISuite_Integrations_APIs/supported-components-6f05bc0.md	Supported Components
+docs/ISuite_Integrations_APIs/supported-dynamic-expressions-for-api-artifacts-6de5869.md	Supported Dynamic Expressions for API Artifacts
+docs/ISuite_Integrations_APIs/supported-odata-features-130d00e.md	Supported ODATA Features
+docs/ISuite_Integrations_APIs/supported-patterns-6affc1a.md	Supported Patterns
+docs/ISuite_Integrations_APIs/supported-patterns-ad867ae.md	Supported Patterns
+docs/ISuite_Integrations_APIs/supported-settings-for-specific-message-brokers-059bd96.md	Supported Settings for Specific Message Brokers
+docs/ISuite_Integrations_APIs/surge-protection-3d14745.md	Surge Protection
+docs/ISuite_Integrations_APIs/switch-off-resolving-of-external-entities-a990e2c.md	Switch Off Resolving of External Entities
+docs/ISuite_Integrations_APIs/synchronize-api-changes-to-your-mcp-server-bd93c74.md	Synchronize API Changes to Your Mcp Server
+docs/ISuite_Integrations_APIs/synchronize-remote-third-part-mcp-server-changes-to-your-mcp-server-87ec798.md	Synchronize Remote Third Part Mcp Server Changes to Your Mcp Server
+docs/ISuite_Integrations_APIs/system-scope-for-cloud-integration-8ea3822.md	System Scope for Cloud Integration
+docs/ISuite_Integrations_APIs/system-variables-7806ebf.md	System Variables
+docs/ISuite_Integrations_APIs/target-endpoint-properties-edeed6a.md	Target Endpoint Properties
+docs/ISuite_Integrations_APIs/the-camel-data-model-in-a-nutshell-d4f8f03.md	The Camel Data Model in a Nutshell
+docs/ISuite_Integrations_APIs/third-party-oauth-token-usage-cccc881.md	Third Party OAUTH Token Usage
+docs/ISuite_Integrations_APIs/timer-and-schedule-based-integration-flows-41a5b13.md	Timer and Schedule Based Integration Flows
+docs/ISuite_Integrations_APIs/tls-connectivity-tests-03bbb5d.md	TLS Connectivity Tests
+docs/ISuite_Integrations_APIs/tls-ssl-connection-information-variables-9326107.md	TLS SSL Connection Information Variables
+docs/ISuite_Integrations_APIs/tracing-the-execution-of-an-integration-flow-4ec27d3.md	Tracing the Execution of an Integration Flow
+docs/ISuite_Integrations_APIs/traffic-management-policies-165db68.md	Traffic Management Policies
+docs/ISuite_Integrations_APIs/transaction-handling-characteristics-and-restrictions-2388efb.md	Transaction Handling Characteristics and Restrictions
+docs/ISuite_Integrations_APIs/transaction-handling-guidelines-52e3f67.md	Transaction Handling Guidelines
+docs/ISuite_Integrations_APIs/transfer-files-9bda753.md	Transfer Files
+docs/ISuite_Integrations_APIs/transport-api-management-artifacts-via-sap-cloud-transport-management-service-2e4bc72.md	Transport API Management Artifacts via SAP Cloud Transport Management Service
+docs/ISuite_Integrations_APIs/transport-apis-and-its-related-contents-eb83118.md	Transport APIS and Its Related Contents
+docs/ISuite_Integrations_APIs/transporting-a-certificate-from-source-to-destination-115d173.md	Transporting a Certificate from Source to Destination
+docs/ISuite_Integrations_APIs/transporting-a-key-value-map-from-source-to-destination-bea14c9.md	Transporting a Key Value Map from Source to Destination
+docs/ISuite_Integrations_APIs/transporting-a-product-from-source-to-destination-3a4cdd2.md	Transporting a Product from Source to Destination
+docs/ISuite_Integrations_APIs/transporting-an-api-provider-from-source-to-destination-1bcf79b.md	Transporting an API Provider from Source to Destination
+docs/ISuite_Integrations_APIs/transporting-an-api-proxy-from-source-to-destination-2fe1aa2.md	Transporting an API Proxy from Source to Destination
+docs/ISuite_Integrations_APIs/transporting-api-and-mcp-server-artifacts-between-tenants-844646f.md	Transporting API and Mcp Server Artifacts Between Tenants
+docs/ISuite_Integrations_APIs/trigger-mass-deletion-of-keystore-entries-bee2744.md	Trigger Mass Deletion of Keystore Entries
+docs/ISuite_Integrations_APIs/triggering-content-transport-using-sap-cloud-transport-management-service-cc36fab.md	Triggering Content Transport Using SAP Cloud Transport Management Service
+docs/ISuite_Integrations_APIs/troubleshooting-adapters-b7a3906.md	Troubleshooting Adapters
+docs/ISuite_Integrations_APIs/troubleshooting-cloud-integration-public-apis-af02d40.md	Troubleshooting Cloud Integration Public APIS
+docs/ISuite_Integrations_APIs/troubleshooting-for-api-management-e765066.md	Troubleshooting for API Management
+docs/ISuite_Integrations_APIs/troubleshooting-for-cloud-integration-37743c2.md	Troubleshooting for Cloud Integration
+docs/ISuite_Integrations_APIs/troubleshooting-http-error-catalog-069b461.md	Troubleshooting HTTP Error Catalog
+docs/ISuite_Integrations_APIs/troubleshooting-integration-flows-c0052ae.md	Troubleshooting Integration Flows
+docs/ISuite_Integrations_APIs/troubleshooting-message-mapping-cb5311a.md	Troubleshooting Message Mapping
+docs/ISuite_Integrations_APIs/troubleshooting-sender-receiver-systems-c5c8328.md	Troubleshooting Sender Receiver Systems
+docs/ISuite_Integrations_APIs/troubleshooting-transporting-content-bbfb41a.md	Troubleshooting Transporting Content
+docs/ISuite_Integrations_APIs/twilio-receiver-adapter-7445ab3.md	Twilio Receiver Adapter
+docs/ISuite_Integrations_APIs/twitter-receiver-adapter-453c174.md	Twitter Receiver Adapter
+docs/ISuite_Integrations_APIs/types-of-quota-3e32f19.md	Types of Quota
+docs/ISuite_Integrations_APIs/unbinding-a-multi-cloud-foundation-application-from-an-api-management-api-portal-service-09fd33a.md	Unbinding a Multi Cloud Foundation Application from an API Management API Portal Service
+docs/ISuite_Integrations_APIs/understanding-quota-counters-cb606e3.md	Understanding Quota Counters
+docs/ISuite_Integrations_APIs/understanding-quota-time-notation-5e2f272.md	Understanding Quota Time Notation
+docs/ISuite_Integrations_APIs/understanding-the-basic-concepts-a81309f.md	Understanding the Basic Concepts
+docs/ISuite_Integrations_APIs/understanding-the-default-behavior-of-an-api-product-for-different-resource-paths-bf2ee80.md	Understanding the Default Behavior of an API Product for Different Resource Paths
+docs/ISuite_Integrations_APIs/unlocking-integration-packages-and-artifacts-739a536.md	Unlocking Integration Packages and Artifacts
+docs/ISuite_Integrations_APIs/update-a-key-value-map-4961431.md	Update a Key Value Map
+docs/ISuite_Integrations_APIs/update-a-number-ranges-object-139a6b2.md	Update a Number Ranges Object
+docs/ISuite_Integrations_APIs/update-a-policy-template-269442f.md	Update a Policy Template
+docs/ISuite_Integrations_APIs/update-a-rate-plan-b8c1e6b.md	Update a Rate Plan
+docs/ISuite_Integrations_APIs/update-an-alternative-partner-60d19e3.md	Update an Alternative Partner
+docs/ISuite_Integrations_APIs/update-and-validate-configuration-parameters-2b92d3d.md	Update and Validate Configuration Parameters
+docs/ISuite_Integrations_APIs/update-version-of-an-integration-flow-component-61bf6a2.md	Update Version of an Integration Flow Component
+docs/ISuite_Integrations_APIs/updates-for-sap-s-integration-packages-5e41ce8.md	Updates for SAP S Integration Packages
+docs/ISuite_Integrations_APIs/updating-a-certificate-1fa04fa.md	Updating a Certificate
+docs/ISuite_Integrations_APIs/updating-a-key-pair-4ceda24.md	Updating a Key Pair
+docs/ISuite_Integrations_APIs/updating-a-key-pair-with-a-signing-response-4242f01.md	Updating a Key Pair with a Signing Response
+docs/ISuite_Integrations_APIs/updating-a-published-product-5cc1b23.md	Updating a Published Product
+docs/ISuite_Integrations_APIs/updating-an-rsa-key-ee6bf92.md	Updating an Rsa Key
+docs/ISuite_Integrations_APIs/updating-the-connection-request-credentials-for-a-pending-request-dd37a7b.md	Updating the Connection Request Credentials for a Pending Request
+docs/ISuite_Integrations_APIs/updating-the-connection-request-credentials-for-an-approved-request-882e1d9.md	Updating the Connection Request Credentials for an Approved Request
+docs/ISuite_Integrations_APIs/updating-the-references-e2a9ec4.md	Updating the References
+docs/ISuite_Integrations_APIs/updating-your-existing-integration-flow-1f9e879.md	Updating Your Existing Integration Flow
+docs/ISuite_Integrations_APIs/upgrading-script-917e014.md	Upgrading Script
+docs/ISuite_Integrations_APIs/upload-wsdls-as-integration-flow-resource-9c22b39.md	Upload Wsdls as Integration Flow Resource
+docs/ISuite_Integrations_APIs/uploading-a-certificate-03cf78a.md	Uploading a Certificate
+docs/ISuite_Integrations_APIs/uploading-a-key-pair-083911e.md	Uploading a Key Pair
+docs/ISuite_Integrations_APIs/uploading-a-keystore-0db193a.md	Uploading a Keystore
+docs/ISuite_Integrations_APIs/uploading-an-rsa-key-b8ba4a3.md	Uploading an Rsa Key
+docs/ISuite_Integrations_APIs/uploading-an-ssh-key-8bf9ae4.md	Uploading an SSH Key
+docs/ISuite_Integrations_APIs/use-a-message-mapping-to-map-xml-to-json-fb7c1df.md	Use a Message Mapping to Map XML to JSON
+docs/ISuite_Integrations_APIs/use-an-alternative-partner-id-to-retrieve-partner-information-01a784c.md	Use an Alternative Partner ID to Retrieve Partner Information
+docs/ISuite_Integrations_APIs/use-case-for-jms-5d2c32f.md	Use Case for JMS
+docs/ISuite_Integrations_APIs/use-cases-for-data-store-and-variables-853d4dd.md	Use Cases for Data Store and Variables
+docs/ISuite_Integrations_APIs/use-csrf-protection-a0765d5.md	Use Csrf Protection
+docs/ISuite_Integrations_APIs/use-custom-header-properties-to-search-for-message-processing-logs-d4b5839.md	Use Custom Header Properties to Search for Message Processing Logs
+docs/ISuite_Integrations_APIs/use-import-statements-supported-by-the-script-runtime-13fee7f.md	Use Import Statements Supported by the Script Runtime
+docs/ISuite_Integrations_APIs/use-prepackaged-integration-content-provided-by-sap-95c68ce.md	Use Prepackaged Integration Content Provided by SAP
+docs/ISuite_Integrations_APIs/use-recommended-libraries-and-classes-bbba19d.md	Use Recommended Libraries and Classes
+docs/ISuite_Integrations_APIs/use-scripting-appropriately-d4dc13c.md	Use Scripting Appropriately
+docs/ISuite_Integrations_APIs/use-secure-authentication-methods-3d46d45.md	Use Secure Authentication Methods
+docs/ISuite_Integrations_APIs/use-secure-protocols-c9b8cae.md	Use Secure Protocols
+docs/ISuite_Integrations_APIs/use-ssrf-protection-e5dc584.md	Use Ssrf Protection
+docs/ISuite_Integrations_APIs/use-the-as2-adapter-with-dynamic-encryption-and-signature-verification-2cd252c.md	Use the AS2 Adapter with Dynamic Encryption and Signature Verification
+docs/ISuite_Integrations_APIs/use-the-base64-decoder-11b070d.md	Use the Base64 Decoder
+docs/ISuite_Integrations_APIs/use-the-base64-encoder-d28e8fc.md	Use the Base64 Encoder
+docs/ISuite_Integrations_APIs/use-the-csv-to-xml-converter-7ad518d.md	Use the CSV to XML Converter
+docs/ISuite_Integrations_APIs/use-the-json-to-xml-and-xml-to-json-converter-7c5e114.md	Use the JSON to XML and XML to JSON Converter
+docs/ISuite_Integrations_APIs/use-the-mime-multipart-encoder-and-decoder-c3fc1f5.md	Use the Mime Multipart Encoder and Decoder
+docs/ISuite_Integrations_APIs/use-the-partner-directory-appropriately-6e00412.md	Use the Partner Directory Appropriately
+docs/ISuite_Integrations_APIs/use-the-persist-step-2707077.md	Use the Persist Step
+docs/ISuite_Integrations_APIs/use-the-xml-to-csv-converter-cf0acac.md	Use the XML to CSV Converter
+docs/ISuite_Integrations_APIs/user-roles-and-responsibilities-in-developer-hub-54b4607.md	User Roles and Responsibilities in Developer Hub
+docs/ISuite_Integrations_APIs/using-additional-filter-criteria-6891f9e.md	Using Additional Filter Criteria
+docs/ISuite_Integrations_APIs/using-autocomplete-25858a4.md	Using Autocomplete
+docs/ISuite_Integrations_APIs/using-camel-simple-expression-language-4688083.md	Using Camel Simple Expression Language
+docs/ISuite_Integrations_APIs/using-custom-attributes-in-product-subscriptions-1cbd94c.md	Using Custom Attributes in Product Subscriptions
+docs/ISuite_Integrations_APIs/using-data-storage-features-when-designing-integration-flows-a836b4e.md	Using Data Storage Features When Designing Integration Flows
+docs/ISuite_Integrations_APIs/using-git-operations-1234702.md	Using Git Operations
+docs/ISuite_Integrations_APIs/using-git-operations-68d2d79.md	Using Git Operations
+docs/ISuite_Integrations_APIs/using-ids-to-filter-messages-a820752.md	Using Ids to Filter Messages
+docs/ISuite_Integrations_APIs/using-message-processing-log-attachments-6776fd3.md	Using Message Processing Log Attachments
+docs/ISuite_Integrations_APIs/using-model-based-code-assist-c4cec66.md	Using Model Based Code Assist
+docs/ISuite_Integrations_APIs/using-sap-cloud-connector-1f45077.md	Using SAP Cloud Connector
+docs/ISuite_Integrations_APIs/using-schema-based-code-assist-bd77a90.md	Using Schema Based Code Assist
+docs/ISuite_Integrations_APIs/using-script-api-methods-in-groovy-scripts-062f7a7.md	Using Script API Methods in Groovy Scripts
+docs/ISuite_Integrations_APIs/using-various-types-of-body-files-in-the-simulation-2e3cf3b.md	Using Various Types of Body Files in the Simulation
+docs/ISuite_Integrations_APIs/using-xpath-expressions-in-the-splitter-step-c6e63f1.md	Using Xpath Expressions in the Splitter Step
+docs/ISuite_Integrations_APIs/validate-incoming-messages-f421c07.md	Validate Incoming Messages
+docs/ISuite_Integrations_APIs/validating-message-payload-against-xml-schema-360dc70.md	Validating Message Payload Against XML Schema
+docs/ISuite_Integrations_APIs/validation-in-the-odata-model-editor-cb36c97.md	Validation in the ODATA Model Editor
+docs/ISuite_Integrations_APIs/validator-flow-steps-fd40240.md	Validator Flow Steps
+docs/ISuite_Integrations_APIs/value-mapping-7932b6d.md	Value Mapping
+docs/ISuite_Integrations_APIs/value-mapping-example-requests-1425fe5.md	Value Mapping Example Requests
+docs/ISuite_Integrations_APIs/variable-references-4f8993f.md	Variable References
+docs/ISuite_Integrations_APIs/variant-1-splitter-without-gather-with-stop-on-exception-and-with-exception-subprocess-d2445ff.md	Variant 1 Splitter Without Gather with Stop on Exception and with Exception Subprocess
+docs/ISuite_Integrations_APIs/variant-2-splitter-without-gather-without-stop-on-exception-and-with-exception-subprocess-f9a508a.md	Variant 2 Splitter Without Gather Without Stop on Exception and with Exception Subprocess
+docs/ISuite_Integrations_APIs/variant-3-splitter-with-gather-with-stop-on-exception-and-with-exception-subprocess-4eac8a7.md	Variant 3 Splitter with Gather with Stop on Exception and with Exception Subprocess
+docs/ISuite_Integrations_APIs/variant-4-splitter-with-gather-without-stop-on-exception-and-with-exception-subprocess-77b89c1.md	Variant 4 Splitter with Gather Without Stop on Exception and with Exception Subprocess
+docs/ISuite_Integrations_APIs/variant-content-filter-step-239d8f8.md	Variant Content Filter Step
+docs/ISuite_Integrations_APIs/variant-dynamic-routing-d241c77.md	Variant Dynamic Routing
+docs/ISuite_Integrations_APIs/variant-dynamic-routing-using-jms-message-queues-27c247e.md	Variant Dynamic Routing Using JMS Message Queues
+docs/ISuite_Integrations_APIs/variant-exception-subprocess-with-end-event-5f7b1c7.md	Variant Exception Subprocess with End Event
+docs/ISuite_Integrations_APIs/variant-exception-subprocess-with-end-message-event-c830df7.md	Variant Exception Subprocess with End Message Event
+docs/ISuite_Integrations_APIs/variant-exception-subprocess-with-error-end-event-35262c9.md	Variant Exception Subprocess with Error End Event
+docs/ISuite_Integrations_APIs/variant-exception-subprocess-with-error-end-event-c032016.md	Variant Exception Subprocess with Error End Event
+docs/ISuite_Integrations_APIs/variant-exception-subprocess-with-escalation-end-event-5649cde.md	Variant Exception Subprocess with Escalation End Event
+docs/ISuite_Integrations_APIs/variant-ignore-4998bd8.md	Variant Ignore
+docs/ISuite_Integrations_APIs/variant-message-mapping-85571e2.md	Variant Message Mapping
+docs/ISuite_Integrations_APIs/variant-raise-an-error-b1148e9.md	Variant Raise an Error
+docs/ISuite_Integrations_APIs/variant-send-to-default-receiver-7ba1864.md	Variant Send to Default Receiver
+docs/ISuite_Integrations_APIs/variant-sender-initiated-scenario-with-external-data-source-and-receiver-36a61b5.md	Variant Sender Initiated Scenario with External Data Source and Receiver
+docs/ISuite_Integrations_APIs/variant-sharing-data-across-integration-flows-that-communicate-with-each-other-fe6d139.md	Variant Sharing Data Across Integration Flows That Communicate with Each Other
+docs/ISuite_Integrations_APIs/variant-sharing-data-across-integration-flows-that-operate-independently-from-each-other-1459948.md	Variant Sharing Data Across Integration Flows That Operate Independently from Each Other
+docs/ISuite_Integrations_APIs/variant-sharing-data-within-the-same-integration-flow-4b75ded.md	Variant Sharing Data Within the Same Integration Flow
+docs/ISuite_Integrations_APIs/variant-static-routing-b71529f.md	Variant Static Routing
+docs/ISuite_Integrations_APIs/variant-timer-initiated-scenario-423730f.md	Variant Timer Initiated Scenario
+docs/ISuite_Integrations_APIs/variant-timer-initiated-scenario-with-external-data-source-and-receiver-7e766dd.md	Variant Timer Initiated Scenario with External Data Source and Receiver
+docs/ISuite_Integrations_APIs/variant-with-general-splitter-cba1ecb.md	Variant with General Splitter
+docs/ISuite_Integrations_APIs/variant-with-iterating-splitter-24f9f29.md	Variant with Iterating Splitter
+docs/ISuite_Integrations_APIs/variant-with-message-mapping-f6bb2b7.md	Variant with Message Mapping
+docs/ISuite_Integrations_APIs/verify-access-tokens-744ce8a.md	Verify Access Tokens
+docs/ISuite_Integrations_APIs/verify-api-key-4d15a04.md	Verify API Key
+docs/ISuite_Integrations_APIs/verify-jwt-277635d.md	Verify Jwt
+docs/ISuite_Integrations_APIs/verify-the-pkcs-7-cms-signature-f095dc6.md	Verify the PKCS 7 Cms Signature
+docs/ISuite_Integrations_APIs/verify-the-xml-digital-signature-090b932.md	Verify the XML Digital Signature
+docs/ISuite_Integrations_APIs/versioning-of-artifacts-cb536a3.md	Versioning of Artifacts
+docs/ISuite_Integrations_APIs/versioning-rules-for-custom-adapters-61a988b.md	Versioning Rules for Custom Adapters
+docs/ISuite_Integrations_APIs/view-and-edit-virtual-host-for-api-artifacts-a87d799.md	View and Edit Virtual Host for API Artifacts
+docs/ISuite_Integrations_APIs/view-bill-details-in-the-developer-hub-4ddac67.md	View Bill Details in the Developer Hub
+docs/ISuite_Integrations_APIs/view-bill-details-in-the-sap-integration-suite-2378110.md	View Bill Details in the SAP Integration Suite
+docs/ISuite_Integrations_APIs/view-subscriptions-costs-and-analyze-reports-fca4d8c.md	View Subscriptions Costs and Analyze Reports
+docs/ISuite_Integrations_APIs/viewing-predictions-and-trends-47f349c.md	Viewing Predictions and Trends
+docs/ISuite_Integrations_APIs/viewing-the-odata-model-layout-10de695.md	Viewing the ODATA Model Layout
+docs/ISuite_Integrations_APIs/virtual-hosts-in-integration-cell-dd401ec.md	Virtual Hosts in Integration Cell
+docs/ISuite_Integrations_APIs/webshop-example-application-767d8ef.md	Webshop Example Application
+docs/ISuite_Integrations_APIs/what-is-migration-tooling-1a3bfbc.md	What Is Migration Tooling
+docs/ISuite_Integrations_APIs/where-used-0559942.md	Where Used
+docs/ISuite_Integrations_APIs/workday-receiver-adapter-0c6e670.md	Workday Receiver Adapter
+docs/ISuite_Integrations_APIs/working-with-an-integration-package-c433ce2.md	Working with an Integration Package
+docs/ISuite_Integrations_APIs/working-with-api-management-321fb4d.md	Working with API Management
+docs/ISuite_Integrations_APIs/working-with-custom-adapters-d6a5631.md	Working with Custom Adapters
+docs/ISuite_Integrations_APIs/working-with-data-types-cf1d397.md	Working with Data Types
+docs/ISuite_Integrations_APIs/working-with-detected-anomalies-1c677b2.md	Working with Detected Anomalies
+docs/ISuite_Integrations_APIs/working-with-fault-message-type-7d1d8a3.md	Working with Fault Message Type
+docs/ISuite_Integrations_APIs/working-with-function-libraries-dd8c30d.md	Working with Function Libraries
+docs/ISuite_Integrations_APIs/working-with-imported-archives-e00e81d.md	Working with Imported Archives
+docs/ISuite_Integrations_APIs/working-with-integration-flows-5c4e79a.md	Working with Integration Flows
+docs/ISuite_Integrations_APIs/working-with-mapping-68d816a.md	Working with Mapping
+docs/ISuite_Integrations_APIs/working-with-message-types-dcfb8cd.md	Working with Message Types
+docs/ISuite_Integrations_APIs/working-with-policies-and-mediation-steps-c744df5.md	Working with Policies and Mediation Steps
+docs/ISuite_Integrations_APIs/working-with-postman-collections-1d11aa6.md	Working with Postman Collections
+docs/ISuite_Integrations_APIs/working-with-prepackaged-integration-content-bd2ed3e.md	Working with Prepackaged Integration Content
+docs/ISuite_Integrations_APIs/working-with-references-6f96b64.md	Working with References
+docs/ISuite_Integrations_APIs/working-with-script-and-script-collection-e60f706.md	Working with Script and Script Collection
+docs/ISuite_Integrations_APIs/working-with-service-interface-fe4b35a.md	Working with Service Interface
+docs/ISuite_Integrations_APIs/working-with-the-api-analytics-dashboard-e07e815.md	Working with the API Analytics Dashboard
+docs/ISuite_Integrations_APIs/ws-security-configuration-for-the-receiver-soap-1-x-adapter-e9f42bf.md	WS Security Configuration for the Receiver SOAP 1 X Adapter
+docs/ISuite_Integrations_APIs/ws-security-configuration-for-the-sender-soap-1-x-adapter-e53bb5c.md	WS Security Configuration for the Sender SOAP 1 X Adapter
+docs/ISuite_Integrations_APIs/xi-adapter-8fedc92.md	XI Adapter
+docs/ISuite_Integrations_APIs/xi-receiver-handles-duplicates-based-on-unique-id-in-payload-3add2bf.md	XI Receiver Handles Duplicates Based on Unique ID in Payload
+docs/ISuite_Integrations_APIs/xi-receiver-handles-duplicates-fcf026b.md	XI Receiver Handles Duplicates
+docs/ISuite_Integrations_APIs/xi-receiver-handles-duplicates-with-decoupling-via-jms-queue-bd19abf.md	XI Receiver Handles Duplicates with Decoupling via JMS Queue
+docs/ISuite_Integrations_APIs/xi-sender-adapter-handles-duplicates-7c9a0fd.md	XI Sender Adapter Handles Duplicates
+docs/ISuite_Integrations_APIs/xml-digital-signature-ed4a663.md	XML Digital Signature
+docs/ISuite_Integrations_APIs/xml-threat-protection-2e04b93.md	XML Threat Protection
+docs/ISuite_Integrations_APIs/xml-threat-protection-3de6615.md	XML Threat Protection
+docs/ISuite_Integrations_APIs/xml-to-json-72d9d22.md	XML to JSON
+docs/ISuite_Integrations_APIs/xsl-transform-a0615a5.md	Xsl Transform
+docs/ISuite_Integrations_APIs/zendesk-receiver-adapter-01bd8bb.md	Zendesk Receiver Adapter

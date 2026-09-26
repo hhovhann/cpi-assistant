@@ -63,7 +63,7 @@ public class RagService {
         return new RagAnswer(
             text,
             extractSources(text, matches),
-            matches.stream().map(m -> m.embedded().metadata().getString("file_name")).toList(),
+            matches.stream().map(m -> RetrievalService.sourceOf(m.embedded())).toList(),
             usage == null ? null : usage.inputTokenCount(),
             usage == null ? null : usage.outputTokenCount(),
             millis
@@ -92,7 +92,7 @@ public class RagService {
         );
         String context = matches.isEmpty() ? "(no relevant documents found)"
             : IntStream.range(0, matches.size())
-            .mapToObj(i -> "[" + (i + 1) + "] " + matches.get(i).embedded().metadata().getString("file_name")
+            .mapToObj(i -> "[" + (i + 1) + "] " + RetrievalService.sourceOf(matches.get(i).embedded())
                 + "\n" + matches.get(i).embedded().text())
             .collect(Collectors.joining("\n---\n"));
 
@@ -137,7 +137,7 @@ public class RagService {
         static Source of(int number, EmbeddingMatch<TextSegment> match) {
             String flat = match.embedded().text().replaceAll("\\s+", " ").trim();
             return new Source(number,
-                    match.embedded().metadata().getString("file_name"),
+                    RetrievalService.sourceOf(match.embedded()),
                     match.score(),
                     flat.length() <= EXCERPT_LENGTH ? flat : flat.substring(0, EXCERPT_LENGTH) + "...");
         }
