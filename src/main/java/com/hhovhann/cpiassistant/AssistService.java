@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -29,7 +30,9 @@ import java.util.regex.Pattern;
  * </ol>
  * The answer comes back with its path — what was searched, downloaded and
  * called — and every page it cites is checked against what the model was
- * actually given.
+ * actually given. A bracketed name counts as unverified only if it appears
+ * nowhere in that text: the model also brackets pages a passage merely
+ * mentions ("see Configure JDBC Drivers"), which is not an invention.
  */
 @Service
 public class AssistService {
@@ -96,7 +99,10 @@ public class AssistService {
         List<Source> sources = given.values().stream()
                 .map(s -> new Source(s.title(), s.url(), s.score(), s.excerpt(), cited.contains(s.title())))
                 .toList();
-        List<String> unverified = cited.stream().filter(title -> !given.containsKey(title)).toList();
+        String seen = textSeen(found.passages(), toolCalls);
+        List<String> unverified = cited.stream()
+                .filter(title -> !given.containsKey(title) && !seen.contains(title.toLowerCase(Locale.ROOT)))
+                .toList();
         return new AssistAnswer(answer, path, sources, unverified, toolCalls, tokens[0], tokens[1],
                 System.currentTimeMillis() - start);
     }
@@ -137,6 +143,14 @@ public class AssistService {
             }
         }
         return given;
+    }
+
+    /** Everything the model read — passages and tool results — lower-cased, to find mentioned names. */
+    private static String textSeen(List<EmbeddingMatch<TextSegment>> passages, List<ToolCall> toolCalls) {
+        StringBuilder seen = new StringBuilder();
+        passages.forEach(match -> seen.append(match.embedded().text()).append('\n'));
+        toolCalls.forEach(call -> seen.append(call.result()).append('\n'));
+        return seen.toString().toLowerCase(Locale.ROOT);
     }
 
     static Set<String> citedTitles(String answer) {

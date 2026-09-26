@@ -99,6 +99,21 @@ class AssistServiceTest {
     }
 
     @Test
+    void aPageNamedInsideAPassageIsNotAnInvention() {
+        var jdbc = new EmbeddingMatch<>(0.9, "jdbc", null, TextSegment.from(
+                "Your administrator deployed the drivers. For more information, see Configure JDBC Drivers.",
+                dev.langchain4j.data.document.Metadata.from(KnowledgeService.TITLE, "JDBC Receiver Adapter")));
+        var knowledge = new CannedKnowledge(new KnowledgeService.Found(List.of(jdbc), List.of("Database: 1 passage(s)"), List.of()), null);
+        var model = new CpiAgentTest.ScriptedChatModel(n -> AiMessage.from(
+                "Deploy the drivers, see [Configure JDBC Drivers] [JDBC Receiver Adapter]. Tune [Retry Iterations]."));
+
+        var answer = service(model, knowledge).assist("How do I configure a JDBC adapter?");
+
+        // Named in the passage: fine. Named nowhere: flagged.
+        assertThat(answer.unverifiedCitations()).containsExactly("Retry Iterations");
+    }
+
+    @Test
     void closeButWrongPassagesSendTheQuestionToSapHelpOnce() {
         var as2 = new KnowledgeService.Found(List.of(passage("Configure the AS2 Receiver Adapter")),
                 List.of("Database: 1 passage(s), best 0.850"), List.of());

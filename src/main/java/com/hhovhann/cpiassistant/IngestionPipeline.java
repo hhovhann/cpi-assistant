@@ -50,16 +50,23 @@ public class IngestionPipeline {
      * embedAll sends the whole batch in one HTTP call; addAll pairs the two
      * lists positionally — you search by vector, but get back text.
      *
-     * The document prefix is applied to the text that gets embedded only.
-     * The store keeps the original chunk, so the prefix never leaks into
-     * what the model is shown.
+     * What gets embedded is the document prefix, the page title and the chunk.
+     * The title matters for chunks that never name their subject: a table row
+     * "Connection Timeout | Provide a connection timeout …" says nothing about
+     * JDBC, and "configure a JDBC adapter" never found it. The store keeps the
+     * original chunk, so neither prefix nor title leaks into what the model sees.
      */
     public List<Embedding> embedInto(List<TextSegment> segments, EmbeddingStore<TextSegment> store) {
         List<TextSegment> prefixed = segments.stream()
-                .map(segment -> TextSegment.from(documentPrefix + segment.text(), segment.metadata()))
+                .map(segment -> TextSegment.from(documentPrefix + titleLine(segment) + segment.text(), segment.metadata()))
                 .toList();
         List<Embedding> embeddings = embeddingModel.embedAll(prefixed).content();
         store.addAll(embeddings, segments);
         return embeddings;
+    }
+
+    private static String titleLine(TextSegment segment) {
+        String title = segment.metadata().getString(KnowledgeService.TITLE);
+        return title == null ? "" : title + "\n\n";
     }
 }

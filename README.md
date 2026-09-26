@@ -127,9 +127,9 @@ with Qwen3 14B on an M4 Max:
 
 | # | Ask | Expected path | Checks |
 |---|---|---|---|
-| 1 | How do I configure a JDBC adapter? | `Database: 3 passage(s)` → `Answered from the passages, no tool` | **RAG only**, 1 model call, cites [JDBC Receiver Adapter] · ~20 s |
+| 1 | How do I configure a JDBC adapter? | `Database: 3 passage(s)` → `Answered from the passages, no tool` | **RAG only**, 1 model call: drivers → data source → Cloud Connector; cites [JDBC Receiver Adapter] · ~20 s |
 | 2 | How do I handle errors in an iFlow? | Database hit → no tool | Cites [Handle Errors Gracefully] |
-| 3 | How do I configure the AS4 receiver adapter? | Database (AS2 passages) → "I don't know" → `SAP Help: downloaded "AS4 Receiver Adapter"` → answered | **Download + save** |
+| 3 | How do I configure the AS4 receiver adapter? | Database (not AS4) → "I don't know" → `SAP Help: downloaded "Configure Receiver Channel with ebMS3 Pull"` → answered | **Download + save**; the steps (Connection tab, Address, keys) |
 | 4 | *the same AS4 question again* | `Database: … best 0.904` → no tool | **From the database, no download** · ~11 s |
 | 5 | Why did Order_Sync fail today and how do I fix it? | Database → `Tool: getProblemMessages` → `Tool: getErrorDetails` → answered | **Tools** — JDBC pool timeout on ORDER_DB |
 | 6 | Is Payment_Status_Poll failing? | `Tool: getProblemMessages` → `getErrorDetails` → `searchDocs` | Finds the **RETRY** message (SFTP connection refused) and looks up the fix · ~140 s |
@@ -138,9 +138,10 @@ with Qwen3 14B on an M4 Max:
 | 9 | Why did Order_Synk fail today? *(typo)* | problem messages → `listIflows` | Suggests Order_Sync |
 | 10 | How do I configure JDBC and SFTP receiver adapters? | Database hit → no tool | Covers both from the passages |
 
-`unverifiedCitations` should be empty; when the model puts something in
-brackets it was never given (it did once: "[this blog]"), the answer shows it
-with ⚠. Not yet tried: a question in another language, and a question after
+`unverifiedCitations` should be empty. It lists a bracketed name only if it
+appears nowhere in what the model was given (it happened: "[this blog]",
+"[HTTP Receiver Adapter: Retry Iterations]"); the answer shows it with ⚠. A
+page a passage merely mentions ("see Configure JDBC Drivers") is not flagged. Not yet tried: a question in another language, and a question after
 `docker compose down` (expected: an error — the store is required).
 
 **See everything a question did:**
@@ -178,7 +179,7 @@ export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY (and optionally OPENAI_M
 ./gradlew test
 ```
 
-33 tests, fakes for the models and for GitHub: no LM Studio and no internet.
+40 tests, fakes for the models and for GitHub: no LM Studio and no internet.
 `PgVectorStoreTest` starts a throwaway pgvector container, so it needs Docker.
 
 ## Endpoints
@@ -224,16 +225,26 @@ from [SAP-docs/btp-integration-suite](https://github.com/SAP-docs/btp-integratio
 page by title and link to it.
 
 - [`sap-help/catalog.tsv`](src/main/resources/sap-help/catalog.tsv) lists the
-  ~1,660 pages the assistant may download — pinned to a commit of that
-  repository. The model never fetches a URL of its choosing.
+  ~1,660 pages the assistant may download, each with its heading and first
+  sentence — pinned to a commit of that repository and rebuilt with
+  `python3 scripts/build_sap_help_catalog.py [commit]`. The model never fetches
+  a URL of its choosing.
+- A page is chosen by meaning (title + first sentence), then two rules:
+  identifiers like AS4, JDBC, SFTP, OData must match exactly, and a how-to
+  question prefers a "Configure …" page when it matches nearly as well.
+- Saved pages are cleaned for search: links keep only their text, HTML
+  parameter tables become one line per row, and each chunk is embedded
+  together with its page title.
 - Only SAP's text is saved, never a model's answer.
 - help.sap.com itself is not fetched: it renders pages with JavaScript and its
   robots.txt disallows automated clients.
 
-**Known limits:** a page is found by its title, so an *overview* page can win
-over the *Configure the …* page that has the steps (JDBC, AS4). For a
-"why did it fail and how do I fix it" question the model does not always look
-the fix up in the docs — it then answers the fix without a citation.
+**Known limits:** only three passages go to the model, so a long page's
+parameter table can stay out of the answer (JDBC gets the setup steps, not
+every field). An honest "the passages don't cover this" that does not start
+with "I don't know" does not trigger the SAP Help retry. For "why did it fail
+and how do I fix it" the model does not always look the fix up in the docs —
+it then answers the fix without a citation.
 
 ## Tech stack
 
@@ -250,6 +261,7 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 | ✅ | 12–13 | Tool calling: documentation search, CPI tenant tools over the OData API (fake tenant; real one needs OAuth) |
 | ✅ | 7, 14 | Persistent knowledge: pgvector in Docker, SAP Help pages downloaded on a miss and kept |
 | ✅ | 15 | One assistant: one endpoint, official SAP docs as the only source, citations checked |
+| ✅ | 16 | Finding the right page: catalog summaries, exact identifiers, "Configure …" preference, readable tables |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

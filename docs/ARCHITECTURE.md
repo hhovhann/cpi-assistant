@@ -15,9 +15,9 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `CpiDocsTool` | `@Tool searchDocs` — more documentation, through `KnowledgeService` | Per tool call |
 | `CpiTenantTools` | `@Tool listIflows`, `getProblemMessages` (FAILED, RETRY, ESCALATED), `getErrorDetails` — read-only | Per tool call |
 | `CpiTenantClient` | HTTP client for the CPI OData API (`cpi.tenant.base-url`) | Per tool call |
-| `SapHelpCatalog` | The ~1,660 SAP pages that may be downloaded (`sap-help/catalog.tsv`); finds pages by title | Titles embedded once per start |
-| `SapHelpClient` | Downloads one page as Markdown from SAP's GitHub docs repository; strips comments, anchors, images, links | Per download |
-| `IngestionPipeline` | Splits a page into chunks, embeds and stores them | Per download |
+| `SapHelpCatalog` | The ~1,660 SAP pages that may be downloaded (`sap-help/catalog.tsv`: path, heading, first sentence); finds a page by meaning, then ranks: exact identifiers, "Configure …" preference | Entries embedded once per start |
+| `SapHelpClient` | Downloads one page as Markdown from SAP's GitHub docs repository; strips comments, anchors, images, links; HTML tables → one line per row | Per download |
+| `IngestionPipeline` | Splits a page into chunks, embeds each together with its page title, stores them | Per download |
 | `RetrievalService` | Embeds a question, returns the closest chunks above the floor; `searchWithin` one page | Per search |
 | `SeedRunner` | At startup: saves the popular pages (unless fresh), embeds the catalog titles, sets `/status` ready | Once, at startup |
 | `LangChain4jConfig` | Builds the beans: HTTP client, chat model (per provider), embedding model, store, assistant | Once, at startup |
@@ -78,8 +78,11 @@ once and answers again if a page came back.
 the model is told to cite `[Title]` only from what it was given. `AssistService`
 collects every title the model saw — the passages, and any `searchDocs`
 result — and returns cited titles outside that set as `unverifiedCitations`;
-the UI marks them ⚠. It is a check, not a guarantee: it catches a page cited
-from memory, not a claim that is missing from a page it did see.
+the UI marks them ⚠. A name that appears in the text the model read is not
+flagged: the model also brackets pages a passage merely mentions ("see
+Configure JDBC Drivers"), and a prompt rule against it did not work. It is a
+check, not a guarantee: it catches a page cited from memory, not a claim that
+is missing from a page it did see.
 
 **Links are stripped from saved pages.** SAP's Markdown links
 (`[Handle Errors in Successful Responses](….md)`) look exactly like
@@ -95,10 +98,31 @@ publishes the same documentation as Markdown in
 reuse with attribution; answers cite the page, and the README credits SAP.
 
 **Only catalog pages can be downloaded.** `sap-help/catalog.tsv` holds ~1,660
-pages (path and title, from the repository's file names, pinned to a commit).
-Nothing — model or user input — can make the app fetch another URL. The
-trade-off: a page must be in the catalog, and is found by its title only, so
-an overview page can win over the "Configure the …" page with the steps.
+pages — path, heading and first sentence, pinned to a commit and built by
+`scripts/build_sap_help_catalog.py`. Nothing — model or user input — can make
+the app fetch another URL; a page must be in the catalog.
+
+**A page is found by title *and* first sentence.** SAP opens each page with a
+one-sentence description, and it carries words the title lacks: "Configure
+Receiver Channel with ebMS3 Push" never says AS4, its first sentence does.
+
+**Then two ranking rules, both from measured misses** (`SapHelpCatalog.rank`):
+*identifiers must match exactly* — to the embedding model AS4 and AS2 are
+nearly the same word, and "configure the AS4 receiver adapter" came closest to
+"Configure the AS2 Receiver Adapter"; a word with a digit or two capitals
+(AS4, JDBC, SFTP, OData, V2) must appear in the page's title or summary. And
+*how-to questions prefer "Configure …" pages* — but only within 0.025 of the
+best match, because "Configure JDBC Drivers" (0.876, about drivers) must not
+beat "JDBC Receiver Adapter" (0.909, which has the fields). A keyword bonus
+(plain and IDF-weighted) was tried first: it did not fix AS4 and pushed
+off-topic questions toward the download threshold.
+
+**Pages are cleaned for search, not only for reading.** HTML parameter tables
+(on about half of all pages) became tag soup in chunks; each row is now one
+line, `Field | Description`. And each chunk is embedded together with its page
+title: a table row like "Connection Timeout | Provide a connection timeout …"
+never says JDBC, and "configure a JDBC adapter" did not find it. The store
+keeps the chunk without the title.
 
 **What is saved is SAP's text, never the model's answer.** A page is split
 like any document and stored with `source=sap-help`, its URL, title and fetch
@@ -184,8 +208,10 @@ sees `search_document:`.
 
 | Test | What it checks | Needs |
 |---|---|---|
-| `AssistServiceTest` | The one path with a scripted model: a database hit is one call with no tool; a cited page never given is flagged; "I don't know" on close-but-wrong passages asks SAP Help once and answers again; tool calls are reported and their pages count as given; numbers and ids are not citations | Nothing — fakes |
+| `AssistServiceTest` | The one path with a scripted model: a database hit is one call with no tool; a cited page never given is flagged, a page named inside a passage is not; "I don't know" on close-but-wrong passages asks SAP Help once and answers again; tool calls are reported and their pages count as given; numbers and ids are not citations | Nothing — fakes |
 | `KnowledgeServiceTest` | A local server plays GitHub: a miss downloads the best page, strips links and images, saves it; the second time the store answers; off-topic downloads nothing; refresh after max-age without duplicates; a moved page; passages labelled by title; the real catalog loads | Nothing — local server, bag-of-words embeddings |
+| `SapHelpCatalogTest` | The ranking rules with real titles and measured scores: AS4 is not AS2, a clearly worse "Configure …" page does not win, an identifier no page has changes nothing | Nothing |
+| `SapHelpClientTest` | Cleaning, on real SAP shapes: an HTML table becomes `Field \| Description` rows; comments, anchors and images go, link text stays | Nothing |
 | `CpiAgentTest` | The tool loop: passages arrive in the message, all four tools offered, a docs question needs no tool, `searchDocs` runs with the model's query and its result goes back, the round-trip limit | Nothing — scripted model |
 | `CpiTenantTest` | Client against the fake tenant over real HTTP: filters, time window, RETRY, quote escaping, error text and 404, iFlow list, the tools' text | Nothing — random port |
 | `PgVectorStoreTest` | Real pgvector: same score scale as memory, remove-by-URL deletes only that page, rows survive a new store on the same table | **Docker** (Testcontainers) |

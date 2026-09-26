@@ -736,6 +736,53 @@ always, tools when needed.
 **Try:** the QA checklist in the README, from an empty store. Then ask about a
 topic in the catalog but not seeded, twice, and compare the two paths.
 
+### Step 16: Finding the right page
+
+**Why:** Step 15's answers for JDBC and AS4 said "the steps are not in the
+passages". The guess was "an overview page beats the Configure page". Checking
+the catalog proved it wrong: no "Configure the JDBC/AS4/HTTP Receiver Adapter"
+page exists. The real causes were two others.
+**What was found, and fixed:**
+
+| Adapter | Real cause | Fix |
+|---|---|---|
+| JDBC | The fields *are* on the JDBC page — in HTML tables, which became tag soup in chunks; and a row like "Connection Timeout \| …" never says JDBC | Tables → one line per row; every chunk embedded together with its page title |
+| AS4 | The steps are in "Configure Receiver Channel with ebMS3 Pull/Push" — titles that never say AS4 | The catalog now carries each page's first sentence ("Configure the AS4 receiver channel …"); matching uses title + sentence |
+
+Adding the sentence brought a new miss: "configure the AS4 receiver adapter"
+now matched **Configure the AS2 Receiver Adapter** best (0.902) — to the
+embedding model AS4 ≈ AS2. A keyword bonus, plain and IDF-weighted, did not
+fix it and pushed off-topic questions toward the 0.82 download threshold
+("tell me a joke" 0.816). What worked is two plain rules in
+`SapHelpCatalog.rank`: identifiers (a digit or two capitals: AS4, JDBC, SFTP,
+OData) must match exactly; how-to questions prefer "Configure …" pages within
+0.025 of the best — so "Configure JDBC Drivers" (0.876) does not beat "JDBC
+Receiver Adapter" (0.909).
+**Classes:** `scripts/build_sap_help_catalog.py`, `SapHelpCatalog.rank` /
+`identifiers`, `SapHelpClient.tablesToRows`, `IngestionPipeline` (title in the
+embedded text), `AssistService` (citation check); tests `SapHelpCatalogTest`,
+`SapHelpClientTest`.
+**Idea:** measure before fixing — the obvious explanation was wrong. And
+retrieval quality is mostly *data preparation*: what text goes into a chunk,
+and what text a chunk is embedded with.
+**Measured with Qwen3 14B, store emptied and reseeded:**
+
+| Question | Before | After |
+|---|---|---|
+| Configure the AS4 receiver adapter | Downloaded the AS4 overview; "no configuration steps" | Downloads "Configure Receiver Channel with ebMS3 Pull"; Connection tab, Address, decryption key, receipts — cited |
+| Configure a JDBC adapter | "The exact steps are not provided" | Drivers → data source → Cloud Connector → adapter version, cited, 20 s |
+| Capital of France / tune JVM GC | No download | No download (best catalog match 0.767 / 0.805) |
+
+- **The citation check needed a correction:** with readable pages the model
+  began bracketing pages a passage *mentions* ("see [Configure JDBC Drivers]").
+  A prompt rule against it was ignored; the check now flags a bracketed name
+  only if it appears nowhere in what the model read. Invented names like
+  "[HTTP Receiver Adapter: Retry Iterations]" are still caught.
+- **Still open:** three passages is little for a long page — JDBC's field table
+  stays out of the answer.
+**Try:** `python3 scripts/build_sap_help_catalog.py` to rebuild the catalog,
+and compare `SapHelpCatalog.rank` on a question of your own.
+
 ---
 
 ## Phase 2 — an agent with LangChain4j
