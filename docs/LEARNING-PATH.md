@@ -536,10 +536,53 @@ stops a model that never converges.
   (`cpi.chat.lmstudio.model-name`). The Step 10 reports were measured with
   Llama; `-Dcpi.chat.lmstudio.model-name=meta-llama-3.1-8b-instruct` reruns them.
 
-**Next:** `/agent` vs `/ask` in the answer evaluation; then CPI tools beyond
-the docs (a CPI API).
+**Next:** `/agent` vs `/ask` in the answer evaluation.
 **Try:** ask `/agent` something that needs two searches, like "Compare the JDBC
 adapter and the OData adapter", and see whether the model searches twice.
+
+### Step 13: CPI tenant tools — live data over HTTP
+
+**What:** three read-only tools that read a CPI tenant through its OData API
+— `listIflows`, `getFailedMessages(iflowName?, hoursBack?)`,
+`getErrorDetails(messageId)` — next to `searchCpiDocs`. Without a tenant (the
+BTP trial is stuck on phone verification), a **fake tenant** runs inside the
+app at `/fake-cpi/api/v1`: same paths, `$filter` syntax and JSON as the real
+API, with five iFlows and planted failures (JDBC pool timeouts, an HTTP 401, a
+mapping error, an SFTP retry, one iFlow in ERROR).
+**Classes:** `CpiTenantTools`, `CpiTenantClient`, `CpiODataModel`,
+`FakeCpiController`, `FakeCpiData`, `CpiTenantTest`.
+**Idea:** two kinds of knowledge — the docs say how CPI works, the tenant says
+what is happening. A "why did it fail and how do I fix it" question needs
+both, in order, and the model has to work out that order itself. The client
+speaks real HTTP to the fake, so a real tenant is a configuration change
+(plus OAuth).
+**Measured with Qwen3 14B:**
+
+| Question | Tool calls, in the model's order | Answer | Tokens in / out | Time |
+|---|---|---|---|---|
+| Why did Order_Sync fail today and how do I fix it? | `getFailedMessages("Order_Sync", 24)` → `getErrorDetails(<id>)` → `searchCpiDocs("JdbcAdapterException connection timeout HikariPool")` | JDBC pool timeout on ORDER_DB, fixes from the JDBC doc, cited | 4,429 / 1,524 | 94 s |
+| Which iFlows are not running? | `listIflows()` | Material_Master_Load, status ERROR | 1,758 / 430 | 26 s |
+
+- **It chained three tools unprompted**, and searched the docs with words
+  from the error text — not from the question.
+- **Not everything is grounded:** "check the HikariPool settings" is uncited
+  and not something a CPI user controls — the model filling a gap from its
+  own knowledge. It also did not say that *three* messages failed.
+- **Cost grows per round trip:** four model calls resend the growing
+  conversation — 4.4K input tokens, 94 s.
+- **A trap on the way:** the first run seemed to ignore the new tools. An older
+  copy of the app was still holding port 8080, and the new one had failed to
+  start. Same input tokens as before was the clue: new tool descriptions
+  would have added to them.
+
+- **A blind spot, found by asking:** "Is Payment_Status_Poll failing?" got
+  "running normally". It is stuck in RETRY (SFTP connection refused), but
+  `getFailedMessages` returns only FAILED, so the model never saw it. The
+  model also passed an `iflowName` to `listIflows`, which takes none —
+  LangChain4j dropped it silently. A tool can only report what its query asks
+  for; the fix is a status parameter (FAILED, RETRY, ESCALATED).
+
+**Try:** "Why did Invoice_To_Partner_EDI fail?", and a made-up iFlow name.
 
 ---
 

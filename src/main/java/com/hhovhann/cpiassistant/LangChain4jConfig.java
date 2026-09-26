@@ -136,13 +136,14 @@ public class LangChain4jConfig {
 
     /**
      * The agent: AiServices implements {@link CpiAgent} and runs the tool loop
-     * against whichever chat model {@code cpi.chat.provider} picked.
+     * against whichever chat model {@code cpi.chat.provider} picked. Two kinds
+     * of tool: the docs (how CPI works) and the tenant (what is happening).
      */
     @Bean
-    CpiAgent cpiAgent(ChatModel chatModel, CpiDocsTool cpiDocsTool) {
+    CpiAgent cpiAgent(ChatModel chatModel, CpiDocsTool cpiDocsTool, CpiTenantTools cpiTenantTools) {
         return AiServices.builder(CpiAgent.class)
                 .chatModel(chatModel)
-                .tools(cpiDocsTool)
+                .tools(cpiDocsTool, cpiTenantTools)
                 .maxToolCallingRoundTrips(MAX_TOOL_ROUND_TRIPS)
                 .build();
     }

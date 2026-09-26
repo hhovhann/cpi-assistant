@@ -179,7 +179,8 @@ Run just one with `./gradlew eval --tests '*AnswerEvaluation'`.
 | GET | `/` | — | Web UI |
 | GET | `/ask` | `question` | RAG answer with cited sources and token usage |
 | GET | `/chat` | `message` | Plain LLM call, no retrieval — the baseline |
-| GET | `/agent` | `question` | The model decides whether and what to search (retrieval as a tool); lists every tool call |
+| GET | `/agent` | `question` | The agent: picks its own tools — the docs, and the CPI tenant (iFlows, failed messages, errors); lists every tool call |
+| GET | `/fake-cpi/api/v1/...` | OData | A stand-in CPI tenant with planted failures — same paths and JSON as the real API (`cpi.tenant.fake=true`) |
 | GET | `/status` | — | `{"ready": true, "indexedSegments": 207}` — whether the docs are indexed yet |
 
 ## Configuration
@@ -200,6 +201,8 @@ and can be overridden on the command line:
 | `cpi.chat.provider` | `lmstudio` | Chat model: `lmstudio`, `openai` (needs `OPENAI_API_KEY`) or `anthropic` (needs `ANTHROPIC_API_KEY`) — see above |
 | `cpi.chat.lmstudio.*` / `.openai.*` / `.anthropic.*` | Qwen3 14B at temperature 0.0 / `gpt-5-mini` / Claude Opus 5.5 | Endpoint, key, model name and limits per provider |
 | `cpi.chat.timeout`, `cpi.chat.max-retries` | `3m`, LangChain4j's 2 | Per chat call, whichever provider |
+| `cpi.tenant.fake` | `true` | Serve the fake CPI tenant at `/fake-cpi/api/v1` |
+| `cpi.tenant.base-url` | the fake tenant | CPI OData API the tenant tools read |
 | `langchain4j.open-ai.embedding-model.*` | LM Studio / nomic v1.5 | Embedding model, plus nomic's `query-prefix` / `document-prefix` |
 
 > The score floor and the prefixes are tuned for nomic-embed-text. Switching
@@ -234,6 +237,7 @@ Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 | 🔶 | 10 | Tuning and evaluation — local part done: retrieval, answers, citations. A stronger model and judge wait for API credit |
 | ✅ | 11 | One switch for the chat model: LM Studio, OpenAI or Anthropic |
 | ✅ | 12 | Retrieval as a tool (`/agent`); Qwen3 14B is now the default local chat model |
+| ✅ | 13 | CPI tenant tools over the OData API, against a fake tenant (real tenant: needs OAuth) |
 
 Then: tools and an agent with LangChain4j.
 Details in [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

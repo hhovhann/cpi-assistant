@@ -51,6 +51,14 @@ cpi:
       # Thinking counts toward this limit.
       max-tokens: 16000
 
+  # The CPI tenant the agent's tools read (CpiTenantClient). Until a real
+  # tenant is reachable, a fake one runs inside this app (FakeCpiController)
+  # with the same paths and JSON as the real OData API. For a real tenant:
+  # fake: false, and base-url = the service key's URL + /api/v1 (OAuth still to do).
+  tenant:
+    fake: true
+    base-url: http://localhost:${server.port:8080}/fake-cpi/api/v1
+
 # Embedding model, consumed by LangChain4jConfig. A separate model on the same
 # LM Studio server. It returns vectors, not text. nomic-embed-text-v1.5
 # produces 768 dimensions. Request logging stays off: 207 segments of payload

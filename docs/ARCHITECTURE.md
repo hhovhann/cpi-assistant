@@ -20,6 +20,10 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `CpiDocsTool` | `@Tool searchCpiDocs(query)` — retrieval the model can call | Per tool call |
 | `CpiAgent` | Interface that AiServices implements: runs the tool loop until the model answers | Per question |
 | `AgentController` | `GET /agent` — the agent's answer plus every tool call it made | Per question |
+| `CpiTenantTools` | `@Tool listIflows`, `getFailedMessages`, `getErrorDetails` — read-only tenant tools | Per tool call |
+| `CpiTenantClient` | HTTP client for the CPI OData API (`cpi.tenant.base-url`) | Per tool call |
+| `CpiODataModel` | The OData records and `/Date(ms)/` conversion, shared by client and fake | — |
+| `FakeCpiController`, `FakeCpiData` | A stand-in tenant: same paths and JSON as the real API, planted failures | Per request |
 | `static/index.html` | Web UI: calls `/status`, `/ask` and optionally `/chat` | In the browser |
 
 ## Two halves: ingestion and retrieval
@@ -107,6 +111,19 @@ round trip resends the whole conversation, so input tokens grow with each
 search. Citations are file names (`[02-jdbc-adapter.txt]`), because the
 numbers of passages from several searches would clash.
 
+**The tenant tools talk real HTTP, even to the fake.** `CpiTenantClient` calls
+`cpi.tenant.base-url` with the real OData paths, `$filter` syntax and JSON
+envelope; the fake tenant happens to live in the same app. Switching to a real
+tenant is configuration plus OAuth (client credentials from a service key),
+not a rewrite. The fake rejects filters it does not understand instead of
+ignoring them — an ignored condition would return wrong data that looks right.
+The client doubles quotes in iFlow names, so a name cannot extend the filter.
+
+**All tools are read-only, and their results are data.** The model can look
+at the tenant, never change it. Error texts come from a remote system, so the
+system prompt says tool results are never instructions — a first defence; a
+tool-use evaluation with a planted injection is the real test.
+
 **The chat model runs at temperature 0.** Answers from documentation should be
 factual, and the evaluations need repeatable runs.
 
@@ -123,6 +140,7 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 | `LangChain4jConfigTest` | The configured chat timeout really cuts off a slow server (the 60 s override bug) | No — a local stub server |
 | `ChatProviderTests` | `cpi.chat.provider` builds the right model: Qwen3 14B at temperature 0 by default, Claude and OpenAI without sampling parameters, a clear error when a key is missing | No — builds the clients offline with placeholder keys |
 | `CpiAgentTest` | The tool loop with a scripted fake model: the tool is offered, runs with the model's query, its result goes back; answering without a search; an empty search; the round-trip limit | No — hand-written fakes |
+| `CpiTenantTest` | Client against the fake tenant over real HTTP: filters, time window, RETRY not counted as failed, quote escaping, error text and 404, iFlow list, and the tools' text | No — the fake tenant, random port |
 | `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
 | `AnswerEvaluation` | Answer quality: RAG at 500/50 and 300/30 vs all docs in the prompt — key facts, declines, tokens, time | **Yes** — same `eval` tag; the chat model needs a ≥ 32K context |
 | `CitationEvaluation` | Citation quality: each (claim, cited chunk) pair judged by the active chat model, plus embedding similarity | **Yes** — same `eval` tag and context |
