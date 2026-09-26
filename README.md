@@ -65,10 +65,11 @@ text into vectors.
 
 | Purpose | Model to download in LM Studio | Identifier the app expects |
 |---|---|---|
-| Chat | Meta Llama 3.1 8B Instruct (`lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF`) | `meta-llama-3.1-8b-instruct` |
+| Chat | Qwen3 14B (`qwen/qwen3-14b`, ~8 GB) — good at tool calling | `qwen/qwen3-14b` |
 | Embeddings | Nomic Embed Text v1.5 | `text-embedding-nomic-embed-text-v1.5` |
 
-Load both, then start the server (Developer tab → *Start Server*). Check it:
+Load the chat model with a 32K context — `lms load qwen/qwen3-14b --context-length 32768` —
+and the embedding model, then start the server (Developer tab → *Start Server*). Check it:
 
 ```bash
 curl -s localhost:1234/v1/models
@@ -126,7 +127,7 @@ curl -G localhost:8080/chat --data-urlencode "message=How do I connect to a data
 - `retrievedFrom` — everything retrieval handed to the model. Here the data
   store chunk was retrieved but not used, so it isn't a source.
 
-### Optional: answer with OpenAI or Claude instead of Llama
+### Optional: answer with OpenAI or Claude instead of the local model
 
 `cpi.chat.provider` picks the chat model: `lmstudio` (default), `openai` or
 `anthropic`. Embeddings stay on LM Studio, so it must still run with the nomic
@@ -166,7 +167,9 @@ Runs two evaluations against LM Studio and saves their reports to `build/eval/`:
 
 Edit the question sets in `src/test/resources/eval/`. The answer evaluation
 puts all docs in one ~16K-token prompt, so load the chat model with a larger
-context first: `lms load meta-llama-3.1-8b-instruct --context-length 32768`.
+context first: `lms load qwen/qwen3-14b --context-length 32768`. The reports
+in the learning path for Steps 10a–10c were measured with Llama 3.1 8B; run
+with `-Dcpi.chat.lmstudio.model-name=meta-llama-3.1-8b-instruct` to compare.
 Run just one with `./gradlew eval --tests '*AnswerEvaluation'`.
 
 ## Endpoints
@@ -176,6 +179,7 @@ Run just one with `./gradlew eval --tests '*AnswerEvaluation'`.
 | GET | `/` | — | Web UI |
 | GET | `/ask` | `question` | RAG answer with cited sources and token usage |
 | GET | `/chat` | `message` | Plain LLM call, no retrieval — the baseline |
+| GET | `/agent` | `question` | The model decides whether and what to search (retrieval as a tool); lists every tool call |
 | GET | `/status` | — | `{"ready": true, "indexedSegments": 207}` — whether the docs are indexed yet |
 
 ## Configuration
@@ -194,7 +198,7 @@ and can be overridden on the command line:
 | `cpi.ingestion.run-on-startup` | `true` | Load and embed the docs at startup (tests set it to `false`) |
 | `cpi.retrieval.min-score` | `0.80` | Relevance floor. On a `(cosine + 1) / 2` scale — see the learning path |
 | `cpi.chat.provider` | `lmstudio` | Chat model: `lmstudio`, `openai` (needs `OPENAI_API_KEY`) or `anthropic` (needs `ANTHROPIC_API_KEY`) — see above |
-| `cpi.chat.lmstudio.*` / `.openai.*` / `.anthropic.*` | Llama 3.1 8B at temperature 0.0 / `gpt-5-mini` / Claude Opus 5.5 | Endpoint, key, model name and limits per provider |
+| `cpi.chat.lmstudio.*` / `.openai.*` / `.anthropic.*` | Qwen3 14B at temperature 0.0 / `gpt-5-mini` / Claude Opus 5.5 | Endpoint, key, model name and limits per provider |
 | `cpi.chat.timeout`, `cpi.chat.max-retries` | `3m`, LangChain4j's 2 | Per chat call, whichever provider |
 | `langchain4j.open-ai.embedding-model.*` | LM Studio / nomic v1.5 | Embedding model, plus nomic's `query-prefix` / `document-prefix` |
 
@@ -229,6 +233,7 @@ Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 | ✅ | 9 | Web UI |
 | 🔶 | 10 | Tuning and evaluation — local part done: retrieval, answers, citations. A stronger model and judge wait for API credit |
 | ✅ | 11 | One switch for the chat model: LM Studio, OpenAI or Anthropic |
+| ✅ | 12 | Retrieval as a tool (`/agent`); Qwen3 14B is now the default local chat model |
 
 Then: tools and an agent with LangChain4j.
 Details in [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

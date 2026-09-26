@@ -17,6 +17,9 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `RagService` | Retrieve → build a numbered prompt → call the LLM → parse the answer's `[n]` citations into sources | Per question |
 | `RagController` | `GET /ask`, and `GET /status` for readiness | Per question |
 | `ChatController` | `GET /chat` — the LLM alone, no retrieval | Per question |
+| `CpiDocsTool` | `@Tool searchCpiDocs(query)` — retrieval the model can call | Per tool call |
+| `CpiAgent` | Interface that AiServices implements: runs the tool loop until the model answers | Per question |
+| `AgentController` | `GET /agent` — the agent's answer plus every tool call it made | Per question |
 | `static/index.html` | Web UI: calls `/status`, `/ask` and optionally `/chat` | In the browser |
 
 ## Two halves: ingestion and retrieval
@@ -95,6 +98,15 @@ top_k with a 400 — `ChatProviderTests` guards that none of them is sent. It al
 and thinking counts toward `max-tokens` (16,000); LangChain4j 1.20 cannot set
 effort, so it runs at the model's default, `medium`.
 
+**`/ask` retrieves every time; `/agent` lets the model decide.** `/ask` is a
+fixed pipeline: search, then answer. `/agent` hands the model a `searchCpiDocs`
+tool and lets it choose whether to search, with what words, and how often.
+The loop is LangChain4j's `AiServices`, capped at `MAX_TOOL_ROUND_TRIPS` (5)
+model replies that ask for tools — LangChain4j's own default is 100. Every
+round trip resends the whole conversation, so input tokens grow with each
+search. Citations are file names (`[02-jdbc-adapter.txt]`), because the
+numbers of passages from several searches would clash.
+
 **The chat model runs at temperature 0.** Answers from documentation should be
 factual, and the evaluations need repeatable runs.
 
@@ -109,7 +121,8 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 | `RagServiceTest` | Prompt contents and numbering, citation parsing and its edge cases, answer mapping, empty retrieval, missing token usage | No — hand-written fakes |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | No — sets `cpi.ingestion.run-on-startup=false` |
 | `LangChain4jConfigTest` | The configured chat timeout really cuts off a slow server (the 60 s override bug) | No — a local stub server |
-| `ChatProviderTests` | `cpi.chat.provider` builds the right model: Llama at temperature 0 by default, Claude and OpenAI without sampling parameters, a clear error when a key is missing | No — builds the clients offline with placeholder keys |
+| `ChatProviderTests` | `cpi.chat.provider` builds the right model: Qwen3 14B at temperature 0 by default, Claude and OpenAI without sampling parameters, a clear error when a key is missing | No — builds the clients offline with placeholder keys |
+| `CpiAgentTest` | The tool loop with a scripted fake model: the tool is offered, runs with the model's query, its result goes back; answering without a search; an empty search; the round-trip limit | No — hand-written fakes |
 | `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
 | `AnswerEvaluation` | Answer quality: RAG at 500/50 and 300/30 vs all docs in the prompt — key facts, declines, tokens, time | **Yes** — same `eval` tag; the chat model needs a ≥ 32K context |
 | `CitationEvaluation` | Citation quality: each (claim, cited chunk) pair judged by the active chat model, plus embedding similarity | **Yes** — same `eval` tag and context |

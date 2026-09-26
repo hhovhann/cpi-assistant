@@ -27,10 +27,10 @@ class ChatProviderTests {
         ChatModel chatModel;
 
         @Test
-        void usesLlamaOnLmStudioAtTemperatureZero() {
+        void usesQwenOnLmStudioAtTemperatureZero() {
             assertThat(chatModel).isInstanceOf(OpenAiChatModel.class);
             var parameters = chatModel.defaultRequestParameters();
-            assertThat(parameters.modelName()).isEqualTo("meta-llama-3.1-8b-instruct");
+            assertThat(parameters.modelName()).isEqualTo("qwen/qwen3-14b");
             assertThat(parameters.temperature()).isEqualTo(0.0);
         }
     }

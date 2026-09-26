@@ -486,6 +486,61 @@ temperature, so none is sent.
 `--cpi.chat.provider=...`, and ask the three demo questions. Then start with
 the provider but no key and read the error.
 
+### Step 12: Retrieval as a tool
+
+**What:** `GET /agent`. The model gets a `searchCpiDocs(query)` tool and
+decides for itself whether to search, what to search for, and whether to
+search again. The response lists every tool call with its arguments and result.
+**Classes:** `CpiDocsTool`, `CpiAgent`, `AgentController`,
+`LangChain4jConfig.cpiAgent`, `CpiAgentTest`.
+**Idea:** in `/ask` *your code* decides to retrieve; in `/agent` the *model*
+does. The model never sees `CpiDocsTool` — only its name and the text in
+`@Tool` and `@P`, which is why that text is written for the model. `CpiAgent`
+has no implementation: `AiServices` builds one that sends the question plus the
+tool descriptions, runs whatever tool the model asks for, sends the result
+back, and repeats until the model answers in text. `maxToolCallingRoundTrips(5)`
+stops a model that never converges.
+**Measured with Llama 3.1 8B (temperature 0):**
+
+| Question | Tool calls | Answer | Tokens in / out |
+|---|---|---|---|
+| Connect to a database from an iFlow | 1 — `"connect to database from iFlow"` | "I don't know" — although the JDBC passage was in the result | 1,277 / 30 |
+| Handle errors in an iFlow | 1 — `"handling errors in iflow"` | Hedged summary, no citations | 1,267 / 105 |
+| Capital of France | 0 | Declined, no search | 482 / 18 |
+
+- **Deciding worked:** it searched for CPI questions, with its own sensible
+  query, and did not search for France.
+- **Using the result did not:** with the same JDBC passage `/ask` answers
+  correctly, but here Llama said "I don't know" and did not search again.
+  Tool results arrive as a separate message after the model's own tool call;
+  small models handle that turn much worse than a context pasted into the
+  prompt.
+- **Cost:** ~1,270 input tokens for one search vs ~380 for `/ask` — the tool
+  descriptions and the extra round trip are paid on every question.
+
+**Same questions with Qwen3 14B** (`qwen/qwen3-14b`, 32K context, temperature 0):
+
+| Question | Tool calls | Answer | Tokens in / out | Time |
+|---|---|---|---|---|
+| Connect to a database from an iFlow | 1 — same query | Correct JDBC steps, cited `[02-jdbc-adapter.txt]` | 990 / 621 | 39 s |
+| Handle errors in an iFlow | 1 — `"error handling in iFlow"` | Five correct points, every one cited | 979 / 786 | 42 s |
+| Capital of France | 0 | Declined, no search | 334 / 166 | 9 s |
+
+- **Same decisions, but it uses what it finds.** Every answer is grounded
+  and cited by file name.
+- **Slower:** Qwen3 *thinks* before it answers. Most of the 600–800 output
+  tokens are hidden reasoning, and they cost ~40 s per question on an M4 Max.
+- **One small embellishment:** "e.g., from CPI's JDBC connection settings" is
+  not in the passage. Grounded is not the same as exact.
+- **Decision:** Qwen3 14B is now the default local chat model
+  (`cpi.chat.lmstudio.model-name`). The Step 10 reports were measured with
+  Llama; `-Dcpi.chat.lmstudio.model-name=meta-llama-3.1-8b-instruct` reruns them.
+
+**Next:** `/agent` vs `/ask` in the answer evaluation; then CPI tools beyond
+the docs (a CPI API).
+**Try:** ask `/agent` something that needs two searches, like "Compare the JDBC
+adapter and the OData adapter", and see whether the model searches twice.
+
 ---
 
 ## Phase 2 — an agent with LangChain4j

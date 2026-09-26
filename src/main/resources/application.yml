@@ -30,9 +30,14 @@ cpi:
     lmstudio:
       base-url: http://localhost:1234/v1
       api-key: lm-studio
-      model-name: meta-llama-3.1-8b-instruct
+      # Qwen3 14B: calls tools and uses their results. Llama 3.1 8B
+      # (meta-llama-3.1-8b-instruct) called the tool but then ignored what it
+      # found. Qwen3 thinks before answering: better answers, ~40 s per question.
+      model-name: qwen/qwen3-14b
       # 0 = always the most likely next token. Answers from docs should be
       # factual, not creative, and the evaluation needs repeatable runs.
+      # (Qwen suggests ~0.6 when thinking, against endless repetition; 0 has
+      # been fine on the demo questions so far.)
       temperature: 0.0
     openai:
       base-url: https://api.openai.com/v1

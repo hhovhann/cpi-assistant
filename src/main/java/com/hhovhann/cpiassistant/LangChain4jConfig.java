@@ -8,6 +8,7 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
+import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import org.springframework.beans.factory.annotation.Value;
@@ -122,6 +123,28 @@ public class LangChain4jConfig {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException("This chat provider needs an API key: export " + envVariable);
         }
+    }
+
+    /**
+     * Upper bound on tool-calling round trips per question: model replies that
+     * ask for tools. Not individual calls — one reply may ask for several.
+     * A model that keeps searching without converging costs a round trip, and
+     * the whole conversation so far in input tokens, every time; past this
+     * limit the question fails instead. LangChain4j's default is 100.
+     */
+    static final int MAX_TOOL_ROUND_TRIPS = 5;
+
+    /**
+     * The agent: AiServices implements {@link CpiAgent} and runs the tool loop
+     * against whichever chat model {@code cpi.chat.provider} picked.
+     */
+    @Bean
+    CpiAgent cpiAgent(ChatModel chatModel, CpiDocsTool cpiDocsTool) {
+        return AiServices.builder(CpiAgent.class)
+                .chatModel(chatModel)
+                .tools(cpiDocsTool)
+                .maxToolCallingRoundTrips(MAX_TOOL_ROUND_TRIPS)
+                .build();
     }
 
     /**
