@@ -94,7 +94,7 @@ class CpiAgentTest {
         assertThat(model.requests).hasSize(2);
         assertThat(model.requests.getFirst().toolSpecifications())
                 .extracting(spec -> spec.name())
-                .containsExactlyInAnyOrder("searchCpiDocs", "listIflows", "getFailedMessages", "getErrorDetails");
+                .containsExactlyInAnyOrder("searchCpiDocs", "listIflows", "getProblemMessages", "getErrorDetails");
         assertThat(model.requests.get(1).messages()).last()
                 .isInstanceOfSatisfying(ToolExecutionResultMessage.class, message -> assertThat(message.text())
                         .contains("[02-jdbc-adapter.txt]", "select JDBC"));

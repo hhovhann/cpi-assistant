@@ -543,7 +543,8 @@ adapter and the OData adapter", and see whether the model searches twice.
 ### Step 13: CPI tenant tools — live data over HTTP
 
 **What:** three read-only tools that read a CPI tenant through its OData API
-— `listIflows`, `getFailedMessages(iflowName?, hoursBack?)`,
+— `listIflows`, `getProblemMessages(iflowName?, status?, hoursBack?)` (first
+`getFailedMessages`, see below),
 `getErrorDetails(messageId)` — next to `searchCpiDocs`. Without a tenant (the
 BTP trial is stuck on phone verification), a **fake tenant** runs inside the
 app at `/fake-cpi/api/v1`: same paths, `$filter` syntax and JSON as the real
@@ -560,7 +561,7 @@ speaks real HTTP to the fake, so a real tenant is a configuration change
 
 | Question | Tool calls, in the model's order | Answer | Tokens in / out | Time |
 |---|---|---|---|---|
-| Why did Order_Sync fail today and how do I fix it? | `getFailedMessages("Order_Sync", 24)` → `getErrorDetails(<id>)` → `searchCpiDocs("JdbcAdapterException connection timeout HikariPool")` | JDBC pool timeout on ORDER_DB, fixes from the JDBC doc, cited | 4,429 / 1,524 | 94 s |
+| Why did Order_Sync fail today and how do I fix it? | `getFailedMessages("Order_Sync", 24)` (the tool's first name) → `getErrorDetails(<id>)` → `searchCpiDocs("JdbcAdapterException connection timeout HikariPool")` | JDBC pool timeout on ORDER_DB, fixes from the JDBC doc, cited | 4,429 / 1,524 | 94 s |
 | Which iFlows are not running? | `listIflows()` | Material_Master_Load, status ERROR | 1,758 / 430 | 26 s |
 
 - **It chained three tools unprompted**, and searched the docs with words
@@ -577,10 +578,34 @@ speaks real HTTP to the fake, so a real tenant is a configuration change
 
 - **A blind spot, found by asking:** "Is Payment_Status_Poll failing?" got
   "running normally". It is stuck in RETRY (SFTP connection refused), but
-  `getFailedMessages` returns only FAILED, so the model never saw it. The
+  `getFailedMessages` returned only FAILED, so the model never saw it. The
   model also passed an `iflowName` to `listIflows`, which takes none —
-  LangChain4j dropped it silently. A tool can only report what its query asks
-  for; the fix is a status parameter (FAILED, RETRY, ESCALATED).
+  LangChain4j dropped it silently.
+- **Fixing it took two changes, not one:**
+  1. *The tool:* `getFailedMessages` became `getProblemMessages` — FAILED,
+     RETRY and ESCALATED by default, an optional `status`, each line labelled.
+     `CpiTenantTest.retriesAreProblemsToo` proves the RETRY now comes back.
+     The name changed too: the model reads it, and "failed" would undersell
+     what the tool returns.
+  2. *The routing:* with only that, the model still asked `listIflows` — its
+     description said "check whether an iFlow is running". It now says it
+     shows deployment status only and points to `getProblemMessages`.
+
+  | Run | Tool calls | Answer |
+  |---|---|---|
+  | Before | `listIflows` | "running normally" — wrong |
+  | New tool, old description | `listIflows` | "running normally" — still wrong |
+  | New tool, new description | `getProblemMessages("Payment_Status_Poll")` → `getErrorDetails` | RETRY, SFTP connection refused — right |
+
+- **The same question can take a different path.** Two runs of the Order_Sync
+  question in a row: one skipped `searchCpiDocs` and invented HikariCP
+  settings plus a help.sap.com URL as its "citation"; the next chained all
+  three tools. Temperature 0 does not make a thinking model's tool choices
+  repeatable.
+- **Made-up citations.** The right Payment_Status_Poll answer cites
+  `[03-sftp-adapter.txt]` and `[04-network-issues.txt]` — neither file
+  exists, and it never searched the docs. The prompt asks for citations from
+  tool results; nothing checks it yet. That check is the next safety step.
 
 **Try:** "Why did Invoice_To_Partner_EDI fail?", and a made-up iFlow name.
 

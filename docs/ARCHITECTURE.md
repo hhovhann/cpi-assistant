@@ -20,7 +20,7 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `CpiDocsTool` | `@Tool searchCpiDocs(query)` — retrieval the model can call | Per tool call |
 | `CpiAgent` | Interface that AiServices implements: runs the tool loop until the model answers | Per question |
 | `AgentController` | `GET /agent` — the agent's answer plus every tool call it made | Per question |
-| `CpiTenantTools` | `@Tool listIflows`, `getFailedMessages`, `getErrorDetails` — read-only tenant tools | Per tool call |
+| `CpiTenantTools` | `@Tool listIflows`, `getProblemMessages` (FAILED, RETRY, ESCALATED), `getErrorDetails` — read-only tenant tools | Per tool call |
 | `CpiTenantClient` | HTTP client for the CPI OData API (`cpi.tenant.base-url`) | Per tool call |
 | `CpiODataModel` | The OData records and `/Date(ms)/` conversion, shared by client and fake | — |
 | `FakeCpiController`, `FakeCpiData` | A stand-in tenant: same paths and JSON as the real API, planted failures | Per request |
@@ -118,6 +118,22 @@ tenant is configuration plus OAuth (client credentials from a service key),
 not a rewrite. The fake rejects filters it does not understand instead of
 ignoring them — an ignored condition would return wrong data that looks right.
 The client doubles quotes in iFlow names, so a name cannot extend the filter.
+
+**Problem messages are FAILED, RETRY and ESCALATED.** `getProblemMessages`
+asks the tenant once per status with a plain `Status eq` filter and merges the
+results, rather than an `or` filter — every OData server handles the plain
+form, and the fake stays simple. Each line says its status, because RETRY
+(CPI still trying) calls for a different reaction than FAILED.
+
+**Tool descriptions route the model.** `listIflows` shows deployment status
+only, and its description says so and names `getProblemMessages` for anything
+about failing messages; before that, "Is X failing?" went to `listIflows` and
+got "running normally" for an iFlow stuck in RETRY.
+
+**Citations are not checked yet.** The prompt asks the model to cite the files
+the tools returned, but nothing enforces it: in one run the model cited two
+files that do not exist without searching at all. `/ask` parses its `[n]`
+citations against the retrieved chunks; `/agent` needs the same kind of check.
 
 **All tools are read-only, and their results are data.** The model can look
 at the tenant, never change it. Error texts come from a remote system, so the

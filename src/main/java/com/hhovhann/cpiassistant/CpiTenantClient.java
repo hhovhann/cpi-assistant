@@ -45,13 +45,14 @@ public class CpiTenantClient {
     }
 
     /**
-     * FAILED messages that ended after {@code since}, newest first.
+     * Messages in one status that ended after {@code since}, newest first.
      *
+     * @param status    COMPLETED, FAILED, RETRY, ESCALATED or PROCESSING
      * @param iflowName exact iFlow name, or null for every iFlow
      */
-    public List<MessageProcessingLog> failedMessages(String iflowName, Instant since, int top) {
+    public List<MessageProcessingLog> messages(String status, String iflowName, Instant since, int top) {
         List<String> conditions = new ArrayList<>();
-        conditions.add("Status eq 'FAILED'");
+        conditions.add("Status eq '" + status.replace("'", "''") + "'");
         if (iflowName != null && !iflowName.isBlank()) {
             // OData escapes a quote inside a string literal by doubling it.
             conditions.add("IntegrationFlowName eq '" + iflowName.replace("'", "''") + "'");
