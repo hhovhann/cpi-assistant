@@ -6,8 +6,7 @@ a curated set of documentation, using **Retrieval-Augmented Generation (RAG)**.
 It is also a learning project. Every part of the RAG pipeline — loading,
 chunking, embedding, retrieval, prompting — is built by hand with
 [LangChain4j](https://docs.langchain4j.dev), with no auto-configuration hiding
-the moving parts. A second track does the same with
-[Spring AI](https://docs.spring.io/spring-ai/reference/) for comparison.
+the moving parts.
 
 > New here? Read this page, run the quick start, then follow
 > [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md) step by step.
@@ -129,8 +128,7 @@ curl -G localhost:8080/chat --data-urlencode "message=How do I connect to a data
 
 ### Optional: answer with Claude instead of Llama
 
-The `claude` profile swaps the chat model to Claude Opus 5.5 on both tracks
-(LangChain4j and Spring AI). Embeddings stay on LM Studio — Anthropic has no
+The `claude` profile swaps the chat model to Claude Opus 5.5. Embeddings stay on LM Studio — Anthropic has no
 embedding API — so LM Studio must still run with the nomic model.
 
 ```bash
@@ -174,9 +172,8 @@ Run just one with `./gradlew eval --tests '*AnswerEvaluation'`.
 | Method | Path | Parameter | Purpose |
 |---|---|---|---|
 | GET | `/` | — | Web UI |
-| GET | `/ask` | `question` | RAG answer with cited sources and token usage (LangChain4j) |
-| GET | `/chat` | `message` | Plain LLM call, no retrieval — the baseline (LangChain4j) |
-| GET | `/springai/chat` | `message` | Plain LLM call through Spring AI, for comparing frameworks |
+| GET | `/ask` | `question` | RAG answer with cited sources and token usage |
+| GET | `/chat` | `message` | Plain LLM call, no retrieval — the baseline |
 | GET | `/status` | — | `{"ready": true, "indexedSegments": 207}` — whether the docs are indexed yet |
 
 ## Configuration
@@ -213,7 +210,7 @@ To add knowledge, drop a `.txt` file in that folder and restart.
 
 ## Tech stack
 
-Java 27 · Spring Boot 4.1.1 · LangChain4j 1.20.0 (core only) · Spring AI 2.0.1 ·
+Java 27 · Spring Boot 4.1.1 · LangChain4j 1.20.0 (core only) ·
 Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 
 ## Project status
@@ -229,7 +226,7 @@ Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 | ✅ | 9 | Web UI |
 | 🔶 | 10 | Tuning and evaluation — local part done: retrieval, answers, citations. A stronger model and judge wait for API credit |
 
-Then: an agent with LangChain4j, and a production version with Spring AI.
+Then: tools and an agent with LangChain4j.
 Details in [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).
 
 ## License

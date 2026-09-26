@@ -479,8 +479,10 @@ call (search the docs, look up an adapter, ask a follow-up) and in what order.
 **Idea:** how context and reasoning combine; when an agent is worth its extra
 calls and cost.
 
-## Phase 3 — production with Spring AI
+## Phase 3 — knowledge that grows
 
-Re-implement the pipeline with Spring AI (a start is already in place:
-`/springai/chat`). **Idea:** once you know what each piece does by hand, a
-framework's abstractions stop being magic — you can judge what they hide.
+Persist the vectors (pgvector, Step 7). When retrieval misses, fetch the answer
+from a trusted source (SAP Help, SAP Community), cite it, and store that page —
+never the model's own answer — so the next question finds it locally.
+**Idea:** a knowledge base that grows from sources you can check, not from
+things the model said.

@@ -2,22 +2,6 @@ spring:
   application:
     name: cpi-assistant
 
-  # Track B — Spring AI. The /v1 suffix IS required here. Spring AI 1.x
-  # appended /v1 itself; 2.0 delegates to the official openai-java SDK, which
-  # does not. Getting this wrong is not a 404: LM Studio answers an unknown
-  # path with HTTP 200 and {"error": "Unexpected endpoint or method"}, so the
-  # SDK parses it as a completion and fails with "`choices` is not set".
-  ai:
-    # Both the OpenAI and the Anthropic starters are on the classpath; this
-    # picks which one becomes the ChatModel. The `claude` profile flips it.
-    model:
-      chat: openai
-    openai:
-      base-url: http://localhost:1234/v1
-      api-key: lm-studio
-      chat:
-        model: meta-llama-3.1-8b-instruct
-
 # Chunking knobs. Override per run without editing source:
 #   ./gradlew bootRun --args="--cpi.ingestion.max-segment-size=500 --cpi.ingestion.max-overlap-size=50"
 cpi:
@@ -33,7 +17,7 @@ cpi:
   retrieval:
     min-score: 0.80
 
-# Track A — LangChain4j. Same LM Studio server, full /v1 base URL.
+# LangChain4j, pointed at LM Studio. Full /v1 base URL.
 # Consumed by LangChain4jConfig, not by an auto-configuration.
 langchain4j:
   open-ai:

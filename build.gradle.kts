@@ -29,7 +29,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
-    // --- Track A: LangChain4j (core only, all GA) ---------------------------
+    // --- LangChain4j (core only, all GA) ------------------------------------
     // Deliberately NOT langchain4j-spring-boot-starter: those starters are
     // built against Spring Boot 3.5 and blow up on Boot 4 with
     // NoClassDefFoundError: .../web/client/RestClientAutoConfiguration.
@@ -45,12 +45,6 @@ dependencies {
     // can compile against JdkHttpClientBuilder to force HTTP/1.1 — see the
     // comment on the HttpClientBuilder bean.
     implementation("dev.langchain4j:langchain4j-http-client-jdk")
-
-    // --- Track B: Spring AI (native Boot 4) ---------------------------------
-    implementation(platform("org.springframework.ai:spring-ai-bom:2.0.1"))
-    implementation("org.springframework.ai:spring-ai-starter-model-openai")
-    // Only one of the two becomes the ChatModel: spring.ai.model.chat picks it.
-    implementation("org.springframework.ai:spring-ai-starter-model-anthropic")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

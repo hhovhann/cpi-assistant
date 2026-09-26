@@ -16,7 +16,6 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `RagService` | Retrieve → build a numbered prompt → call the LLM → parse the answer's `[n]` citations into sources | Per question |
 | `RagController` | `GET /ask`, and `GET /status` for readiness | Per question |
 | `LangChain4jChatController` | `GET /chat` — the LLM alone, no retrieval | Per question |
-| `SpringAiChatController` | `GET /springai/chat` — the same through Spring AI | Per question |
 | `static/index.html` | Web UI: calls `/status`, `/ask` and optionally `/chat` | In the browser |
 
 ## Two halves: ingestion and retrieval
@@ -46,17 +45,6 @@ seconds; retrieval runs on every question and must be fast. They share two
 beans — the `EmbeddingModel` (must be the same on both sides) and the
 `EmbeddingStore`.
 
-## Two frameworks side by side
-
-| | Track A — LangChain4j | Track B — Spring AI |
-|---|---|---|
-| Wiring | By hand, in `LangChain4jConfig` | Spring Boot auto-configuration |
-| Config | `langchain4j.open-ai.*` | `spring.ai.openai.*` |
-| Endpoints | `/chat`, `/ask` | `/springai/chat` |
-| Status | Full RAG pipeline | Plain chat only (Phase 3) |
-
-Both talk to the same LM Studio server.
-
 ## Decisions worth knowing
 
 **No LangChain4j Spring Boot starters.** They are built against Spring Boot
@@ -77,10 +65,6 @@ HTTP/2, which on a plain `http://` URL sends an upgrade request that LM Studio
 never answers. The symptom is misleading — requests just time out, as if the
 model were slow. See the comment on `langChain4jHttpClientBuilder()`.
 
-**Spring AI's base URL must end in `/v1`.** Spring AI 2.0 doesn't add it. Get
-it wrong and LM Studio returns HTTP 200 with an error body, so the failure
-looks like a parsing bug (`` `choices` is not set ``), not a 404.
-
 **The vector store is in memory.** Embeddings are rebuilt on every startup
 (~1.5 s for 207 chunks). Fine at this size; pgvector is the planned
 replacement, behind the same `EmbeddingStore` interface.
@@ -100,10 +84,9 @@ A new JDK often breaks Lombok first, because it hooks into compiler internals.
 
 **The `claude` profile swaps only the chat model.** `LangChain4jConfig` builds
 an `AnthropicChatModel` instead of the LM Studio one (`@Profile("claude")` /
-`@Profile("!claude")`), and `spring.ai.model.chat` picks the Anthropic starter
-over the OpenAI one for Spring AI. Embeddings stay on LM Studio: Anthropic has
-no embedding API. Opus 5.5 rejects temperature, top_p and top_k with a 400 —
-`ClaudeProfileTests` guards that neither track sends them. It always thinks,
+`@Profile("!claude")`). Embeddings stay on LM Studio: Anthropic has no
+embedding API. Opus 5.5 rejects temperature, top_p and top_k with a 400 —
+`ClaudeProfileTests` guards that none of them is sent. It always thinks,
 and thinking counts toward `max-tokens` (16,000); LangChain4j 1.20 cannot set
 effort, so it runs at the model's default, `medium`.
 
@@ -121,7 +104,7 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 | `RagServiceTest` | Prompt contents and numbering, citation parsing and its edge cases, answer mapping, empty retrieval, missing token usage | No — hand-written fakes |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | No — sets `cpi.ingestion.run-on-startup=false` |
 | `LangChain4jConfigTest` | The configured chat timeout really cuts off a slow server (the 60 s override bug) | No — a local stub server |
-| `ClaudeProfileTests` | Under the `claude` profile both tracks get a Claude chat model — right model id, no temperature/top_p/top_k | No — builds the clients offline with a placeholder key |
+| `ClaudeProfileTests` | Under the `claude` profile the chat model is Claude — right model id, no temperature/top_p/top_k | No — builds the clients offline with a placeholder key |
 | `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
 | `AnswerEvaluation` | Answer quality: RAG at 500/50 and 300/30 vs all docs in the prompt — key facts, declines, tokens, time | **Yes** — same `eval` tag; the chat model needs a ≥ 32K context |
 | `CitationEvaluation` | Citation quality: each (claim, cited chunk) pair judged by the active chat model, plus embedding similarity | **Yes** — same `eval` tag and context |

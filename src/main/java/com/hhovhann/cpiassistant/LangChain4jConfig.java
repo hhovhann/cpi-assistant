@@ -19,7 +19,7 @@ import java.net.http.HttpClient;
 import java.time.Duration;
 
 /**
- * Track A wiring — LangChain4j, built by hand.
+ * LangChain4j wiring, built by hand.
  *
  * We do NOT use langchain4j-spring-boot-starter: it is compiled against
  * Spring Boot 3.5 and fails on Boot 4 (RestClientAutoConfiguration moved out
