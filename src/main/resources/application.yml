@@ -51,6 +51,19 @@ cpi:
       # Thinking counts toward this limit.
       max-tokens: 16000
 
+  # Where the vectors live. pgvector needs the container: docker compose up -d
+  # memory: rebuilt on every start, gone on shutdown (tests use this).
+  store:
+    type: pgvector              # memory | pgvector
+    pgvector:
+      host: localhost
+      port: 5433
+      database: cpi
+      user: cpi
+      password: cpi             # local development only
+      table: cpi_chunks
+      dimension: 768            # nomic-embed-text-v1.5
+
   # The CPI tenant the agent's tools read (CpiTenantClient). Until a real
   # tenant is reachable, a fake one runs inside this app (FakeCpiController)
   # with the same paths and JSON as the real OData API. For a real tenant:

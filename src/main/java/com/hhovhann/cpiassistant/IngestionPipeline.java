@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
+
 @Service
 public class IngestionPipeline {
 
@@ -22,6 +24,11 @@ public class IngestionPipeline {
     private final EmbeddingModel embeddingModel;
     private final EmbeddingStore<TextSegment> embeddingStore;
     private final String documentPrefix;
+
+    /** Metadata key saying where a chunk came from. */
+    static final String SOURCE = "source";
+    /** {@link #SOURCE} of chunks read from the files in cpi-docs. */
+    static final String LOCAL_DOCS = "cpi-docs";
 
     /** Written by the startup thread, read by request threads — hence atomic. */
     private final AtomicInteger indexedSegments = new AtomicInteger();
@@ -80,7 +87,14 @@ public class IngestionPipeline {
      * what retrieval hands to the LLM.
      */
     public List<Embedding> embed(List<TextSegment> segments) {
-        List<Embedding> embeddings = embedInto(segments, embeddingStore);
+        List<TextSegment> tagged = segments.stream()
+                .map(segment -> TextSegment.from(segment.text(), segment.metadata().copy().put(SOURCE, LOCAL_DOCS)))
+                .toList();
+        // Replace, not append: a persistent store still holds the previous
+        // run's chunks, and the files may have changed since. Only chunks
+        // tagged as local docs go — anything else in the store stays.
+        embeddingStore.removeAll(metadataKey(SOURCE).isEqualTo(LOCAL_DOCS));
+        List<Embedding> embeddings = embedInto(tagged, embeddingStore);
         indexedSegments.addAndGet(embeddings.size());
 
         return embeddings;

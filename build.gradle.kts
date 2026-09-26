@@ -45,8 +45,14 @@ dependencies {
     // can compile against JdkHttpClientBuilder to force HTTP/1.1 — see the
     // comment on the HttpClientBuilder bean.
     implementation("dev.langchain4j:langchain4j-http-client-jdk")
+    // Vector store in Postgres (docker-compose.yml). Still a beta module
+    // (1.20.0-beta30, set by the BOM), but plain JDBC with no Spring in it.
+    implementation("dev.langchain4j:langchain4j-pgvector")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    // A throwaway pgvector container per test run (needs Docker).
+    testImplementation("org.testcontainers:testcontainers-postgresql")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

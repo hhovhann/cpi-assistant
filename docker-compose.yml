@@ -1,0 +1,25 @@
+# Postgres with the pgvector extension — the persistent vector store.
+#   docker compose up -d        start (data survives restarts, in the pgdata volume)
+#   docker compose down         stop; add -v to delete the stored vectors too
+# Port 5433 on the host, not 5432: a local Postgres often holds 5432 already.
+# Credentials are for local development only.
+services:
+  pgvector:
+    image: pgvector/pgvector:pg18
+    container_name: cpi-assistant-pgvector
+    environment:
+      POSTGRES_DB: cpi
+      POSTGRES_USER: cpi
+      POSTGRES_PASSWORD: cpi
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cpi -d cpi"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:

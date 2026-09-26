@@ -164,12 +164,31 @@ rule from the system message and ask *"What is the capital of France?"*.
 
 ---
 
-### Step 7: Persistent vector store — *skipped for now, optional for a demo*
-Swap `InMemoryEmbeddingStore` for **pgvector** (PostgreSQL). Same
-`EmbeddingStore` interface, so nothing else changes — but embeddings survive
-a restart, and search uses an index instead of comparing against every vector.
-**Idea:** the vector store is a pluggable detail; the interface is what
-matters. *Optional for a demo.*
+### Step 7: Persistent vector store — pgvector in Docker *(done after Step 13)*
+
+**What:** `docker compose up -d` starts Postgres 18 with the pgvector extension
+on port 5433; `cpi.store.type=pgvector` (the default) stores the vectors in the
+`cpi_chunks` table — a `vector(768)` column next to the text and the metadata
+as JSON. `cpi.store.type=memory` is the old in-memory store.
+**Classes:** `StoreProperties`, `LangChain4jConfig.embeddingStore` /
+`pgVectorStore`, `IngestionPipeline.embed`, `PgVectorStoreTest`,
+`docker-compose.yml`.
+**Why now:** skipped at first because 207 chunks rebuild in ~1.5 s. It became
+necessary with the plan to save pages fetched from SAP Help: those cannot be
+re-read from disk on the next start.
+**Idea:** the store is a pluggable detail behind `EmbeddingStore` — retrieval
+did not change at all. What *did* change is ingestion: with a store that
+remembers, "add everything at startup" becomes "add everything again", so the
+local docs are now tagged `source=cpi-docs` and replaced, not appended.
+**Measured:**
+- 207 rows after the first start, **207 after a restart** — no duplicates.
+- Same scores as in memory: the JDBC chunk for the database question is
+  0.8642 in both, so the `0.80` floor still holds. `PgVectorStoreTest` checks
+  the scale directly: 1.0 same direction, 0.8 for cosine 0.6, 0.5 orthogonal.
+**Try:** `docker exec -it cpi-assistant-pgvector psql -U cpi -d cpi`, then
+`select metadata->>'file_name', left(text, 60) from cpi_chunks limit 5;` —
+the chunks as rows. Then `docker compose down` and start with
+`--cpi.store.type=memory`: the app does not care.
 
 ### Step 8: Source references in answers
 *`RagService.extractSources()`, `RagService.Source`*

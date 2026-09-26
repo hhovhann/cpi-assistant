@@ -11,6 +11,7 @@ import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+import dev.langchain4j.store.embedding.pgvector.PgVectorEmbeddingStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -177,15 +178,40 @@ public class LangChain4jConfig {
     }
 
     /**
-     * The vector store, in memory for now.
+     * The vector store; {@code cpi.store.type} picks which.
      *
      * InMemoryEmbeddingStore keeps every vector in a list and, on search,
-     * compares the query against all of them one by one. At 207 segments that
-     * is nothing. A persistent store such as pgvector implements the same
-     * interface with an index behind it — the rest of the code would not change.
+     * compares the query against all of them one by one — at 207 segments that
+     * is nothing, but it forgets everything on shutdown. PgVectorEmbeddingStore
+     * keeps them in a Postgres table; retrieval and ingestion see the same
+     * EmbeddingStore interface and do not change.
+     *
+     * Both report scores as (cosine + 1) / 2, so cpi.retrieval.min-score means
+     * the same with either store (PgVectorStoreTest checks it).
      */
     @Bean
-    EmbeddingStore<TextSegment> embeddingStore() {
-        return new InMemoryEmbeddingStore<>();
+    EmbeddingStore<TextSegment> embeddingStore(StoreProperties store) {
+        return switch (store.type()) {
+            case MEMORY -> new InMemoryEmbeddingStore<>();
+            case PGVECTOR -> pgVectorStore(store.pgvector());
+        };
+    }
+
+    /**
+     * Creates the vector extension and the table on first use. No index: at a
+     * few hundred rows an exact scan is fast and never misses a neighbour,
+     * which an approximate IVFFlat index can.
+     */
+    static EmbeddingStore<TextSegment> pgVectorStore(StoreProperties.PgVector pg) {
+        return PgVectorEmbeddingStore.builder()
+                .host(pg.host())
+                .port(pg.port())
+                .database(pg.database())
+                .user(pg.user())
+                .password(pg.password())
+                .table(pg.table())
+                .dimension(pg.dimension())
+                .createTable(true)
+                .build();
     }
 }

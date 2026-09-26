@@ -55,6 +55,7 @@ rather than from what it remembers.
 |---|---|---|
 | JDK | **27** | Gradle's toolchain uses it. If your default `java` is older, run via `./gradlew`, not `java -jar`. With SDKMAN, `sdk env install` picks the version from `.sdkmanrc`. |
 | [LM Studio](https://lmstudio.ai) | any recent | Runs the models locally, free, behind an OpenAI-compatible API |
+| [Docker](https://www.docker.com) | any recent | Runs Postgres with pgvector, the vector store: `docker compose up -d` (host port 5433). Without it, run with `--cpi.store.type=memory` |
 
 No API key or cloud account is needed for development.
 
@@ -76,7 +77,16 @@ curl -s localhost:1234/v1/models
 # should list both identifiers above
 ```
 
-### 3. Run
+### 3. Start the vector store
+
+```bash
+docker compose up -d      # Postgres + pgvector on localhost:5433; vectors survive restarts
+```
+
+On every start the app re-reads the docs and replaces their chunks in the
+store; anything else stored there stays.
+
+### 4. Run
 
 ```bash
 ./gradlew bootRun
@@ -89,7 +99,7 @@ before asking questions — until then the vector store is empty:
 === Embedded 207 segments in ~1500 ms, 768 dimensions each ===
 ```
 
-### 4. Ask
+### 5. Ask
 
 **In the browser:** open <http://localhost:8080>. The page waits until the
 docs are indexed, then lets you ask. Tick *Compare with the model alone* to
@@ -142,7 +152,7 @@ export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY (and optionally OPENAI_M
 Model names and limits per provider are under `cpi.chat` in
 [`application.yml`](src/main/resources/application.yml).
 
-### 5. Test
+### 6. Test
 
 ```bash
 ./gradlew test
@@ -151,7 +161,7 @@ Model names and limits per provider are under `cpi.chat` in
 Tests use hand-written fakes for the models, so they run in seconds and do
 **not** need LM Studio.
 
-### 6. Evaluate (optional)
+### 7. Evaluate (optional)
 
 ```bash
 ./gradlew eval
@@ -201,6 +211,8 @@ and can be overridden on the command line:
 | `cpi.chat.provider` | `lmstudio` | Chat model: `lmstudio`, `openai` (needs `OPENAI_API_KEY`) or `anthropic` (needs `ANTHROPIC_API_KEY`) — see above |
 | `cpi.chat.lmstudio.*` / `.openai.*` / `.anthropic.*` | Qwen3 14B at temperature 0.0 / `gpt-5-mini` / Claude Opus 5.5 | Endpoint, key, model name and limits per provider |
 | `cpi.chat.timeout`, `cpi.chat.max-retries` | `3m`, LangChain4j's 2 | Per chat call, whichever provider |
+| `cpi.store.type` | `pgvector` | `pgvector` (Docker, persistent) or `memory` (rebuilt every start; tests use it) |
+| `cpi.store.pgvector.*` | localhost:5433, db/user/password `cpi`, table `cpi_chunks`, 768 dims | Connection and table |
 | `cpi.tenant.fake` | `true` | Serve the fake CPI tenant at `/fake-cpi/api/v1` |
 | `cpi.tenant.base-url` | the fake tenant | CPI OData API the tenant tools read |
 | `langchain4j.open-ai.embedding-model.*` | LM Studio / nomic v1.5 | Embedding model, plus nomic's `query-prefix` / `document-prefix` |
@@ -221,7 +233,8 @@ To add knowledge, drop a `.txt` file in that folder and restart.
 ## Tech stack
 
 Java 27 · Spring Boot 4.1.1 · LangChain4j 1.20.0 (core only) ·
-Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
+Gradle 9.7.1 (Kotlin DSL) · LM Studio · PostgreSQL 18 + pgvector (Docker) ·
+JUnit 5 / AssertJ · Testcontainers
 
 ## Project status
 
@@ -231,7 +244,7 @@ Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 | ✅ | 4 | Chunking |
 | ✅ | 5 | Embeddings + semantic search |
 | ✅ | 6 | RAG: retrieve, then generate |
-| ⬜ | 7 | Persistent vector store (pgvector) |
+| ✅ | 7 | Persistent vector store: pgvector in Docker (done after Step 13) |
 | ✅ | 8 | Source references in answers |
 | ✅ | 9 | Web UI |
 | 🔶 | 10 | Tuning and evaluation — local part done: retrieval, answers, citations. A stronger model and judge wait for API credit |

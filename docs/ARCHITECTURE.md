@@ -10,6 +10,7 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 |---|---|---|
 | `LangChain4jConfig` | Builds the LangChain4j beans: HTTP client, chat model, embedding model, vector store | Once, at startup |
 | `IngestionProperties` | Chunking settings bound from `cpi.ingestion.*` | — |
+| `StoreProperties` | Vector store: `memory` or `pgvector`, plus connection, bound from `cpi.store.*` | — |
 | `ChatProperties` | Which chat model answers, bound from `cpi.chat.*`: `provider` plus settings per provider | — |
 | `IngestionPipeline` | Loads the docs, splits them into chunks, embeds and stores them | Once, at startup |
 | `IngestionRunner` | Drives the pipeline at startup and logs stats plus probe searches | Once, at startup |
@@ -73,9 +74,24 @@ HTTP/2, which on a plain `http://` URL sends an upgrade request that LM Studio
 never answers. The symptom is misleading — requests just time out, as if the
 model were slow. See the comment on `langChain4jHttpClientBuilder()`.
 
-**The vector store is in memory.** Embeddings are rebuilt on every startup
-(~1.5 s for 207 chunks). Fine at this size; pgvector is the planned
-replacement, behind the same `EmbeddingStore` interface.
+**The vector store is Postgres with pgvector, or memory.** `cpi.store.type`
+picks: `pgvector` (default, `docker compose up -d`, port 5433) keeps vectors in
+the `cpi_chunks` table across restarts; `memory` rebuilds them every start and
+is what the tests use (`src/test/resources/application.properties`). Both
+report `(cosine + 1) / 2`, so the `0.80` floor and every measured score carry
+over — the JDBC chunk scores 0.8642 in both. No vector index: at a few hundred
+rows an exact scan is fast and never misses a neighbour.
+
+**Local docs are replaced on every start, nothing else is.** Each chunk read
+from `cpi-docs` gets `source=cpi-docs` in its metadata; ingestion deletes the
+chunks with that tag, then adds the fresh ones. The files may have changed, and
+a plain add would duplicate them on every restart. Chunks from anywhere else —
+pages fetched from SAP Help, later — stay.
+
+**`langchain4j-pgvector` is a beta module** (1.20.0-beta30), like the Spring
+starters that were dropped. It is plain JDBC with no Spring in it, so it does
+not have their compatibility problem. It also supports hybrid search
+(vectors + Postgres full-text), a candidate fix for the ranking problem below.
 
 **Retrieval scores are `(cosine + 1) / 2`,** not raw cosine. The `0.80` floor
 is on that scale, and is specific to nomic-embed-text with task prefixes. It is
@@ -157,6 +173,7 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 | `ChatProviderTests` | `cpi.chat.provider` builds the right model: Qwen3 14B at temperature 0 by default, Claude and OpenAI without sampling parameters, a clear error when a key is missing | No — builds the clients offline with placeholder keys |
 | `CpiAgentTest` | The tool loop with a scripted fake model: the tool is offered, runs with the model's query, its result goes back; answering without a search; an empty search; the round-trip limit | No — hand-written fakes |
 | `CpiTenantTest` | Client against the fake tenant over real HTTP: filters, time window, RETRY not counted as failed, quote escaping, error text and 404, iFlow list, and the tools' text | No — the fake tenant, random port |
+| `PgVectorStoreTest` | Real pgvector in a throwaway container: same score scale as the in-memory store, re-ingesting replaces the local docs and keeps other chunks, rows survive a new store on the same table | No — but **needs Docker** (Testcontainers) |
 | `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
 | `AnswerEvaluation` | Answer quality: RAG at 500/50 and 300/30 vs all docs in the prompt — key facts, declines, tokens, time | **Yes** — same `eval` tag; the chat model needs a ≥ 32K context |
 | `CitationEvaluation` | Citation quality: each (claim, cited chunk) pair judged by the active chat model, plus embedding similarity | **Yes** — same `eval` tag and context |
