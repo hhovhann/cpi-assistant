@@ -43,7 +43,7 @@ import static java.lang.String.format;
  *       the statement: SUPPORTED, PARTIAL or UNSUPPORTED</li>
  * </ul>
  * The judge is whatever chat model is active: Llama by default, which means it
- * grades its own answers; Claude under the `claude` profile. The report lists
+ * grades its own answers; Claude with {@code -Dcpi.chat.provider=anthropic}. The report lists
  * every pair with an empty "Your verdict" column, because a judge is only as
  * useful as its agreement with someone who knows the domain.
  * <p>
@@ -54,8 +54,8 @@ import static java.lang.String.format;
 @Tag("eval")
 @SpringBootTest(properties = {
         "cpi.ingestion.run-on-startup=false",
-        "langchain4j.open-ai.chat-model.log-requests=false",
-        "langchain4j.open-ai.chat-model.log-responses=false"})
+        "cpi.chat.log-requests=false",
+        "cpi.chat.log-responses=false"})
 class CitationEvaluation {
 
     private static final int K = 3;

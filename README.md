@@ -126,18 +126,20 @@ curl -G localhost:8080/chat --data-urlencode "message=How do I connect to a data
 - `retrievedFrom` — everything retrieval handed to the model. Here the data
   store chunk was retrieved but not used, so it isn't a source.
 
-### Optional: answer with Claude instead of Llama
+### Optional: answer with OpenAI or Claude instead of Llama
 
-The `claude` profile swaps the chat model to Claude Opus 5.5. Embeddings stay on LM Studio — Anthropic has no
-embedding API — so LM Studio must still run with the nomic model.
+`cpi.chat.provider` picks the chat model: `lmstudio` (default), `openai` or
+`anthropic`. Embeddings stay on LM Studio, so it must still run with the nomic
+model. Every question to a hosted model is a paid API call.
 
 ```bash
-export ANTHROPIC_API_KEY=...        # every question is a paid API call
-./gradlew bootRun --args="--spring.profiles.active=claude"
-./gradlew eval -Dspring.profiles.active=claude     # evaluations, answered by Claude
+export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY (and optionally OPENAI_MODEL)
+./gradlew bootRun --args="--cpi.chat.provider=anthropic"
+./gradlew eval -Dcpi.chat.provider=anthropic     # evaluations, answered by Claude
 ```
 
-Settings are in [`application-claude.yml`](src/main/resources/application-claude.yml).
+Model names and limits per provider are under `cpi.chat` in
+[`application.yml`](src/main/resources/application.yml).
 
 ### 5. Test
 
@@ -191,8 +193,9 @@ and can be overridden on the command line:
 | `cpi.ingestion.max-overlap-size` | `50` | Characters repeated between neighbouring chunks |
 | `cpi.ingestion.run-on-startup` | `true` | Load and embed the docs at startup (tests set it to `false`) |
 | `cpi.retrieval.min-score` | `0.80` | Relevance floor. On a `(cosine + 1) / 2` scale — see the learning path |
-| `langchain4j.open-ai.chat-model.*` | LM Studio / Llama 3.1 8B, temperature 0.0 | Chat model endpoint, name and temperature |
-| `spring.profiles.active=claude` | off | Answer with Claude Opus 5.5 (needs `ANTHROPIC_API_KEY`) — see above |
+| `cpi.chat.provider` | `lmstudio` | Chat model: `lmstudio`, `openai` (needs `OPENAI_API_KEY`) or `anthropic` (needs `ANTHROPIC_API_KEY`) — see above |
+| `cpi.chat.lmstudio.*` / `.openai.*` / `.anthropic.*` | Llama 3.1 8B at temperature 0.0 / `gpt-5-mini` / Claude Opus 5.5 | Endpoint, key, model name and limits per provider |
+| `cpi.chat.timeout`, `cpi.chat.max-retries` | `3m`, LangChain4j's 2 | Per chat call, whichever provider |
 | `langchain4j.open-ai.embedding-model.*` | LM Studio / nomic v1.5 | Embedding model, plus nomic's `query-prefix` / `document-prefix` |
 
 > The score floor and the prefixes are tuned for nomic-embed-text. Switching
@@ -225,6 +228,7 @@ Gradle 9.7.1 (Kotlin DSL) · LM Studio · JUnit 5 / AssertJ
 | ✅ | 8 | Source references in answers |
 | ✅ | 9 | Web UI |
 | 🔶 | 10 | Tuning and evaluation — local part done: retrieval, answers, citations. A stronger model and judge wait for API credit |
+| ✅ | 11 | One switch for the chat model: LM Studio, OpenAI or Anthropic |
 
 Then: tools and an agent with LangChain4j.
 Details in [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

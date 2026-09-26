@@ -43,8 +43,8 @@ import static java.lang.String.format;
 @SpringBootTest(properties = {
         "cpi.ingestion.run-on-startup=false",
         // A 20K-token prompt per request would bury the console.
-        "langchain4j.open-ai.chat-model.log-requests=false",
-        "langchain4j.open-ai.chat-model.log-responses=false"})
+        "cpi.chat.log-requests=false",
+        "cpi.chat.log-responses=false"})
 class AnswerEvaluation {
 
     private static final int K = 3;

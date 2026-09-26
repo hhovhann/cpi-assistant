@@ -453,14 +453,14 @@ pair **with the cited passage** and an empty *Your verdict* column.
 
 **Try:** open the report, read the passages, and fill in *Your verdict* for
 the RAG pairs. Count how often you agree with the judge. Then run the same
-evaluation with `-Dspring.profiles.active=claude` and compare the judges.
+evaluation with `-Dcpi.chat.provider=anthropic` and compare the judges.
 
 #### The rest of Step 10 — *needs API credit*
 - **A stronger model, and a stronger judge:** Llama 3.1 8B vs a frontier model
   on answer quality, citation reliability and cost — and a stronger model
-  grading the answers and citations. The `claude` profile is ready for it
-  (`./gradlew eval -Dspring.profiles.active=claude`); *waits for an Anthropic
-  key, or OpenAI credit for the original plan.*
+  grading the answers and citations. The provider switch is ready for it
+  (`./gradlew eval -Dcpi.chat.provider=anthropic` or `=openai`); *waits for an
+  Anthropic key or OpenAI credit.*
 - **Ranking:** fix the Partner Directory chunk outranking JDBC — *hybrid
   search* (keywords + vectors) or a *reranker*. It is the source of the blanket
   citations above.
@@ -469,6 +469,22 @@ evaluation with `-Dspring.profiles.active=claude` and compare the judges.
   hosted model than for local Llama.
 - **Demo questions:** JDBC adapter setup, Script step vs Groovy Script, error
   handling in an iFlow — each should get an accurate answer with sources.
+
+### Step 11: One switch for the chat model
+
+**What:** `cpi.chat.provider` = `lmstudio`, `openai` or `anthropic` picks the
+chat model for the whole app; settings per provider live under `cpi.chat` in
+`application.yml`. Replaces the `claude` Spring profile.
+**Classes:** `ChatProperties`, `LangChain4jConfig.chatModel`, `ChatProviderTests`.
+**Idea:** the rest of the code depends only on LangChain4j's `ChatModel`
+interface, so swapping the provider touches one method. What does *not* swap
+freely is the embedding model: the stored vectors belong to it.
+**Differences between providers show up in the settings, not the code:**
+Llama runs at temperature 0; Claude Opus 5.5 and newer OpenAI models reject a
+temperature, so none is sent.
+**Try:** set `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`, start with
+`--cpi.chat.provider=...`, and ask the three demo questions. Then start with
+the provider but no key and read the error.
 
 ---
 

@@ -13,7 +13,6 @@ import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -58,61 +57,71 @@ public class LangChain4jConfig {
                 .httpClientBuilder(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1));
     }
 
+    /**
+     * The one chat model everything uses — /chat, /ask and the evaluations.
+     * {@code cpi.chat.provider} picks which; see {@link ChatProperties}.
+     */
     @Bean
-    @Profile("!claude")
-    ChatModel langChain4jChatModel(
-            HttpClientBuilder httpClientBuilder,
-            @Value("${langchain4j.open-ai.chat-model.base-url}") String baseUrl,
-            @Value("${langchain4j.open-ai.chat-model.api-key}") String apiKey,
-            @Value("${langchain4j.open-ai.chat-model.model-name}") String modelName,
-            @Value("${langchain4j.open-ai.chat-model.log-requests:false}") boolean logRequests,
-            @Value("${langchain4j.open-ai.chat-model.log-responses:false}") boolean logResponses,
-            @Value("${langchain4j.open-ai.chat-model.temperature:#{null}}") Double temperature,
-            @Value("${langchain4j.open-ai.chat-model.timeout:PT3M}") Duration timeout,
-            @Value("${langchain4j.open-ai.chat-model.max-retries:#{null}}") Integer maxRetries) {
+    ChatModel chatModel(HttpClientBuilder httpClientBuilder, ChatProperties chat) {
+        return switch (chat.provider()) {
+            case LMSTUDIO -> openAiCompatibleChatModel(httpClientBuilder, chat.lmstudio(), chat);
+            case OPENAI -> {
+                requireKey(chat.openai().apiKey(), "OPENAI_API_KEY");
+                yield openAiCompatibleChatModel(httpClientBuilder, chat.openai(), chat);
+            }
+            case ANTHROPIC -> claudeChatModel(chat.anthropic(), chat);
+        };
+    }
+
+    /**
+     * LM Studio or OpenAI itself: the same client, pointed at a different URL.
+     */
+    static ChatModel openAiCompatibleChatModel(HttpClientBuilder httpClientBuilder,
+                                               ChatProperties.OpenAiCompatible model,
+                                               ChatProperties chat) {
         return OpenAiChatModel.builder()
                 .httpClientBuilder(httpClientBuilder)
-                .baseUrl(baseUrl)
-                .apiKey(apiKey)
-                .modelName(modelName)
-                .temperature(temperature)
+                .baseUrl(model.baseUrl())
+                .apiKey(model.apiKey())
+                .modelName(model.modelName())
+                .temperature(model.temperature())
                 // Generous: the first request makes LM Studio load the model,
                 // and a cold 16K-token prompt takes over a minute to read.
-                .timeout(timeout)
-                // null keeps LangChain4j's default: 2 retries, with back-off.
-                .maxRetries(maxRetries)
-                .logRequests(logRequests)
-                .logResponses(logResponses)
+                .timeout(chat.timeout())
+                .maxRetries(chat.maxRetries())
+                .logRequests(chat.logRequests())
+                .logResponses(chat.logResponses())
                 .build();
     }
 
     /**
-     * The chat model under the `claude` profile: Claude Opus 5.5 instead of
-     * the local Llama. Only generation moves — retrieval still embeds with
-     * LM Studio, because Anthropic has no embedding endpoint.
+     * Claude. Only generation moves — retrieval still embeds with LM Studio,
+     * because Anthropic has no embedding endpoint.
      *
      * No temperature: Opus 5.5 rejects sampling parameters with a 400. It
-     * also always thinks, and the thinking counts toward maxTokens, so the
-     * limit is sized for thinking plus the answer, not the answer alone.
+     * always thinks, and the thinking counts toward maxTokens.
      */
-    @Bean
-    @Profile("claude")
-    ChatModel claudeChatModel(
-            @Value("${langchain4j.anthropic.chat-model.api-key}") String apiKey,
-            @Value("${langchain4j.anthropic.chat-model.model-name}") String modelName,
-            @Value("${langchain4j.anthropic.chat-model.max-tokens}") int maxTokens,
-            @Value("${langchain4j.anthropic.chat-model.log-requests:false}") boolean logRequests,
-            @Value("${langchain4j.anthropic.chat-model.log-responses:false}") boolean logResponses) {
+    static ChatModel claudeChatModel(ChatProperties.Anthropic model, ChatProperties chat) {
+        requireKey(model.apiKey(), "ANTHROPIC_API_KEY");
         return AnthropicChatModel.builder()
-                .apiKey(apiKey)
-                .modelName(modelName)
-                .maxTokens(maxTokens)
-                // Opus thinks before it answers, so a call can run long. Set it
-                // explicitly, matching the local model's read timeout.
-                .timeout(Duration.ofMinutes(3))
-                .logRequests(logRequests)
-                .logResponses(logResponses)
+                .apiKey(model.apiKey())
+                .modelName(model.modelName())
+                .maxTokens(model.maxTokens())
+                .timeout(chat.timeout())
+                .maxRetries(chat.maxRetries())
+                .logRequests(chat.logRequests())
+                .logResponses(chat.logResponses())
                 .build();
+    }
+
+    /**
+     * Fails at startup, with the fix in the message, instead of on the first
+     * question with a 401 from the provider.
+     */
+    private static void requireKey(String apiKey, String envVariable) {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("This chat provider needs an API key: export " + envVariable);
+        }
     }
 
     /**

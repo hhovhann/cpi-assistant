@@ -17,25 +17,41 @@ cpi:
   retrieval:
     min-score: 0.80
 
-# LangChain4j, pointed at LM Studio. Full /v1 base URL.
-# Consumed by LangChain4jConfig, not by an auto-configuration.
-langchain4j:
-  open-ai:
-    chat-model:
+  # Which chat model answers. Switch the whole app with one property:
+  #   ./gradlew bootRun --args="--cpi.chat.provider=anthropic"
+  # Only the chosen provider needs its key. Embeddings stay on LM Studio.
+  # Consumed by LangChain4jConfig, not by an auto-configuration.
+  chat:
+    provider: lmstudio            # lmstudio | openai | anthropic
+    # Set on the model, not the HTTP client: the model's own timeout overrides it.
+    timeout: 3m
+    log-requests: true
+    log-responses: true
+    lmstudio:
       base-url: http://localhost:1234/v1
       api-key: lm-studio
       model-name: meta-llama-3.1-8b-instruct
       # 0 = always the most likely next token. Answers from docs should be
       # factual, not creative, and the evaluation needs repeatable runs.
       temperature: 0.0
-      # Set here, not on the HTTP client: the model's own timeout overrides it.
-      timeout: 3m
-      log-requests: true
-      log-responses: true
+    openai:
+      base-url: https://api.openai.com/v1
+      api-key: ${OPENAI_API_KEY:}
+      # Check the current list at platform.openai.com/docs/models. No
+      # temperature: newer OpenAI models accept only their default.
+      model-name: ${OPENAI_MODEL:gpt-5-mini}
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:}
+      model-name: claude-opus-5-5
+      # Thinking counts toward this limit.
+      max-tokens: 16000
 
-    # Embedding model — a separate model, same LM Studio server. It returns vectors,
-    # not text. nomic-embed-text-v1.5 produces 768 dimensions.
-    # Request logging stays off here: 207 segments of payload is unreadable.
+# Embedding model, consumed by LangChain4jConfig. A separate model on the same
+# LM Studio server. It returns vectors, not text. nomic-embed-text-v1.5
+# produces 768 dimensions. Request logging stays off: 207 segments of payload
+# is unreadable.
+langchain4j:
+  open-ai:
     embedding-model:
       base-url: http://localhost:1234/v1
       api-key: lm-studio

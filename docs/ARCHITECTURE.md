@@ -10,12 +10,13 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 |---|---|---|
 | `LangChain4jConfig` | Builds the LangChain4j beans: HTTP client, chat model, embedding model, vector store | Once, at startup |
 | `IngestionProperties` | Chunking settings bound from `cpi.ingestion.*` | — |
+| `ChatProperties` | Which chat model answers, bound from `cpi.chat.*`: `provider` plus settings per provider | — |
 | `IngestionPipeline` | Loads the docs, splits them into chunks, embeds and stores them | Once, at startup |
 | `IngestionRunner` | Drives the pipeline at startup and logs stats plus probe searches | Once, at startup |
 | `RetrievalService` | Embeds a question and returns the closest chunks above the score floor | Per question |
 | `RagService` | Retrieve → build a numbered prompt → call the LLM → parse the answer's `[n]` citations into sources | Per question |
 | `RagController` | `GET /ask`, and `GET /status` for readiness | Per question |
-| `LangChain4jChatController` | `GET /chat` — the LLM alone, no retrieval | Per question |
+| `ChatController` | `GET /chat` — the LLM alone, no retrieval | Per question |
 | `static/index.html` | Web UI: calls `/status`, `/ask` and optionally `/chat` | In the browser |
 
 ## Two halves: ingestion and retrieval
@@ -56,8 +57,8 @@ The LangChain4j core has no Spring dependency, so the beans are built in
 `OpenAiEmbeddingModel` pass their own timeout to the HTTP client — 60 s unless
 `.timeout(...)` is set — and it overrides the client's. A 3-minute timeout on the
 client was silently ignored until the answer evaluation hit it.
-`langchain4j.open-ai.chat-model.timeout` / `.embedding-model.timeout` (default
-3m) and `chat-model.max-retries` are the knobs; `LangChain4jConfigTest` proves
+`cpi.chat.timeout` / `langchain4j.open-ai.embedding-model.timeout` (default
+3m) and `cpi.chat.max-retries` are the knobs; `LangChain4jConfigTest` proves
 the chat timeout really cuts a slow call off.
 
 **HTTP/1.1 is forced for LangChain4j.** The JDK HTTP client defaults to
@@ -82,11 +83,15 @@ adding its own markup. Never assign an answer to `innerHTML` unescaped.
 1.18.46, which breaks on Java 27; `build.gradle.kts` overrides it to 1.18.48.
 A new JDK often breaks Lombok first, because it hooks into compiler internals.
 
-**The `claude` profile swaps only the chat model.** `LangChain4jConfig` builds
-an `AnthropicChatModel` instead of the LM Studio one (`@Profile("claude")` /
-`@Profile("!claude")`). Embeddings stay on LM Studio: Anthropic has no
-embedding API. Opus 5.5 rejects temperature, top_p and top_k with a 400 —
-`ClaudeProfileTests` guards that none of them is sent. It always thinks,
+**One switch picks the chat model: `cpi.chat.provider`.** `lmstudio` (the
+default), `openai` or `anthropic`; `LangChain4jConfig.chatModel` builds the
+matching model, and everything else sees only the `ChatModel` interface.
+LM Studio and OpenAI share one client, since LM Studio speaks the OpenAI API.
+A provider without its key stops the app at startup with the variable to
+export, instead of failing on the first question. Only the chat model moves:
+embeddings stay on LM Studio, because the stored vectors were made by nomic
+and Anthropic has no embedding API. Opus 5.5 rejects temperature, top_p and
+top_k with a 400 — `ChatProviderTests` guards that none of them is sent. It always thinks,
 and thinking counts toward `max-tokens` (16,000); LangChain4j 1.20 cannot set
 effort, so it runs at the model's default, `medium`.
 
@@ -104,7 +109,7 @@ embeds a prefixed copy but stores the original chunk, so the LLM never sees
 | `RagServiceTest` | Prompt contents and numbering, citation parsing and its edge cases, answer mapping, empty retrieval, missing token usage | No — hand-written fakes |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | No — sets `cpi.ingestion.run-on-startup=false` |
 | `LangChain4jConfigTest` | The configured chat timeout really cuts off a slow server (the 60 s override bug) | No — a local stub server |
-| `ClaudeProfileTests` | Under the `claude` profile the chat model is Claude — right model id, no temperature/top_p/top_k | No — builds the clients offline with a placeholder key |
+| `ChatProviderTests` | `cpi.chat.provider` builds the right model: Llama at temperature 0 by default, Claude and OpenAI without sampling parameters, a clear error when a key is missing | No — builds the clients offline with placeholder keys |
 | `RetrievalEvaluation` | Retrieval quality across chunk sizes on a fixed question set — Hit@1, Hit@3, MRR, floor leaks | **Yes** — tagged `eval`, run with `./gradlew eval`, excluded from `./gradlew test` |
 | `AnswerEvaluation` | Answer quality: RAG at 500/50 and 300/30 vs all docs in the prompt — key facts, declines, tokens, time | **Yes** — same `eval` tag; the chat model needs a ≥ 32K context |
 | `CitationEvaluation` | Citation quality: each (claim, cited chunk) pair judged by the active chat model, plus embedding similarity | **Yes** — same `eval` tag and context |

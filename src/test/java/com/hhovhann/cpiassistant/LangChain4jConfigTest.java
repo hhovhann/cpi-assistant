@@ -50,12 +50,12 @@ class LangChain4jConfigTest {
 
     @Test
     void chatModelTimeoutIsApplied() {
+        var server = new ChatProperties.OpenAiCompatible(
+                "http://localhost:" + slowServer.getAddress().getPort() + "/v1", "test-key", "test-model", null);
+        var chat = new ChatProperties(ChatProperties.Provider.LMSTUDIO, Duration.ofMillis(300), 0, false, false,
+                server, server, new ChatProperties.Anthropic(null, null, 16000));
         var config = new LangChain4jConfig();
-        ChatModel model = config.langChain4jChatModel(
-                config.langChain4jHttpClientBuilder(),
-                "http://localhost:" + slowServer.getAddress().getPort() + "/v1",
-                "test-key", "test-model", false, false, null,
-                Duration.ofMillis(300), 0);
+        ChatModel model = config.chatModel(config.langChain4jHttpClientBuilder(), chat);
 
         long start = System.nanoTime();
         assertThatThrownBy(() -> model.chat("hello")).isInstanceOf(TimeoutException.class);

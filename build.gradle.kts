@@ -38,7 +38,7 @@ dependencies {
     implementation(platform("dev.langchain4j:langchain4j-bom:1.20.0"))
     implementation("dev.langchain4j:langchain4j")
     implementation("dev.langchain4j:langchain4j-open-ai")
-    // Claude chat model for the `claude` profile. Embeddings stay on LM Studio:
+    // Claude, when cpi.chat.provider=anthropic. Embeddings stay on LM Studio:
     // Anthropic has no embedding endpoint.
     implementation("dev.langchain4j:langchain4j-anthropic")
     // Pulled in transitively at runtime anyway, but declared so LangChain4jConfig
@@ -58,7 +58,7 @@ tasks.test {
 
 // Evaluations need LM Studio running, so they stay out of `test`.
 //   ./gradlew eval
-//   ./gradlew eval -Dspring.profiles.active=claude   (answers from Claude — paid)
+//   ./gradlew eval -Dcpi.chat.provider=anthropic   (answers from Claude — paid)
 tasks.register<Test>("eval") {
     description = "Runs the evaluations tagged 'eval' against the live models."
     group = "verification"
@@ -69,6 +69,6 @@ tasks.register<Test>("eval") {
     }
     testLogging.showStandardStreams = true
     outputs.upToDateWhen { false }
-    // Gradle runs tests in a separate JVM; pass the profile through to it.
-    System.getProperty("spring.profiles.active")?.let { systemProperty("spring.profiles.active", it) }
+    // Gradle runs tests in a separate JVM; pass the provider through to it.
+    System.getProperty("cpi.chat.provider")?.let { systemProperty("cpi.chat.provider", it) }
 }
