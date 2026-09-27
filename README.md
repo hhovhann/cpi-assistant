@@ -221,8 +221,13 @@ export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY (and optionally OPENAI_M
 
 56 tests, fakes for the models, GitHub, the tenant and MCP servers: no LM Studio and no internet.
 Answer quality against the real model: `./scripts/qa.sh` (above).
-RAG compared with a model that searches the files itself: `./gradlew measure`
-(LM Studio, pgvector, internet; ~15 min; report in `build/measure/`).
+Two measurements against the real model (LM Studio, pgvector, internet; reports in `build/measure/`):
+
+```bash
+./gradlew measure --tests '*RagVsFileSearch*'   # RAG vs a model that searches the files, 15 questions (~35 min)
+./gradlew measure --tests '*ToolUse*'           # tool use: 10 questions, with vs without skills (~20 min)
+./gradlew measure -Dcpi.measure.rag-only=true --tests '*RagVsFileSearch*'   # RAG alone, ~7 min
+```
 `PgVectorStoreTest` starts a throwaway pgvector container, so it needs Docker.
 
 ## Endpoints
@@ -313,6 +318,7 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 | ✅ | 19 | Hybrid search: BM25 keywords fused with the vectors (RRF) for pages and passages; the retry asks for a new page; a downloaded page adds its best passages — RAG now 7 of 7 right with fewer tokens than file search |
 | ✅ | 20 | Simpler: the two best SAP pages first, then the store, one model call — graph and retries removed; a cleaner fix (SAP's `<placeholders>`); measured on 15 questions (8 reworded): RAG 12 of 15 right, 13 of 13 grounded, half the tokens of file search |
 | ✅ | 21 | An agent like a small Claude Code: `readPage`, `searchDocs`, skills (`loadSkill`), tenant tools (OAuth; fake only in `dev`), MCP client with allowlists, hooks around every tool call |
+| ✅ | 22 | Measured tool use: 10 tenant and docs questions against planted failures, with vs without skills — with Qwen3 14B the model never loaded a skill; 9 of 10 right without, 7 of 10 with |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

@@ -1090,6 +1090,50 @@ server adds no new safety code.
 it in the prompt; or add an MCP server in `cpi.mcp.servers` with one allowed
 tool and watch `/status` list it.
 
+### Step 22: Measuring tool use — do skills help?
+
+**Why:** Step 21's measurement asked documentation questions; it could not
+show what the tools and skills add. A second measurement asks the questions
+the agent exists for.
+**What:** `ToolUseMeasurement` (`./gradlew measure --tests '*ToolUse*'`, report
+in `build/measure/tool-use.md`): ten questions against the fake tenant's
+planted failures, whose true answers are known — a JDBC pool timeout, a
+message in RETRY, an iFlow in ERROR, a typo in an iFlow name, an iFlow that does
+not exist, an HTTP 401 plus "what does SAP say about fixing it", a mapping
+error, "is anything failing?", a parameter deep in a page, off-topic. Two
+configurations with the same tools: **with skills** and **without** (an empty
+skill library). Per answer: were the expected tools called, is it right (key
+facts, no invented failure), unverified citations, model calls and tokens.
+
+**Measured** (one run, Qwen3 14B):
+
+| | With skills | Without skills |
+|---|---|---|
+| Expected tools called | 8 of 10 | 9 of 10 |
+| Right | 7 of 10 | **9 of 10** |
+| Unverified citations | 3 | 2 |
+| Skills loaded | **0** | — |
+| Model calls / tokens in | 23 / 43,954 | 23 / 42,288 |
+
+- **The model never loaded a skill.** The list in the system prompt did not
+  turn into `loadSkill` calls — and for "Is anything failing on the tenant?" the
+  model *described* the tools ("you would need to use getProblemMessages or
+  check-tenant-health") instead of calling any, naming a skill as if it were a
+  tool.
+- **The misses are real:** a RETRY message reported as "failed"; the typo
+  question never listing the iFlows, so no "did you mean Order_Sync?" — the step
+  the troubleshooting skill would have given.
+- **Neither configuration looked the fix up in the docs** for the HTTP 401
+  ("what does SAP say about fixing it?"): the answers were right from the error
+  text alone, without `searchDocs`.
+- One run: single answers flip. The pattern — zero skills loaded — is the finding.
+
+**Idea:** a capability the model does not use is only cost. Measure the
+behaviour, not the feature list: skills that pay off with a strong model may
+not with a 14B one.
+**Try:** `./gradlew measure --tests '*ToolUse*' -Dcpi.chat.provider=anthropic`
+(needs `ANTHROPIC_API_KEY`, paid) — does a stronger model load the skills?
+
 ---
 
 ## Phase 2 — an agent with LangChain4j

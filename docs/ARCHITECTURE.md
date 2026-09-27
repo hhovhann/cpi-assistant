@@ -267,6 +267,7 @@ sees `search_document:`.
 | `LangChain4jConfigTest` | The chat timeout really cuts off a slow server | Nothing — local stub |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | Nothing |
 | `RagVsFileSearchMeasurement` | Not a test: RAG against an agent that searches (BM25) and reads the SAP pages, same questions and model — tokens and calls counted at the model, time, right, grounded. Own table `cpi_chunks_measure`, reset to the seed pages every run. Tagged `measure`, run with `./gradlew measure` | LM Studio, pgvector, internet |
+| `ToolUseMeasurement` | Not a test: the agent against the fake tenant's planted failures — tenant questions, a tenant error plus its fix in the docs, a parameter deep in a page, off-topic — with skills and without. Expected tools called, right, unverified citations, calls and tokens. Tagged `measure`: `./gradlew measure --tests '*ToolUse*'` | LM Studio, pgvector, internet, port 18081 |
 
 Answer *quality* against the real model: `scripts/qa.sh` asks up to fourteen questions (the five tenant ones only when the agent has tenant tools)
 and checks the path and sources of each answer (see the [README](../README.md)). The
