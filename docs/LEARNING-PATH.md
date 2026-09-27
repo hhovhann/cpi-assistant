@@ -897,6 +897,67 @@ itself, not of the product, is what caught it.
 **Try:** `./gradlew measure -Dcpi.chat.provider=anthropic` (needs
 `ANTHROPIC_API_KEY`, paid) and see how a stronger model changes both columns.
 
+### Step 19: Hybrid search — keywords next to the vectors
+
+**Why:** Step 18 showed file search, with plain keyword ranking, finding pages
+RAG missed ("Setting Up Outbound SFTP Connections"), and reading more of a page
+than RAG's three passages (Kafka).
+**What:**
+- **`Bm25`** — keyword ranking, the same code the file-search side of Step 18
+  uses: words lower-cased, stop words dropped; a rare word counts more than a
+  common one (IDF), a long text less per hit. And **RRF** (reciprocal rank
+  fusion, k = 60): each list gives a document 1 / (60 + rank), the sums decide.
+- **Choosing a SAP page** (`SapHelpCatalog.search`): the 20 best pages by
+  meaning and the 20 best by keywords over title + first sentence, fused.
+  Each page keeps its *similarity* score, so the 0.82 download threshold and
+  the "Configure …" margin still mean what they meant.
+- **Ordering passages** (`RetrievalService.search`): 4× more candidates above
+  the 0.80 floor, re-ordered by meaning + keywords over title + text.
+  Keywords re-order; they never add a chunk meaning did not find, so the floor
+  still decides what is a hit.
+- **The SAP Help retry asks for a *new* page.** After "I don't know", the page
+  already saved is skipped ("no new page matches well enough") — before, the
+  SFTP retry picked the page that had just failed.
+- **A page downloaded for a question adds its two best passages**, found
+  within that page: the answer sees more than three passages of the page that
+  was fetched for it.
+
+**Why not pgvector's own hybrid mode** (`PgVectorEmbeddingStore` `searchMode`):
+its scores are RRF sums (~0.02), which break every similarity threshold;
+`plainto_tsquery` needs *all* words of the question in one chunk; and it exists
+only on pgvector, not in the in-memory store the tests use. BM25 in Java works
+the same on both stores, over at most a few thousand short texts.
+
+**A limit, found by a test:** with RRF, when the two lists disagree exactly
+(A B vs B A), the sums tie and the meaning order wins. Keywords *lift* a chunk
+both lists like; they do not overrule meaning.
+
+**Measured** (`./gradlew measure`, one run each; `scripts/qa.sh` still 10 of 10):
+
+| | RAG before | RAG after | File search after |
+|---|---|---|---|
+| Right | 4 of 7 | **7 of 7** | 7 of 7 |
+| Grounded (docs questions) | 5 of 6 | 4 of 6 | 1 of 6 |
+| Tokens in / out | 16,738 / 4,193 | **14,808 / 4,161** | 16,962 / 7,316 |
+| Model calls | 13 | **12** | 15 |
+| Time | 148 s | 191 s | 345 s |
+
+- **SFTP: fixed by the search, not the retry.** The first passages now link to
+  "Setting Up Outbound SFTP Connections"; the graph hop reads it; one call.
+- **Kafka: fixed by the extra passages** of the page downloaded for it.
+- **Error handling:** a grader artifact before (Step 18); passes now — noise.
+- **Not 100 %:** AS4 and Kafka still start with passages that miss and need
+  the SAP Help retry (3–4 calls). Two right answers cited no page, so grounding
+  went down by one. Time went up on both sides — machine load; tokens and calls
+  went down.
+
+**Idea:** keyword and vector search fail differently — keywords miss
+paraphrases, vectors blur identifiers and rare words. Fusing by *rank* needs no
+common score scale; keeping the similarity for thresholds keeps the
+guardrails.
+**Try:** run `./gradlew measure` twice more and see which ✅ flip — one run
+per question is a sample, not a verdict.
+
 ---
 
 ## Phase 2 — an agent with LangChain4j
@@ -909,6 +970,6 @@ combine; when an agent is worth its extra calls and cost.
 
 Done in Step 7 (pgvector), Step 14 (SAP Help pages, saved), Step 15 (one
 source of truth, citations checked), Step 16 (finding the right page) and
-Step 17 (page graph, QA script). Next: a CPI entity graph — iFlows, adapters,
+Step 17 (page graph, QA script), Step 19 (hybrid search). Next: a CPI entity graph — iFlows, adapters,
 data sources and systems from the tenant, linked to the documentation — for
 questions like "which iFlows break if ORDER_DB is down?".

@@ -90,6 +90,7 @@ public class SapHelpCatalog {
     private final String documentPrefix;
     private volatile InMemoryEmbeddingStore<TextSegment> titleIndex;
     private final Map<String, Embedding> entryEmbeddings = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Bm25 keywords;
 
     @Autowired
     public SapHelpCatalog(EmbeddingModel embeddingModel,
@@ -101,6 +102,9 @@ public class SapHelpCatalog {
     SapHelpCatalog(List<Page> pages, EmbeddingModel embeddingModel, String queryPrefix, String documentPrefix) {
         this.pagesById = new LinkedHashMap<>();
         pages.forEach(page -> pagesById.put(page.id(), page));
+        Map<String, String> texts = new LinkedHashMap<>();
+        pages.forEach(page -> texts.put(page.id(), page.searchText()));
+        this.keywords = new Bm25(texts);
         this.embeddingModel = embeddingModel;
         this.queryPrefix = queryPrefix;
         this.documentPrefix = documentPrefix;
@@ -158,16 +162,32 @@ public class SapHelpCatalog {
     private static final Pattern WORD = Pattern.compile("[A-Za-z0-9]+");
     private static final Pattern HOW_TO_CONFIGURE = Pattern.compile("(?i)\\b(configure|configuring|set ?up|setup)\\b");
 
-    /** The best pages for the query, best first — nearest by meaning, then {@link #rank}ed. */
+    /**
+     * The best pages for the query, best first. Hybrid: the pages nearest by
+     * meaning and the best BM25 keyword matches on title and summary, fused by
+     * rank — "known hosts" finds "Maintaining SSH Known Hosts for SFTP
+     * Connectivity", which meaning alone ranked below the general SFTP page.
+     * Then {@link #rank}'s rules. Every page keeps its similarity score, so the
+     * download threshold means the same as before.
+     */
     public List<PageMatch> search(String query, int maxResults) {
         Embedding queryEmbedding = embeddingModel.embed(queryPrefix + query).content();
-        List<PageMatch> nearest = titleIndex().search(EmbeddingSearchRequest.builder()
+        List<String> byMeaning = titleIndex().search(EmbeddingSearchRequest.builder()
                         .queryEmbedding(queryEmbedding).maxResults(CANDIDATES).minScore(0.0).build())
                 .matches().stream()
-                .map(match -> new PageMatch(pagesById.get(match.embedded().metadata().getString("id")), match.score()))
+                .map(match -> match.embedded().metadata().getString("id"))
                 .toList();
-        List<PageMatch> ranked = rank(query, nearest);
+        List<String> byKeywords = keywords.rank(query, CANDIDATES).stream().map(Bm25.Scored::id).toList();
+        List<PageMatch> fused = Bm25.fuse(List.of(byMeaning, byKeywords)).stream()
+                .map(pagesById::get)
+                .map(page -> new PageMatch(page, similarity(queryEmbedding, page)))
+                .toList();
+        List<PageMatch> ranked = rank(query, fused);
         return ranked.subList(0, Math.min(maxResults, ranked.size()));
+    }
+
+    private double similarity(Embedding query, Page page) {
+        return RelevanceScore.fromCosineSimilarity(CosineSimilarity.between(query, entryEmbeddings.get(page.id())));
     }
 
     /**
@@ -197,7 +217,7 @@ public class SapHelpCatalog {
             }
         }
         if (HOW_TO_CONFIGURE.matcher(query).find() && !pool.isEmpty()) {
-            double best = pool.getFirst().score();
+            double best = pool.stream().mapToDouble(PageMatch::score).max().orElse(0);
             List<PageMatch> configure = pool.stream()
                     .filter(m -> m.page().title().startsWith("Configure") && best - m.score() <= CONFIGURE_MARGIN)
                     .toList();

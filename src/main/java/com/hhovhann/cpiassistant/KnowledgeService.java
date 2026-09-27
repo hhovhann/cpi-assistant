@@ -51,6 +51,8 @@ public class KnowledgeService {
     static final String TITLE = "title";
     static final String FETCHED_AT = "fetched_at";
     static final int MAX_PASSAGES = 3;
+    /** Passages added from each page downloaded for the question. */
+    static final int PASSAGES_FROM_DOWNLOAD = 2;
 
     /** What {@link #find} did, step by step, and what it found. */
     public record Found(List<EmbeddingMatch<TextSegment>> passages, List<String> steps, List<String> downloaded) {
@@ -103,7 +105,7 @@ public class KnowledgeService {
             return followLink(query, new Found(passages, steps, new ArrayList<>()));
         }
         List<String> steps = new ArrayList<>(List.of("Database: nothing above the %.2f floor".formatted(retrieval.minScore())));
-        return followLink(query, fetchAndSearch(query, steps));
+        return followLink(query, fetchAndSearch(query, steps, false));
     }
 
     /**
@@ -111,7 +113,7 @@ public class KnowledgeService {
      * turned out not to answer the question.
      */
     public Found fetchFromSapHelp(String query) {
-        return followLink(query, fetchAndSearch(query, new ArrayList<>()));
+        return followLink(query, fetchAndSearch(query, new ArrayList<>(), true));
     }
 
     /**
@@ -179,12 +181,22 @@ public class KnowledgeService {
         return new Found(passages, steps, downloaded);
     }
 
-    private Found fetchAndSearch(String query, List<String> steps) {
-        List<SapHelpCatalog.PageMatch> candidates = catalog.search(query, maxPagesPerMiss).stream()
+    /**
+     * @param onlyNewPages skip pages already saved: when the saved passages did
+     *                     not answer, the same page again brings nothing new (the
+     *                     SFTP "known hosts" question kept getting the general
+     *                     SFTP page)
+     */
+    private Found fetchAndSearch(String query, List<String> steps, boolean onlyNewPages) {
+        List<SapHelpCatalog.PageMatch> candidates = catalog.search(query, maxPagesPerMiss + (onlyNewPages ? 5 : 0)).stream()
                 .filter(match -> match.score() >= minTitleScore)
+                .filter(match -> !onlyNewPages || !isSaved(match.page()))
+                .limit(maxPagesPerMiss)
                 .toList();
         if (candidates.isEmpty()) {
-            steps.add("SAP Help: no page title matches well enough (needs %.2f)".formatted(minTitleScore));
+            steps.add(onlyNewPages
+                    ? "SAP Help: no new page matches well enough (needs %.2f)".formatted(minTitleScore)
+                    : "SAP Help: no page title matches well enough (needs %.2f)".formatted(minTitleScore));
             return new Found(List.of(), steps, List.of());
         }
         List<String> downloaded = new ArrayList<>();
@@ -199,9 +211,28 @@ public class KnowledgeService {
                 case MISSING -> steps.add("SAP Help: \"%s\" is no longer available".formatted(page.title()));
             }
         }
-        List<EmbeddingMatch<TextSegment>> passages = retrieval.search(query, MAX_PASSAGES);
+        List<EmbeddingMatch<TextSegment>> passages = new ArrayList<>(retrieval.search(query, MAX_PASSAGES));
+        // A page downloaded for this question is the reason for the download:
+        // its best passages go in even if other pages rank higher overall
+        // (the Kafka answer stayed thin with three passages from elsewhere).
+        for (SapHelpCatalog.PageMatch candidate : candidates) {
+            if (downloaded.contains(candidate.page().title())) {
+                for (EmbeddingMatch<TextSegment> extra : retrieval.searchWithin(query, PASSAGES_FROM_DOWNLOAD,
+                        metadataKey(URL).isEqualTo(candidate.page().url()))) {
+                    if (passages.stream().noneMatch(p -> p.embeddingId().equals(extra.embeddingId()))) {
+                        passages.add(extra);
+                    }
+                }
+            }
+        }
         steps.add("Database again: %d passage(s)".formatted(passages.size()));
         return new Found(passages, steps, downloaded);
+    }
+
+    /** A fresh copy of the page is in the store. */
+    private boolean isSaved(SapHelpCatalog.Page page) {
+        List<EmbeddingMatch<TextSegment>> stored = retrieval.searchWithin(page.title(), 1, metadataKey(URL).isEqualTo(page.url()));
+        return !stored.isEmpty() && !isStale(stored.getFirst().embedded());
     }
 
     public enum Saved { DOWNLOADED, ALREADY_SAVED, MISSING }

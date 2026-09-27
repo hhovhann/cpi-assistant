@@ -15,11 +15,12 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `CpiDocsTool` | `@Tool searchDocs` — more documentation, through `KnowledgeService` | Per tool call |
 | `CpiTenantTools` | `@Tool listIflows`, `getProblemMessages` (FAILED, RETRY, ESCALATED), `getErrorDetails` — read-only | Per tool call |
 | `CpiTenantClient` | HTTP client for the CPI OData API (`cpi.tenant.base-url`) | Per tool call |
-| `SapHelpCatalog` | The ~1,660 SAP pages that may be downloaded (`sap-help/catalog.tsv`: path, heading, first sentence); finds a page by meaning, then ranks: exact identifiers, "Configure …" preference | Entries embedded once per start |
+| `SapHelpCatalog` | The ~1,660 SAP pages that may be downloaded (`sap-help/catalog.tsv`: path, heading, first sentence); finds a page by meaning and keywords, then ranks: exact identifiers, "Configure …" preference | Entries embedded once per start |
 | `PageGraph` | Which SAP page links to which (`sap-help/links.tsv`, ~3,400 edges) | Loaded once |
 | `SapHelpClient` | Downloads one page as Markdown from SAP's GitHub docs repository; strips comments, anchors, images, links; HTML tables → one line per row | Per download |
 | `IngestionPipeline` | Splits a page into chunks, embeds each together with its page title, stores them | Per download |
-| `RetrievalService` | Embeds a question, returns the closest chunks above the floor; `searchWithin` one page | Per search |
+| `RetrievalService` | Embeds a question, returns the closest chunks above the floor, re-ordered by meaning + keywords; `searchWithin` one page | Per search |
+| `Bm25` | Keyword ranking (BM25) and rank fusion (RRF) — the keyword half of hybrid search | Per search |
 | `SeedRunner` | At startup: saves the popular pages (unless fresh), embeds the catalog titles, sets `/status` ready | Once, at startup |
 | `LangChain4jConfig` | Builds the beans: HTTP client, chat model (per provider), embedding model, store, assistant | Once, at startup |
 | `ChatProperties`, `StoreProperties`, `SeedProperties`, `IngestionProperties` | Settings bound from `cpi.chat.*`, `cpi.store.*`, `cpi.knowledge.*`, `cpi.ingestion.*` | — |
@@ -170,8 +171,16 @@ table across restarts; `memory` is what the tests use
 thousand rows an exact scan is fast and never misses a neighbour.
 
 **`langchain4j-pgvector` is a beta module** (1.20.0-beta30). It is plain JDBC
-with no Spring in it. It also supports hybrid search (vectors + Postgres
-full-text), a candidate fix for "overview page beats configure page".
+with no Spring in it. Its own hybrid mode is not used — see below.
+
+**Hybrid search is BM25 in Java, fused by rank.** The catalog fuses its 20
+best pages by meaning with its 20 best by keywords; passages: 4× candidates
+above the floor, re-ordered. Reciprocal rank fusion (k = 60) needs no common
+score scale, and every result keeps its similarity score, so the 0.80 and 0.82
+thresholds are unchanged. Keywords re-order passages but never add one below
+the floor. pgvector's `searchMode` hybrid was rejected: it returns RRF scores
+(~0.02) that break the thresholds, `plainto_tsquery` needs every word in one
+chunk, and the in-memory store the tests use has no such mode.
 
 **No LangChain4j Spring Boot starters.** They are built against Spring Boot
 3.5 and fail on Boot 4 (`NoClassDefFoundError: RestClientAutoConfiguration`).
@@ -239,9 +248,10 @@ sees `search_document:`.
 | Test | What it checks | Needs |
 |---|---|---|
 | `AssistServiceTest` | The one path with a scripted model: a database hit is one call with no tool; a cited page never given is flagged, a page named inside a passage is not; an iFlow name becomes a note; a tool call written as text gets one more try; the tool-call limit gives an answer, not an error; "I don't know" on close-but-wrong passages asks SAP Help once and answers again; tool calls are reported and their pages count as given; numbers and ids are not citations | Nothing — fakes |
-| `KnowledgeServiceTest` | A local server plays GitHub: a miss downloads the best page, strips links and images, saves it; the second time the store answers; off-topic downloads nothing; refresh after max-age without duplicates; a moved page; passages labelled by title; the real catalog loads | Nothing — local server, bag-of-words embeddings |
+| `KnowledgeServiceTest` | A local server plays GitHub: a miss downloads the best page, strips links and images, saves it; the second time the store answers; off-topic downloads nothing; refresh after max-age without duplicates; a moved page; passages labelled by title; asking SAP Help again skips pages already saved; a decline with either apostrophe; the real catalog loads | Nothing — local server, bag-of-words embeddings |
 | `KnowledgeServiceTest` (graph) | A page the passage names and links to is followed and saved; a linked page it does not name is not; the switch turns it off; the real graph loads | Nothing |
 | `SapHelpCatalogTest` | The ranking rules with real titles and measured scores: AS4 is not AS2, a clearly worse "Configure …" page does not win, an identifier no page has changes nothing | Nothing |
+| `Bm25Test` | The rare word decides; stop words are not searched; fusion rewards agreement between lists; keywords lift a passage both lists like but add none, and scores stay similarities | Nothing |
 | `SapHelpClientTest` | Cleaning, on real SAP shapes: an HTML table becomes `Field \| Description` rows; comments, anchors and images go, link text stays | Nothing |
 | `CpiAgentTest` | The tool loop: passages arrive in the message, all four tools offered, a docs question needs no tool, `searchDocs` runs with the model's query and its result goes back, the round-trip limit | Nothing — scripted model |
 | `CpiTenantTest` | Client against the fake tenant over real HTTP: filters, time window, RETRY, quote escaping, error text and 404, iFlow list, the tools' text | Nothing — random port |

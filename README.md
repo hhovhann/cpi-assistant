@@ -252,7 +252,10 @@ page by title and link to it.
   sentence — pinned to a commit of that repository and rebuilt with
   `python3 scripts/build_sap_help_catalog.py [commit]`. The model never fetches
   a URL of its choosing.
-- A page is chosen by meaning (title + first sentence), then two rules:
+- **Hybrid search:** pages and passages are ranked by meaning *and* by
+  keywords (BM25), fused by rank (RRF). Keywords catch rare words and exact
+  names the vectors blur; the similarity thresholds still decide what counts.
+- A page is chosen this way (title + first sentence), then two rules:
   identifiers like AS4, JDBC, SFTP, OData must match exactly, and a how-to
   question prefers a "Configure …" page when it matches nearly as well.
 - Saved pages are cleaned for search: links keep only their text, HTML
@@ -267,9 +270,9 @@ page by title and link to it.
 - help.sap.com itself is not fetched: it renders pages with JavaScript and its
   robots.txt disallows automated clients.
 
-**Known limits:** only three passages go to the model, so a long page's
-parameter table can stay out of the answer (JDBC gets the setup steps, not
-every field). An honest "the passages don't cover this" that does not start
+**Known limits:** only three passages go to the model (five after a
+download), so a long page's parameter table can stay out of the answer (JDBC
+gets the setup steps, not every field). An honest "the passages don't cover this" that does not start
 with "I don't know" does not trigger the SAP Help retry. For "why did it fail
 and how do I fix it" the model does not always look the fix up in the docs —
 it then answers the fix without a citation.
@@ -292,6 +295,7 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 | ✅ | 16 | Finding the right page: catalog summaries, exact identifiers, "Configure …" preference, readable tables |
 | ✅ | 17 | Page graph (graph RAG, one hop) next to the vectors; `scripts/qa.sh`; tenant questions stay tenant questions |
 | ✅ | 18 | Measured: RAG vs a model that searches the files itself — RAG a bit cheaper and 2.3× faster, file search more often right (7 of 7 vs 4 of 7), RAG more often grounded (5 of 6 vs 2 of 6) |
+| ✅ | 19 | Hybrid search: BM25 keywords fused with the vectors (RRF) for pages and passages; the retry asks for a new page; a downloaded page adds its best passages — RAG now 7 of 7 right with fewer tokens than file search |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

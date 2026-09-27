@@ -175,6 +175,18 @@ class KnowledgeServiceTest {
     }
 
     @Test
+    void askingSapHelpAgainSkipsPagesAlreadySaved() {
+        // Both SFTP pages match; the first is saved already. A retry must bring the other.
+        knowledge.ensureSaved(new SapHelpCatalog.Page(SFTP_PATH, "Configure the SFTP Receiver Adapter"));
+
+        var retry = knowledge.fetchFromSapHelp("SFTP receiver adapter known hosts");
+
+        assertThat(retry.steps()).noneMatch(step -> step.contains("is already saved"));
+        assertThat(retry.steps()).anyMatch(step -> step.startsWith("SAP Help: no new page matches")
+                || step.startsWith("SAP Help: downloaded"));
+    }
+
+    @Test
     void aDeclineIsRecognisedWithEitherApostrophe() {
         assertThat(KnowledgeService.isIDontKnow("I don't know.")).isTrue();
         assertThat(KnowledgeService.isIDontKnow("  I don\u2019t know the steps.")).isTrue();

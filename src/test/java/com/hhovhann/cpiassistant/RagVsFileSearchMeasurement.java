@@ -177,39 +177,18 @@ class RagVsFileSearchMeasurement {
         Result<String> answer(@UserMessage String question);
     }
 
-    /** Search and read over the downloaded pages. */
+    /** Search and read over the downloaded pages — BM25, the same ranking RAG uses for keywords. */
     static final class FileTools {
-        private static final Pattern TOKEN = Pattern.compile("[a-z0-9]+");
-        private static final Set<String> STOP = Set.of("a", "an", "and", "are", "can", "do", "does", "for", "from",
-                "how", "i", "in", "is", "it", "my", "of", "on", "or", "the", "to", "what", "with", "which");
-        private static final double K1 = 1.2;
-        private static final double B = 0.75;
-
         private final Map<String, String> pages;
         private final Map<String, String> titles;
-        private final Map<String, Map<String, Integer>> termCounts = new HashMap<>();
-        private final Map<String, Integer> lengths = new HashMap<>();
-        private final Map<String, Integer> documentFrequency = new HashMap<>();
-        private final double averageLength;
+        private final Bm25 bm25;
 
         FileTools(Map<String, String> pages, Map<String, String> titles) {
             this.pages = pages;
             this.titles = titles;
-            long total = 0;
-            for (Map.Entry<String, String> page : pages.entrySet()) {
-                Map<String, Integer> counts = new HashMap<>();
-                int length = 0;
-                Matcher m = TOKEN.matcher((titles.get(page.getKey()) + "\n" + page.getValue()).toLowerCase(Locale.ROOT));
-                while (m.find()) {
-                    counts.merge(m.group(), 1, Integer::sum);
-                    length++;
-                }
-                termCounts.put(page.getKey(), counts);
-                lengths.put(page.getKey(), length);
-                counts.keySet().forEach(term -> documentFrequency.merge(term, 1, Integer::sum));
-                total += length;
-            }
-            averageLength = pages.isEmpty() ? 1 : (double) total / pages.size();
+            Map<String, String> texts = new LinkedHashMap<>();
+            pages.forEach((id, text) -> texts.put(id, titles.get(id) + "\n" + text));
+            this.bm25 = new Bm25(texts);
         }
 
         @Tool("""
@@ -221,39 +200,16 @@ class RagVsFileSearchMeasurement {
             if (q.length() > 2 && q.startsWith("/") && q.endsWith("/")) {
                 return regexSearch(q.substring(1, q.length() - 1));
             }
-            List<String> terms = new ArrayList<>(new java.util.LinkedHashSet<>(
-                    TOKEN.matcher(q.toLowerCase(Locale.ROOT)).results().map(java.util.regex.MatchResult::group).filter(t -> !STOP.contains(t)).toList()));
+            List<String> terms = Bm25.terms(q);
             if (terms.isEmpty()) {
                 return "Give one or more keywords.";
             }
-            record Hit(String id, double score) {
-            }
-            List<Hit> hits = new ArrayList<>();
-            int n = pages.size();
-            for (String id : pages.keySet()) {
-                Map<String, Integer> counts = termCounts.get(id);
-                double score = 0;
-                for (String term : terms) {
-                    int tf = counts.getOrDefault(term, 0);
-                    if (tf == 0) {
-                        continue;
-                    }
-                    int df = documentFrequency.getOrDefault(term, 0);
-                    double idf = Math.log(1 + (n - df + 0.5) / (df + 0.5));
-                    score += idf * tf * (K1 + 1) / (tf + K1 * (1 - B + B * lengths.get(id) / averageLength));
-                }
-                if (score > 0) {
-                    hits.add(new Hit(id, score));
-                }
-            }
-            hits.sort((a, b) -> Double.compare(b.score(), a.score()));
+            var hits = bm25.rank(q, SEARCH_HITS);
             if (hits.isEmpty()) {
                 return "No matches for " + q;
             }
-            String rarest = terms.stream().min((a, b) -> Integer.compare(documentFrequency.getOrDefault(a, 0),
-                    documentFrequency.getOrDefault(b, 0))).orElseThrow();
-            return String.join("\n", hits.stream().limit(SEARCH_HITS)
-                    .map(h -> h.id() + " | " + titles.get(h.id()) + " | " + line(pages.get(h.id()), rarest))
+            return String.join("\n", hits.stream()
+                    .map(h -> h.id() + " | " + titles.get(h.id()) + " | " + line(pages.get(h.id()), terms))
                     .toList());
         }
 
@@ -268,7 +224,7 @@ class RagVsFileSearchMeasurement {
             for (Map.Entry<String, String> page : pages.entrySet()) {
                 Matcher m = regex.matcher(page.getValue());
                 if (m.find()) {
-                    hits.add(page.getKey() + " | " + titles.get(page.getKey()) + " | " + line(page.getValue(), m.group()));
+                    hits.add(page.getKey() + " | " + titles.get(page.getKey()) + " | " + line(page.getValue(), List.of(m.group())));
                     if (hits.size() == SEARCH_HITS) {
                         break;
                     }
@@ -277,15 +233,19 @@ class RagVsFileSearchMeasurement {
             return hits.isEmpty() ? "No matches for /" + expression + "/" : String.join("\n", hits);
         }
 
-        private static String line(String text, String containing) {
-            String needle = containing.toLowerCase(Locale.ROOT);
+        /** The first line holding one of the words, most words first. */
+        private static String line(String text, List<String> words) {
+            String best = "";
+            long bestCount = 0;
             for (String line : text.split("\n")) {
-                if (line.toLowerCase(Locale.ROOT).contains(needle)) {
-                    String s = line.strip();
-                    return s.length() > 160 ? s.substring(0, 160) + "…" : s;
+                String lower = line.toLowerCase(Locale.ROOT);
+                long count = words.stream().filter(w -> lower.contains(w.toLowerCase(Locale.ROOT))).count();
+                if (count > bestCount) {
+                    bestCount = count;
+                    best = line.strip();
                 }
             }
-            return "";
+            return best.length() > 160 ? best.substring(0, 160) + "…" : best;
         }
 
         @Tool("""

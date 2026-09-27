@@ -10,7 +10,9 @@ import dev.langchain4j.store.embedding.filter.Filter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Query-time half of RAG: turn a question into a vector and find the segments
@@ -52,7 +54,33 @@ public class RetrievalService {
      * KnowledgeService goes to SAP Help.
      */
     public List<EmbeddingMatch<TextSegment>> search(String query, int maxResults) {
-        return search(embedQuery(query), maxResults, embeddingStore, minScore);
+        List<EmbeddingMatch<TextSegment>> candidates =
+                search(embedQuery(query), Math.max(maxResults * CANDIDATES_PER_RESULT, 12), embeddingStore, minScore);
+        return hybridOrder(query, candidates).subList(0, Math.min(maxResults, candidates.size()));
+    }
+
+    /** How many candidates by meaning per passage returned, for the keywords to re-order. */
+    static final int CANDIDATES_PER_RESULT = 4;
+
+    /**
+     * Hybrid ranking of chunks: the order by meaning and a BM25 order by
+     * keywords (over page title and text), fused by rank. Keywords re-order
+     * the candidates meaning found; they do not add new ones, so the floor still
+     * decides what counts as a hit, and scores stay similarities.
+     */
+    static List<EmbeddingMatch<TextSegment>> hybridOrder(String query, List<EmbeddingMatch<TextSegment>> byMeaning) {
+        if (byMeaning.size() < 2) {
+            return byMeaning;
+        }
+        Map<String, EmbeddingMatch<TextSegment>> byId = new LinkedHashMap<>();
+        Map<String, String> texts = new LinkedHashMap<>();
+        for (EmbeddingMatch<TextSegment> match : byMeaning) {
+            byId.put(match.embeddingId(), match);
+            String title = match.embedded().metadata().getString(KnowledgeService.TITLE);
+            texts.put(match.embeddingId(), (title == null ? "" : title + "\n") + match.embedded().text());
+        }
+        List<String> keywordOrder = new Bm25(texts).rank(query, byMeaning.size()).stream().map(Bm25.Scored::id).toList();
+        return Bm25.fuse(List.of(List.copyOf(byId.keySet()), keywordOrder)).stream().map(byId::get).toList();
     }
 
     /**
