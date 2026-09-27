@@ -102,6 +102,9 @@ class CpiTenantTest {
         assertThat(tools.getProblemMessages("Order_Sync", "RETRY", null))
                 .isEqualTo("No messages in status RETRY for Order_Sync in the last 24 hours.");
         assertThat(tools.getProblemMessages(null, "COMPLETED", null)).startsWith("Unknown status COMPLETED.");
+        // The model sends lists like this; it used to take three tries.
+        assertThat(tools.getProblemMessages("Payment_Status_Poll", "FAILED,RETRY, ESCALATED", null))
+                .startsWith("1 message(s) with problems for Payment_Status_Poll in the last 24 hours (1 RETRY):");
         assertThat(tools.getErrorDetails("nope")).isEqualTo("No error information for message nope. Check the id.");
     }
 }

@@ -37,6 +37,9 @@ import java.util.regex.Pattern;
 @Service
 public class AssistService {
 
+    static final String STOPPED = "I could not finish: this question needed more tool calls than allowed. "
+            + "Ask more precisely — for example with the exact iFlow name.";
+
     /** [Page Title] — a citation. Numbers and message ids in brackets are not. */
     private static final Pattern CITATION = Pattern.compile("\\[([^\\[\\]\\n]{3,150})]");
     private static final Pattern RETURNED_TITLE = Pattern.compile("(?m)^\\[([^\\]\\n]+)]$");
@@ -109,7 +112,18 @@ public class AssistService {
 
     private Result<String> ask(String question, KnowledgeService.Found found, List<String> path,
                                List<ToolCall> toolCalls, int[] tokens) {
-        Result<String> result = agent.answer(KnowledgeService.format(found.passages()), question);
+        Result<String> result;
+        try {
+            result = agent.answer(KnowledgeService.format(found.passages()), question);
+        } catch (RuntimeException e) {
+            if (!String.valueOf(e.getMessage()).contains("maxToolCallingRoundTrips")) {
+                throw e;
+            }
+            // The safety limit stopped a model that kept calling tools. Say so
+            // instead of failing the request with a 500.
+            path.add("Stopped: more than %d rounds of tool calls".formatted(LangChain4jConfig.MAX_TOOL_ROUND_TRIPS));
+            return Result.<String>builder().content(STOPPED).toolExecutions(List.of()).build();
+        }
         result.toolExecutions().forEach(e -> {
             toolCalls.add(new ToolCall(e.request().name(), e.request().arguments(), e.result()));
             path.add("Tool: " + e.request().name() + " " + e.request().arguments());
@@ -162,8 +176,9 @@ public class AssistService {
         while (m.find()) {
             for (String part : m.group(1).split("\\]\\s*\\[")) {
                 String title = part.strip();
-                // A number, an id or a date is not a page title.
-                if (title.chars().anyMatch(Character::isLetter) && !title.matches("[0-9a-f]{16,}")) {
+                // A number, an id, a date or a tool name (listIflows) is not a page title.
+                if (title.chars().anyMatch(Character::isLetter) && !title.matches("[0-9a-f]{16,}")
+                        && !title.matches("[a-z]+[A-Z][A-Za-z]*")) {
                     titles.add(title);
                 }
             }

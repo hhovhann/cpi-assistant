@@ -174,8 +174,26 @@ class AssistServiceTest {
     }
 
     @Test
-    void numbersAndIdsInBracketsAreNotCitations() {
-        assertThat(AssistService.citedTitles("See [1], message [308fd65c82453608a88a13344717584f] and [JDBC Receiver Adapter] [Handle Errors Gracefully]."))
+    void numbersIdsAndToolNamesInBracketsAreNotCitations() {
+        assertThat(AssistService.citedTitles("See [1], message [308fd65c82453608a88a13344717584f], [listIflows], "
+                + "[JDBC Receiver Adapter] [Handle Errors Gracefully]."))
                 .containsExactly("JDBC Receiver Adapter", "Handle Errors Gracefully");
+    }
+
+    @Test
+    void aModelThatNeverStopsCallingToolsGetsAnAnswerNotAnError() {
+        var knowledge = new CannedKnowledge(new KnowledgeService.Found(List.of(), List.of("Database: nothing above the 0.80 floor"), List.of()), null) {
+            @Override
+            public Found find(String query) {
+                calls.add("find");
+                return new Found(List.of(), List.of("Database: nothing above the 0.80 floor"), List.of());
+            }
+        };
+        var model = new CpiAgentTest.ScriptedChatModel(n -> CpiAgentTest.callTool("searchDocs", "{\"query\": \"attempt " + n + "\"}"));
+
+        var answer = service(model, knowledge).assist("Why did Order_Synk fail today?");
+
+        assertThat(answer.answer()).isEqualTo(AssistService.STOPPED);
+        assertThat(answer.path()).last().asString().startsWith("Stopped: more than 5 rounds");
     }
 }

@@ -12,8 +12,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -75,15 +77,13 @@ public class CpiTenantTools {
             see why.""")
     public String getProblemMessages(
             @P(value = "Exact iFlow name, e.g. Order_Sync. Leave empty for all iFlows.", required = false) String iflowName,
-            @P(value = "FAILED, RETRY or ESCALATED. Leave empty for all three.", required = false) String status,
+            @P(value = "FAILED, RETRY or ESCALATED — one, or several separated by commas. Leave empty for all three.", required = false) String status,
             @P(value = "How many hours back to look. Default 24.", required = false) Integer hoursBack) {
-        List<String> statuses;
-        if (status == null || status.isBlank()) {
-            statuses = PROBLEM_STATUSES;
-        } else if (PROBLEM_STATUSES.contains(status.trim().toUpperCase())) {
-            statuses = List.of(status.trim().toUpperCase());
-        } else {
-            return "Unknown status " + status + ". Use FAILED, RETRY or ESCALATED, or leave it empty.";
+        List<String> statuses = status == null || status.isBlank()
+                ? PROBLEM_STATUSES
+                : Arrays.stream(status.toUpperCase(Locale.ROOT).split("[,\\s]+")).filter(s -> !s.isBlank()).distinct().toList();
+        if (!PROBLEM_STATUSES.containsAll(statuses)) {
+            return "Unknown status " + status + ". Use FAILED, RETRY or ESCALATED — one, several separated by commas, or empty for all.";
         }
         int hours = hoursBack == null || hoursBack <= 0 ? 24 : hoursBack;
         Instant since = clock.instant().minus(Duration.ofHours(hours));

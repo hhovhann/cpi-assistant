@@ -121,6 +121,23 @@ curl -s -G localhost:8080/assist --data-urlencode "question=How do I configure a
 
 ## QA checklist — what to ask, and what you should see
 
+**Run it all at once:**
+
+```bash
+./scripts/qa.sh                              # app on localhost:8080
+BASE=http://localhost:8081 ./scripts/qa.sh   # another port
+```
+
+It asks ten questions and checks the **path** of each answer: store hit, first
+download, the same question again from the store, off-topic without a
+download, and five live-tenant cases where the model must call tools. It
+removes the AS4 pages from the store first, so the download case works on
+every run. Prints ✅/❌ per case; exit code 0 when all pass (~4 minutes with
+Qwen3 14B). Tool cases depend on the model's choices — re-run a ❌ once
+before calling it a bug.
+
+**Or ask by hand:**
+
 Start from an empty store to see every path (`docker exec cpi-assistant-pgvector
 psql -U cpi -d cpi -c "truncate cpi_chunks;"`, then restart the app). Measured
 with Qwen3 14B on an M4 Max:
@@ -179,7 +196,8 @@ export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY (and optionally OPENAI_M
 ./gradlew test
 ```
 
-40 tests, fakes for the models and for GitHub: no LM Studio and no internet.
+41 tests, fakes for the models and for GitHub: no LM Studio and no internet.
+Answer quality against the real model: `./scripts/qa.sh` (above).
 `PgVectorStoreTest` starts a throwaway pgvector container, so it needs Docker.
 
 ## Endpoints

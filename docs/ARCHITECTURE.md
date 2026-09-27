@@ -173,7 +173,9 @@ with a 400 — `ChatProviderTests` guards that none of them is sent.
 **The tool loop is capped.** `AiServices` runs at most
 `MAX_TOOL_ROUND_TRIPS` (5) model replies that ask for tools — LangChain4j's
 default is 100. Every round trip resends the whole conversation, so input
-tokens grow with each call.
+tokens grow with each call. Hitting the cap returns an answer that says so,
+with the path — not an HTTP 500, which is what the typo question
+"Order_Synk" produced before.
 
 **The tenant tools talk real HTTP, even to the fake.** `CpiTenantClient` calls
 `cpi.tenant.base-url` with the real OData paths, `$filter` syntax and JSON
@@ -184,7 +186,9 @@ name cannot extend the filter.
 
 **Problem messages are FAILED, RETRY and ESCALATED.** One plain `Status eq`
 query per status, merged — every OData server handles that form. Each line
-says its status, because RETRY calls for a different reaction than FAILED.
+says its status, because RETRY calls for a different reaction than FAILED. The
+`status` parameter takes a list ("FAILED,RETRY"): the model sends one anyway,
+and rejecting it cost three extra round trips (65 s → 21 s once accepted).
 
 **Tool descriptions route the model.** `listIflows` says it shows deployment
 status only and names `getProblemMessages` for failing messages; before that,
@@ -219,9 +223,10 @@ sees `search_document:`.
 | `LangChain4jConfigTest` | The chat timeout really cuts off a slow server | Nothing — local stub |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | Nothing |
 
-Answer *quality* against the real model is checked by hand with the QA
-checklist in the [README](../README.md); the earlier automated evaluations
-(Step 10) were built on the hand-written docs and are in git history.
+Answer *quality* against the real model: `scripts/qa.sh` asks ten questions
+and checks the path of each answer (see the [README](../README.md)). The
+earlier automated evaluations (Step 10) were built on the hand-written docs
+and are in git history.
 
 ## Gotchas when running
 
