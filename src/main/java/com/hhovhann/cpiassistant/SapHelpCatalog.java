@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -90,7 +89,7 @@ public class SapHelpCatalog {
     private final String documentPrefix;
     private volatile InMemoryEmbeddingStore<TextSegment> titleIndex;
     private final Map<String, Embedding> entryEmbeddings = new java.util.concurrent.ConcurrentHashMap<>();
-    private final Bm25 keywords;
+    private final KeywordSearch keywords;
 
     @Autowired
     public SapHelpCatalog(EmbeddingModel embeddingModel,
@@ -104,7 +103,7 @@ public class SapHelpCatalog {
         pages.forEach(page -> pagesById.put(page.id(), page));
         Map<String, String> texts = new LinkedHashMap<>();
         pages.forEach(page -> texts.put(page.id(), page.searchText()));
-        this.keywords = new Bm25(texts);
+        this.keywords = new KeywordSearch(texts);
         this.embeddingModel = embeddingModel;
         this.queryPrefix = queryPrefix;
         this.documentPrefix = documentPrefix;
@@ -136,31 +135,13 @@ public class SapHelpCatalog {
         return Optional.ofNullable(id == null ? null : pagesById.get(id.trim()));
     }
 
-    /** The first page with this exact title — to link a title the model was shown. */
-    public Optional<Page> pageByTitle(String title) {
-        return pagesById.values().stream().filter(page -> page.title().equals(title)).findFirst();
-    }
-
     /** A catalog page and how well its title and summary match, on the (cosine + 1) / 2 scale. */
     public record PageMatch(Page page, double score) {
     }
 
-    /** How well each of these pages matches the query, best first — for pages found another way, e.g. by a link. */
-    public List<PageMatch> score(String query, List<Page> pages) {
-        titleIndex();
-        Embedding q = embeddingModel.embed(queryPrefix + query).content();
-        return pages.stream()
-                .map(page -> new PageMatch(page, RelevanceScore.fromCosineSimilarity(CosineSimilarity.between(q, entryEmbeddings.get(page.id())))))
-                .sorted(Comparator.comparingDouble(PageMatch::score).reversed())
-                .toList();
-    }
-
     /** How many nearest pages {@link #rank} chooses from. */
     static final int CANDIDATES = 20;
-    /** A "Configure …" page is preferred only if it matches nearly as well as the best page. */
-    static final double CONFIGURE_MARGIN = 0.025;
     private static final Pattern WORD = Pattern.compile("[A-Za-z0-9]+");
-    private static final Pattern HOW_TO_CONFIGURE = Pattern.compile("(?i)\\b(configure|configuring|set ?up|setup)\\b");
 
     /**
      * The best pages for the query, best first. Hybrid: the pages nearest by
@@ -177,8 +158,8 @@ public class SapHelpCatalog {
                 .matches().stream()
                 .map(match -> match.embedded().metadata().getString("id"))
                 .toList();
-        List<String> byKeywords = keywords.rank(query, CANDIDATES).stream().map(Bm25.Scored::id).toList();
-        List<PageMatch> fused = Bm25.fuse(List.of(byMeaning, byKeywords)).stream()
+        List<String> byKeywords = keywords.rank(query, CANDIDATES).stream().map(KeywordSearch.Scored::id).toList();
+        List<PageMatch> fused = KeywordSearch.fuse(List.of(byMeaning, byKeywords)).stream()
                 .map(pagesById::get)
                 .map(page -> new PageMatch(page, similarity(queryEmbedding, page)))
                 .toList();
@@ -191,41 +172,21 @@ public class SapHelpCatalog {
     }
 
     /**
-     * Two rules on top of "nearest by meaning", both measured on real questions:
-     * <ol>
-     *   <li><b>Identifiers must match exactly.</b> To the embedding model AS4 and
-     *       AS2 are nearly the same word: "configure the AS4 receiver adapter"
-     *       came closest to "Configure the AS2 Receiver Adapter". A word with a
-     *       digit or two capitals — AS4, JDBC, SFTP, OData, V2 — is an identifier;
-     *       pages whose title and summary lack one are dropped (unless that would
-     *       drop them all).</li>
-     *   <li><b>How-to questions prefer "Configure …" pages</b> — the ones with the
-     *       steps — but only within {@link #CONFIGURE_MARGIN} of the best: "Configure
-     *       JDBC Drivers" (0.876) is about drivers, not the adapter, and must not
-     *       beat "JDBC Receiver Adapter" (0.909).</li>
-     * </ol>
-     * Scores stay the embedding scores, so the download threshold still means
-     * the same thing.
+     * One rule on top of "nearest": <b>identifiers must match exactly.</b> To
+     * the embedding model AS4 and AS2 are nearly the same word: "configure the
+     * AS4 receiver adapter" came closest to "Configure the AS2 Receiver
+     * Adapter". A word with a digit or two capitals — AS4, JDBC, SFTP, OData,
+     * V2 — is an identifier; pages whose title and summary lack one are dropped
+     * (unless that would drop them all). Scores stay the embedding scores, so
+     * the download threshold still means the same thing.
      */
     static List<PageMatch> rank(String query, List<PageMatch> nearestFirst) {
-        List<PageMatch> pool = nearestFirst;
         Set<String> identifiers = identifiers(query);
-        if (!identifiers.isEmpty()) {
-            List<PageMatch> exact = pool.stream().filter(m -> words(m.page().searchText()).containsAll(identifiers)).toList();
-            if (!exact.isEmpty()) {
-                pool = exact;
-            }
+        if (identifiers.isEmpty()) {
+            return nearestFirst;
         }
-        if (HOW_TO_CONFIGURE.matcher(query).find() && !pool.isEmpty()) {
-            double best = pool.stream().mapToDouble(PageMatch::score).max().orElse(0);
-            List<PageMatch> configure = pool.stream()
-                    .filter(m -> m.page().title().startsWith("Configure") && best - m.score() <= CONFIGURE_MARGIN)
-                    .toList();
-            List<PageMatch> reordered = new ArrayList<>(configure);
-            pool.stream().filter(m -> !configure.contains(m)).forEach(reordered::add);
-            pool = reordered;
-        }
-        return pool;
+        List<PageMatch> exact = nearestFirst.stream().filter(m -> words(m.page().searchText()).containsAll(identifiers)).toList();
+        return exact.isEmpty() ? nearestFirst : exact;
     }
 
     /** Words with a digit or at least two capitals: AS4, JDBC, SFTP, OData, V2 — lower-cased. */

@@ -958,18 +958,70 @@ guardrails.
 **Try:** run `./gradlew measure` twice more and see which ✅ flip — one run
 per question is a sample, not a verdict.
 
+### Step 20: Simpler — the best page first, one model call
+
+**Why:** Steps 14–19 fixed one weak spot at a time, and each fix added a pass:
+an "I don't know → ask SAP Help again" retry, a retry for a tool call written
+as text, a graph hop, extra passages after a download, a "Configure …"
+ranking rule. Four runs of Step 19 gave the same answer every time — the
+weak spots were systematic: AS4 took 4 model calls, Kafka 3, and JDBC and
+Kafka were never grounded.
+**What — one rule instead of the patches:** every question first looks up its
+best catalog page (hybrid, identifiers must match). If it matches at 0.82,
+the page is saved — downloaded the first time, from the store after that —
+and its three best passages go into the answer, plus the three best from the
+whole store. Then one model call, with the tools. Then the citation check.
+**Removed:** `PageGraph` and `links.tsv`, both retries, the "Configure …"
+rule, `fetchFromSapHelp`, `cpi.knowledge.max-pages-per-miss` and
+`follow-links`.
+**Docs only:** the tenant tools of Steps 12–13, the fake tenant behind them,
+and `searchDocs` went too. The tenant never had a real system behind it, and
+keeping its questions working needed an iFlow-name hint and extra prompt rules
+(without them the model answered "Is Payment_Status_Poll failing?" from the
+docs, once with an empty answer, and once passed a placeholder,
+`<message_id_from_previous_step>`, as a tool argument). Now: no tools, one
+model call per question. `Bm25` is now `KeywordSearch`, named for what it does.
+**Fixed:** a URL in brackets counted as a cited page (Kafka's "grounded"
+failure); the measurement checked citations against 160-character excerpts
+instead of the full passages (JDBC's). **Safer:** questions of 1–1,000
+characters (HTTP 400 otherwise), the database login from `CPI_DB_USER` /
+`CPI_DB_PASSWORD`, an empty model answer never passed on as `null`.
+
+**Measured** (`./gradlew measure`, before the tools were removed — the
+measured questions never called one; `scripts/qa.sh`, now eight docs cases):
+
+| RAG | Step 19 | Step 20 |
+|---|---|---|
+| Right | 7 of 7 | **7 of 7** |
+| Grounded (docs questions) | 4 of 6 | **6 of 6** |
+| Tokens in / out | 14,808 / 4,161 | **9,243 / 2,854** |
+| Model calls | 12 | **7** — one per question |
+| AS4 / Kafka / SFTP | 4 / 3 / 1 calls | **1 / 1 / 1** |
+
+File search in the same run: 7 of 7 right, 1 of 6 grounded, 16,962 / 7,316
+tokens, 15 calls. Time is not compared: LM Studio stalls on single calls
+(126–857 s totals for the same work across runs).
+
+**Idea:** when every fix is a new pass after the fact, look for the step that
+makes them unnecessary. Here it was the order — the right page first, then
+the store — and it removed code, calls and tokens at once.
+**Try:** ask something outside the seven measured questions ("How do I
+configure the Mail receiver adapter?") and read the path: which page was
+chosen, and was it the right one?
+
 ---
 
 ## Phase 2 — an agent with LangChain4j
 
-Done in Steps 12–13 and folded into the one path in Step 15: the model decides
-which tools to call and in what order. **Idea:** how context and reasoning
+Done in Steps 12–13 and folded into the one path in Step 15: the model decided
+which tools to call and in what order. Removed in Step 20 — the assistant is
+docs only. **Idea:** how context and reasoning
 combine; when an agent is worth its extra calls and cost.
 
 ## Phase 3 — knowledge that grows
 
 Done in Step 7 (pgvector), Step 14 (SAP Help pages, saved), Step 15 (one
 source of truth, citations checked), Step 16 (finding the right page) and
-Step 17 (page graph, QA script), Step 19 (hybrid search). Next: a CPI entity graph — iFlows, adapters,
-data sources and systems from the tenant, linked to the documentation — for
-questions like "which iFlows break if ORDER_DB is down?".
+Step 17 (page graph, QA script), Step 19 (hybrid search) and Step 20 (the
+best page first, docs only). Next: more and reworded questions in the
+measurement, to see how well the page choice holds beyond seven questions.

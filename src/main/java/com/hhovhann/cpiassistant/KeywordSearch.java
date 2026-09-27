@@ -11,12 +11,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * BM25, the classic keyword ranking: a page scores for each query word it
+ * Keyword search with BM25, the classic ranking: a page scores for each query word it
  * contains, more for rare words (IDF), with diminishing returns for repeats and
  * a penalty for length. The keyword half of hybrid search — exact words like
  * "known hosts" or "AS4", which the vector half blurs.
  */
-final class Bm25 {
+final class KeywordSearch {
 
     private static final Pattern TOKEN = Pattern.compile("[a-z0-9]+");
     private static final Set<String> STOP = Set.of("a", "an", "and", "are", "can", "do", "does", "for", "from",
@@ -32,7 +32,7 @@ final class Bm25 {
     private final Map<String, Integer> documentFrequency = new HashMap<>();
     private final double averageLength;
 
-    Bm25(Map<String, String> documents) {
+    KeywordSearch(Map<String, String> documents) {
         long total = 0;
         for (Map.Entry<String, String> document : documents.entrySet()) {
             Map<String, Integer> counts = new HashMap<>();

@@ -9,7 +9,7 @@ cpi:
     max-segment-size: 500
     max-overlap-size: 50
   # Relevance floor, on the store's (cosine + 1) / 2 scale, not raw cosine.
-  # Below it, the question counts as a miss and SAP Help is asked. Measured on
+  # A chunk below it is not used. Measured on
   # the earlier hand-written docs: noise reached 0.82, some right chunks
   # scored just under 0.80. Model-specific (nomic with task prefixes).
   retrieval:
@@ -28,9 +28,8 @@ cpi:
     lmstudio:
       base-url: http://localhost:1234/v1
       api-key: lm-studio
-      # Qwen3 14B: calls tools and uses their results. Llama 3.1 8B
-      # (meta-llama-3.1-8b-instruct) called the tool but then ignored what it
-      # found. Qwen3 thinks before answering: better answers, ~40 s per question.
+      # Qwen3 14B: answers from the passages and cites them. It thinks before
+      # answering: better answers, ~10-30 s per question on an M-series Mac.
       model-name: qwen/qwen3-14b
       # 0 = always the most likely next token. Answers from docs should be
       # factual, not creative, and the evaluation needs repeatable runs.
@@ -57,37 +56,22 @@ cpi:
       host: localhost
       port: 5433
       database: cpi
-      user: cpi
-      password: cpi             # local development only
+      user: ${CPI_DB_USER:cpi}
+      password: ${CPI_DB_PASSWORD:cpi}   # the default is for the local Docker container only
       table: cpi_chunks
       dimension: 768            # nomic-embed-text-v1.5
-
-  # The CPI tenant the assistant's tools read (CpiTenantClient). Until a real
-  # tenant is reachable, a fake one runs inside this app (FakeCpiController)
-  # with the same paths and JSON as the real OData API. For a real tenant:
-  # fake: false, and base-url = the service key's URL + /api/v1 (OAuth still to do).
-  tenant:
-    fake: true
-    base-url: http://localhost:${server.port:8080}/fake-cpi/api/v1
 
   # The knowledge: official SAP Integration Suite docs only, as Markdown from
   # SAP's GitHub repository (CC BY 4.0) — help.sap.com itself is rendered by
   # JavaScript and disallows automated clients. KnowledgeService searches the
-  # store; on a miss it downloads the best-matching pages of sap-help/catalog.tsv
-  # and saves them. A saved page is downloaded again after max-age.
+  # store and the best-matching page of sap-help/catalog.tsv, which it downloads
+  # and saves the first time. A saved page is downloaded again after max-age.
   knowledge:
     sap-help-url: https://raw.githubusercontent.com/SAP-docs/btp-integration-suite/main
     max-age: 30d
     # A page is downloaded only if its title matches the question this well.
     # Measured: real CPI questions 0.83-0.95; off-topic ones up to 0.80.
     min-title-score: 0.82
-    # One page per miss: the second-best title was usually a neighbour (AS2 for
-    # an AS4 question) — a download and 50 chunks for nothing.
-    max-pages-per-miss: 1
-    # One hop through the page graph (sap-help/links.tsv): when a passage names a
-    # page its own page links to, read the best such page if it matches the
-    # question at least min-title-score. false = vectors only, for comparison.
-    follow-links: true
     # Saved at startup (unless already saved and fresh), so common questions
     # never wait for a download. Page ids from sap-help/catalog.tsv.
     seed-on-startup: true

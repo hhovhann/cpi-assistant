@@ -60,10 +60,6 @@ class KnowledgeServiceTest {
     private SapHelpCatalog catalog;
     private SapHelpClient client;
     private IngestionPipeline pipeline;
-    // The JDBC page links to both; its text names only the drivers page.
-    private final PageGraph graph = new PageGraph(List.of(
-            new String[]{"jdbc-receiver-adapter-88be644", "configure-jdbc-drivers-77c7d95"},
-            new String[]{"jdbc-receiver-adapter-88be644", "jdbc-for-mariadb-cloud-1d320d6"}));
 
     @BeforeEach
     void setUp() throws IOException {
@@ -98,11 +94,7 @@ class KnowledgeServiceTest {
                 new SapHelpCatalog.Page("docs/ISuite_Integrations_APIs/moved-sftp-page-1234567.md", "SFTP Page That Moved")),
                 model, "", "");
         client = new SapHelpClient("http://localhost:" + github.getAddress().getPort());
-        knowledge = knowledge(0.82, true);
-    }
-
-    private KnowledgeService knowledge(double minScore, boolean followLinks) {
-        return new KnowledgeService(retrieval, catalog, client, graph, pipeline, store, minScore, 1, Duration.ofDays(30), followLinks, clock);
+        knowledge = new KnowledgeService(retrieval, catalog, client, pipeline, store, 0.82, Duration.ofDays(30), clock);
     }
 
     @AfterEach
@@ -116,7 +108,7 @@ class KnowledgeServiceTest {
     }
 
     @Test
-    void aMissDownloadsTheBestPageSavesItAndAnswersFromIt() {
+    void theBestPageIsDownloadedSavedAndAnsweredFrom() {
         var found = knowledge.find("SFTP receiver adapter known hosts");
 
         assertThat(found.downloaded()).containsExactly("Configure the SFTP Receiver Adapter");
@@ -125,8 +117,7 @@ class KnowledgeServiceTest {
                 .doesNotContain("<!--", "<a name", "](", "![");
         assertThat(found.passages().getFirst().embedded().metadata().getString(KnowledgeService.URL))
                 .isEqualTo(SapHelpCatalog.REPO_BLOB + SFTP_PATH);
-        assertThat(found.steps()).first().asString().startsWith("Database: nothing above");
-        assertThat(found.steps()).anyMatch(step -> step.startsWith("SAP Help: downloaded \"Configure the SFTP Receiver Adapter\""));
+        assertThat(found.steps()).first().asString().startsWith("SAP Help: downloaded \"Configure the SFTP Receiver Adapter\"");
         assertThat(downloads).hasValue(1);
     }
 
@@ -138,7 +129,8 @@ class KnowledgeServiceTest {
         var again = knowledge.find("SFTP receiver adapter known hosts");
 
         assertThat(again.downloaded()).isEmpty();
-        assertThat(again.steps()).singleElement().asString().startsWith("Database: ");
+        assertThat(again.steps()).first().asString().startsWith("SAP Help: best page \"Configure the SFTP Receiver Adapter\"");
+        assertThat(again.steps()).last().asString().startsWith("Database: 1 passage(s)");
         assertThat(downloads).hasValue(1);
         assertThat(storedChunks()).isEqualTo(chunks);
     }
@@ -148,7 +140,8 @@ class KnowledgeServiceTest {
         var found = knowledge.find("What is the capital of France?");
 
         assertThat(found.passages()).isEmpty();
-        assertThat(found.steps()).last().asString().startsWith("SAP Help: no page title matches well enough");
+        assertThat(found.steps()).first().asString().startsWith("SAP Help: no page matches well enough");
+        assertThat(found.steps()).last().asString().startsWith("Database: nothing above");
         assertThat(downloads).hasValue(0);
     }
 
@@ -175,25 +168,6 @@ class KnowledgeServiceTest {
     }
 
     @Test
-    void askingSapHelpAgainSkipsPagesAlreadySaved() {
-        // Both SFTP pages match; the first is saved already. A retry must bring the other.
-        knowledge.ensureSaved(new SapHelpCatalog.Page(SFTP_PATH, "Configure the SFTP Receiver Adapter"));
-
-        var retry = knowledge.fetchFromSapHelp("SFTP receiver adapter known hosts");
-
-        assertThat(retry.steps()).noneMatch(step -> step.contains("is already saved"));
-        assertThat(retry.steps()).anyMatch(step -> step.startsWith("SAP Help: no new page matches")
-                || step.startsWith("SAP Help: downloaded"));
-    }
-
-    @Test
-    void aDeclineIsRecognisedWithEitherApostrophe() {
-        assertThat(KnowledgeService.isIDontKnow("I don't know.")).isTrue();
-        assertThat(KnowledgeService.isIDontKnow("  I don\u2019t know the steps.")).isTrue();
-        assertThat(KnowledgeService.isIDontKnow("Use the JDBC adapter.")).isFalse();
-    }
-
-    @Test
     void passagesAreLabelledByPageTitle() {
         var found = knowledge.find("SFTP receiver adapter known hosts");
 
@@ -202,38 +176,15 @@ class KnowledgeServiceTest {
     }
 
     @Test
-    void aLinkedPageThePassageNamesIsFollowedAndSaved() {
-        // Bag-of-words scores are lower than nomic's: a lower bar for this fake.
-        var graphAware = knowledge(0.6, true);
-        graphAware.ensureSaved(new SapHelpCatalog.Page(JDBC_PATH, "JDBC Receiver Adapter"));
+    void thePagesPassagesAndTheStoresBestAreCombinedWithoutDuplicates() {
+        knowledge.ensureSaved(new SapHelpCatalog.Page(JDBC_PATH, "JDBC Receiver Adapter"));
 
-        var found = graphAware.find("JDBC receiver adapter drivers");
+        var found = knowledge.find("SFTP receiver adapter known hosts");
 
-        assertThat(found.steps()).anyMatch(step -> step.startsWith("Graph: a passage links to \"Configure JDBC Drivers\""));
-        assertThat(found.downloaded()).containsExactly("Configure JDBC Drivers");
-        assertThat(found.passages()).extracting(m -> m.embedded().metadata().getString(KnowledgeService.TITLE))
-                .contains("JDBC Receiver Adapter", "Configure JDBC Drivers")
-                // Linked, but not named in the passage: not followed.
-                .doesNotContain("JDBC for MariaDB (Cloud)");
-    }
-
-    @Test
-    void followingLinksCanBeSwitchedOff() {
-        var vectorsOnly = knowledge(0.6, false);
-        vectorsOnly.ensureSaved(new SapHelpCatalog.Page(JDBC_PATH, "JDBC Receiver Adapter"));
-
-        var found = vectorsOnly.find("JDBC receiver adapter drivers");
-
-        assertThat(found.steps()).noneMatch(step -> step.startsWith("Graph:"));
-        assertThat(downloads).hasValue(1);
-    }
-
-    @Test
-    void theRealGraphLoads() {
-        var real = new PageGraph();
-
-        assertThat(real.edges()).isGreaterThan(3000);
-        assertThat(real.linksFrom("jdbc-receiver-adapter-88be644")).contains("configure-jdbc-drivers-77c7d95");
+        // The SFTP page is the best page; the same chunk found again in the store is not repeated.
+        assertThat(found.passages()).extracting(m -> m.embeddingId()).doesNotHaveDuplicates();
+        assertThat(found.passages().getFirst().embedded().metadata().getString(KnowledgeService.TITLE))
+                .isEqualTo("Configure the SFTP Receiver Adapter");
     }
 
     @Test
@@ -246,7 +197,6 @@ class KnowledgeServiceTest {
             assertThat(page.url()).isEqualTo(SapHelpCatalog.REPO_BLOB
                     + "docs/ISuite_Integrations_APIs/define-exception-subprocess-690e078.md");
         });
-        assertThat(catalog.pageByTitle("JDBC Receiver Adapter")).isPresent();
         assertThat(catalog.page("https://evil.example.com/x")).isEmpty();
     }
 }

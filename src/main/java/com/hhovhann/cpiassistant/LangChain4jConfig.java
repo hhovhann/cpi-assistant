@@ -127,24 +127,13 @@ public class LangChain4jConfig {
     }
 
     /**
-     * Upper bound on tool-calling round trips per question: model replies that
-     * ask for tools. Not individual calls — one reply may ask for several.
-     * A model that keeps searching without converging costs a round trip, and
-     * the whole conversation so far in input tokens, every time; past this
-     * limit the question fails instead. LangChain4j's default is 100.
-     */
-    static final int MAX_TOOL_ROUND_TRIPS = 5;
-
-    /**
-     * The assistant: AiServices implements {@link CpiAgent} and runs the tool
-     * loop against whichever chat model {@code cpi.chat.provider} picked.
+     * The assistant: AiServices implements {@link CpiAgent} against whichever
+     * chat model {@code cpi.chat.provider} picked.
      */
     @Bean
-    CpiAgent cpiAgent(ChatModel chatModel, CpiDocsTool cpiDocsTool, CpiTenantTools cpiTenantTools) {
+    CpiAgent cpiAgent(ChatModel chatModel) {
         return AiServices.builder(CpiAgent.class)
                 .chatModel(chatModel)
-                .tools(cpiDocsTool, cpiTenantTools)
-                .maxToolCallingRoundTrips(MAX_TOOL_ROUND_TRIPS)
                 .build();
     }
 

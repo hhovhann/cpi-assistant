@@ -9,24 +9,18 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | Class | Role | Runs |
 |---|---|---|
 | `AssistController` | `GET /assist` — the whole API — and `GET /status` | Per question |
-| `AssistService` | The one path: knowledge → assistant → one SAP Help retry on "I don't know" → citation check; records the path | Per question |
-| `KnowledgeService` | Finds documentation: the store, or on a miss the best SAP Help page — downloaded, saved, searched again; then one hop through the page graph. No model call | Per question, per `searchDocs` |
-| `CpiAgent` | The assistant: an interface AiServices implements; gets question + passages + tools, runs the tool loop | Per question |
-| `CpiDocsTool` | `@Tool searchDocs` — more documentation, through `KnowledgeService` | Per tool call |
-| `CpiTenantTools` | `@Tool listIflows`, `getProblemMessages` (FAILED, RETRY, ESCALATED), `getErrorDetails` — read-only | Per tool call |
-| `CpiTenantClient` | HTTP client for the CPI OData API (`cpi.tenant.base-url`) | Per tool call |
-| `SapHelpCatalog` | The ~1,660 SAP pages that may be downloaded (`sap-help/catalog.tsv`: path, heading, first sentence); finds a page by meaning and keywords, then ranks: exact identifiers, "Configure …" preference | Entries embedded once per start |
-| `PageGraph` | Which SAP page links to which (`sap-help/links.tsv`, ~3,400 edges) | Loaded once |
+| `AssistService` | The one path: knowledge → assistant (one model call) → citation check; records the path | Per question |
+| `KnowledgeService` | Finds documentation: the best SAP Help page for the question (downloaded and saved the first time) and its best passages, plus the best passages in the store. No model call | Per question |
+| `CpiAgent` | The assistant: an interface AiServices implements; gets question + passages, answers in one call | Per question |
+| `SapHelpCatalog` | The ~1,660 SAP pages that may be downloaded (`sap-help/catalog.tsv`: path, heading, first sentence); finds a page by meaning and keywords; identifiers must match exactly | Entries embedded once per start |
 | `SapHelpClient` | Downloads one page as Markdown from SAP's GitHub docs repository; strips comments, anchors, images, links; HTML tables → one line per row | Per download |
 | `IngestionPipeline` | Splits a page into chunks, embeds each together with its page title, stores them | Per download |
 | `RetrievalService` | Embeds a question, returns the closest chunks above the floor, re-ordered by meaning + keywords; `searchWithin` one page | Per search |
-| `Bm25` | Keyword ranking (BM25) and rank fusion (RRF) — the keyword half of hybrid search | Per search |
+| `KeywordSearch` | Keyword ranking (BM25) and rank fusion (RRF) — the keyword half of hybrid search | Per search |
 | `SeedRunner` | At startup: saves the popular pages (unless fresh), embeds the catalog titles, sets `/status` ready | Once, at startup |
 | `LangChain4jConfig` | Builds the beans: HTTP client, chat model (per provider), embedding model, store, assistant | Once, at startup |
 | `ChatProperties`, `StoreProperties`, `SeedProperties`, `IngestionProperties` | Settings bound from `cpi.chat.*`, `cpi.store.*`, `cpi.knowledge.*`, `cpi.ingestion.*` | — |
-| `CpiODataModel` | The OData records and `/Date(ms)/` conversion, shared by client and fake | — |
-| `FakeCpiController`, `FakeCpiData` | A stand-in tenant: same paths and JSON as the real API, planted failures. Not part of the assistant | Per request |
-| `static/index.html` | Web UI: one question box; shows path, sources, ⚠ unverified citations, tool calls | In the browser |
+| `static/index.html` | Web UI: one question box; shows path, sources, ⚠ unverified citations | In the browser |
 
 ## One path
 
@@ -34,20 +28,17 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 flowchart TB
     AC[AssistController /assist] --> AS[AssistService]
     AS -->|1 find| KS[KnowledgeService]
+    KS -->|best page| CAT[SapHelpCatalog]
     KS -->|search| RS[RetrievalService] --> ST[(pgvector)]
-    KS -->|miss: best title| CAT[SapHelpCatalog]
     KS -->|download| CL[SapHelpClient] --> GH[(SAP-docs on GitHub)]
     KS -->|split + embed + save| IP[IngestionPipeline] --> ST
-    AS -->|2 answer: question + passages| AG[CpiAgent]
-    AG -->|when needed| DT[CpiDocsTool searchDocs] --> KS
-    AG -->|when needed| TT[CpiTenantTools] --> TC[CpiTenantClient] --> TEN[(CPI tenant / fake)]
+    AS -->|2 answer: question + passages| AG[CpiAgent] --> LLM[(chat model)]
     AS -->|3 check citations, build path| AC
 ```
 
-**Who decides what.** Finding documentation is code: the store first, SAP
-Help on a miss — predictable, no model call. Whether to call a tool is the
-model's decision: it sees the passages and the tools, and a documentation
-question needs none. There is no router, and no mode.
+**Who decides what.** Finding documentation is code: the best SAP page, then
+the store — predictable, no model call. The model only writes the answer, from
+the passages it is given. There are no tools, no router and no mode.
 
 ## Decisions worth knowing
 
@@ -60,51 +51,45 @@ official SAP documentation. The comparisons live on in the learning path.
 **Finding docs is code, not a tool the model must remember to call.** An
 earlier version gave the model `searchSapHelp` / `readSapHelpPage` tools; it
 sometimes skipped them, and the path varied from run to run. Now
-`KnowledgeService` always runs first and hands the model its passages. The
-model still has `searchDocs` for what the question alone does not find — an
-error text from the tenant.
+`KnowledgeService` always runs first and hands the model its passages.
 
-**Two thresholds decide a download.** The store is a miss below
-`cpi.retrieval.min-score` (0.80). Then a page is downloaded only if its title
-matches the question at `cpi.knowledge.min-title-score` (0.82) — measured:
-real CPI questions 0.83–0.95, off-topic ones up to 0.80 ("capital of France"
-0.769, "tune JVM garbage collection" 0.800). One page per miss: the
-second-best title was usually a neighbour (AS2 for AS4).
+**Docs only — no tools (Step 20).** Steps 12–13 gave the model a
+`searchDocs` tool and three tools over a CPI tenant's OData API, backed by a
+fake tenant, since no real one was connected. The tenant half never had a
+real tenant behind it, and needed extra prompt rules and an iFlow-name hint to
+work with a 14B model. `searchDocs` only mattered for looking up a tenant's
+error text. Both were removed: one model call per question, no tool loop. The
+tenant code is in git history (before Step 20) if a real tenant comes.
 
-**One hop through the page graph, next to the vectors.** SAP pages link to
-each other; `links.tsv` keeps those links as edges, built with the catalog.
-After retrieval, `KnowledgeService.followLink` looks at pages a passage's own
-page links to *and* the passage names ("see Configure JDBC Drivers"), scores
-them against the question, and reads the best one if it reaches 0.82 — the
-same bar as a download. Not "the most similar linked page": the JDBC page links
-to a dozen database-specific pages, and "JDBC for MariaDB" (0.881) came out on
-top while the prerequisite the passage names, "Configure JDBC Drivers"
-(0.876), is what the question needs. With the hop, the JDBC answer gives the
-driver steps from that page; without it, it only names the page.
-`cpi.knowledge.follow-links=false` switches it off to compare.
+**The best page first, not only on a miss.** Earlier the store was searched
+first and SAP Help asked only when nothing scored above 0.80. But passages
+above the floor can be the wrong ones — AS2 chunks score 0.85 for an AS4
+question — so the app needed an "I don't know → ask SAP Help again" retry, a
+graph hop to reach pages a passage names, and extra passages after a
+download. Now every question looks up its best catalog page first: saved
+the first time, from the store after that, its three best passages always in
+the answer, plus the three best from the whole store. One rule replaced three
+patches, and the AS4 question went from four model calls to one.
 
-**A name shaped like an iFlow's is passed on as a hint.** Once the store held a
-page about failed connections, "Why did Unknown_Flow fail?" was answered from
-it and the tenant never asked — a system-prompt rule did not change that.
-`AssistService.notes` adds "Unknown_Flow looks like an iFlow name. Check the
-tenant" to the message and to the path. A hint, not a router: the model still
-decides.
+**Two thresholds.** A page is used only if it matches the question at
+`cpi.knowledge.min-title-score` (0.82) — measured: real CPI questions
+0.83–0.95, off-topic ones up to 0.80 ("capital of France" 0.769, "tune JVM
+garbage collection" 0.800). A passage from the whole store only at
+`cpi.retrieval.min-score` (0.80).
 
-**A tool call written as text gets one more try.** Qwen3 14B sometimes answers
-"use getProblemMessages with iflowName=…" instead of calling it. An answer that
-names a tool while no tool ran is asked once more, with "make the call, do not
-describe it"; the path says so.
+**An empty answer is never passed on.** Qwen3 has returned only its thinking
+and no text; the app answers "The model returned no answer. Please ask again."
+instead of `null`.
 
-**"I don't know" gets one more chance.** Passages above the floor can still be
-the wrong ones — AS2 chunks score 0.85 for an AS4 question. If the answer is
-"I don't know" and nothing was downloaded yet, `AssistService` asks SAP Help
-once and answers again if a page came back.
+**Questions are 1 to 1,000 characters.** Checked in `AssistController` before
+any model call (HTTP 400 otherwise); every character goes into the prompt.
 
 **Citations are checked in code.** A bracket right after a word or a slash is
 code, not a citation (`payload/LogEntry[severity = 'Error']`). Passages are labelled by page title, and
 the model is told to cite `[Title]` only from what it was given. `AssistService`
-collects every title the model saw — the passages, and any `searchDocs`
-result — and returns cited titles outside that set as `unverifiedCitations`;
+collects the title of every passage the model was given and returns cited
+titles outside that set as `unverifiedCitations` (a URL or an id in brackets
+is not a citation);
 the UI marks them ⚠. A name that appears in the text the model read is not
 flagged: the model also brackets pages a passage merely mentions ("see
 Configure JDBC Drivers"), and a prompt rule against it did not work. It is a
@@ -133,16 +118,11 @@ the app fetch another URL; a page must be in the catalog.
 one-sentence description, and it carries words the title lacks: "Configure
 Receiver Channel with ebMS3 Push" never says AS4, its first sentence does.
 
-**Then two ranking rules, both from measured misses** (`SapHelpCatalog.rank`):
+**Then one ranking rule, from a measured miss** (`SapHelpCatalog.rank`):
 *identifiers must match exactly* — to the embedding model AS4 and AS2 are
 nearly the same word, and "configure the AS4 receiver adapter" came closest to
 "Configure the AS2 Receiver Adapter"; a word with a digit or two capitals
-(AS4, JDBC, SFTP, OData, V2) must appear in the page's title or summary. And
-*how-to questions prefer "Configure …" pages* — but only within 0.025 of the
-best match, because "Configure JDBC Drivers" (0.876, about drivers) must not
-beat "JDBC Receiver Adapter" (0.909, which has the fields). A keyword bonus
-(plain and IDF-weighted) was tried first: it did not fix AS4 and pushed
-off-topic questions toward the download threshold.
+(AS4, JDBC, SFTP, OData, V2) must appear in the page's title or summary. The "Configure …" preference that used to follow was dropped in Step 20: with hybrid search and the best page's passages in every answer, `scripts/qa.sh` passes without it.
 
 **Pages are cleaned for search, not only for reading.** HTML parameter tables
 (on about half of all pages) became tag soup in chunks; each row is now one
@@ -173,7 +153,7 @@ thousand rows an exact scan is fast and never misses a neighbour.
 **`langchain4j-pgvector` is a beta module** (1.20.0-beta30). It is plain JDBC
 with no Spring in it. Its own hybrid mode is not used — see below.
 
-**Hybrid search is BM25 in Java, fused by rank.** The catalog fuses its 20
+**Hybrid search is BM25 in Java (`KeywordSearch`), fused by rank.** The catalog fuses its 20
 best pages by meaning with its 20 best by keywords; passages: 4× candidates
 above the floor, re-ordered. Reciprocal rank fusion (k = 60) needs no common
 score scale, and every result keeps its similarity score, so the 0.80 and 0.82
@@ -205,33 +185,10 @@ Embeddings stay on LM Studio: the stored vectors were made by nomic, and
 Anthropic has no embedding API. Opus 5.5 rejects temperature, top_p and top_k
 with a 400 — `ChatProviderTests` guards that none of them is sent.
 
-**The tool loop is capped.** `AiServices` runs at most
-`MAX_TOOL_ROUND_TRIPS` (5) model replies that ask for tools — LangChain4j's
-default is 100. Every round trip resends the whole conversation, so input
-tokens grow with each call. Hitting the cap returns an answer that says so,
-with the path — not an HTTP 500, which is what the typo question
-"Order_Synk" produced before.
-
-**The tenant tools talk real HTTP, even to the fake.** `CpiTenantClient` calls
-`cpi.tenant.base-url` with the real OData paths, `$filter` syntax and JSON
-envelope. A real tenant is configuration plus OAuth (client credentials from a
-service key), not a rewrite. The fake rejects filters it does not understand
-instead of ignoring them, and the client doubles quotes in iFlow names, so a
-name cannot extend the filter.
-
-**Problem messages are FAILED, RETRY and ESCALATED.** One plain `Status eq`
-query per status, merged — every OData server handles that form. Each line
-says its status, because RETRY calls for a different reaction than FAILED. The
-`status` parameter takes a list ("FAILED,RETRY"): the model sends one anyway,
-and rejecting it cost three extra round trips (65 s → 21 s once accepted).
-
-**Tool descriptions route the model.** `listIflows` says it shows deployment
-status only and names `getProblemMessages` for failing messages; before that,
-"Is X failing?" got "running normally" for an iFlow stuck in RETRY.
-
-**All tools are read-only, and their results are data.** The model can look
-at the tenant, never change it. Passages and error texts come from outside,
-so the system prompt says they are never instructions — a first defence.
+**Passages are data, never instructions.** They come from outside, so the
+system prompt says to ignore any instructions inside them — a first defence.
+The app only reads: it downloads catalog pages and answers; nothing the model
+writes is executed or saved.
 
 **The UI escapes everything the model writes**, and links only to
 `github.com/SAP-docs/…`. Never assign an answer to `innerHTML` unescaped.
@@ -247,22 +204,20 @@ sees `search_document:`.
 
 | Test | What it checks | Needs |
 |---|---|---|
-| `AssistServiceTest` | The one path with a scripted model: a database hit is one call with no tool; a cited page never given is flagged, a page named inside a passage is not; an iFlow name becomes a note; a tool call written as text gets one more try; the tool-call limit gives an answer, not an error; "I don't know" on close-but-wrong passages asks SAP Help once and answers again; tool calls are reported and their pages count as given; numbers and ids are not citations | Nothing — fakes |
-| `KnowledgeServiceTest` | A local server plays GitHub: a miss downloads the best page, strips links and images, saves it; the second time the store answers; off-topic downloads nothing; refresh after max-age without duplicates; a moved page; passages labelled by title; asking SAP Help again skips pages already saved; a decline with either apostrophe; the real catalog loads | Nothing — local server, bag-of-words embeddings |
-| `KnowledgeServiceTest` (graph) | A page the passage names and links to is followed and saved; a linked page it does not name is not; the switch turns it off; the real graph loads | Nothing |
-| `SapHelpCatalogTest` | The ranking rules with real titles and measured scores: AS4 is not AS2, a clearly worse "Configure …" page does not win, an identifier no page has changes nothing | Nothing |
-| `Bm25Test` | The rare word decides; stop words are not searched; fusion rewards agreement between lists; keywords lift a passage both lists like but add none, and scores stay similarities | Nothing |
+| `AssistServiceTest` | The one path with a scripted model: a database hit is one call; a cited page never given is flagged, a page named inside a passage is not; an empty answer is never passed on; numbers, ids and URLs are not citations | Nothing — fakes |
+| `KnowledgeServiceTest` | A local server plays GitHub: the best page is downloaded, stripped of links and images, saved and answered from; the second time it comes from the store; off-topic downloads nothing; the page's passages and the store's best are combined without duplicates; refresh after max-age without duplicates; a moved page; passages labelled by title; the real catalog loads | Nothing — local server, bag-of-words embeddings |
+| `SapHelpCatalogTest` | The ranking rule with real titles and measured scores: AS4 is not AS2, an identifier no page has changes nothing | Nothing |
+| `KeywordSearchTest` | The rare word decides; stop words are not searched; fusion rewards agreement between lists; keywords lift a passage both lists like but add none, and scores stay similarities | Nothing |
 | `SapHelpClientTest` | Cleaning, on real SAP shapes: an HTML table becomes `Field \| Description` rows; comments, anchors and images go, link text stays | Nothing |
-| `CpiAgentTest` | The tool loop: passages arrive in the message, all four tools offered, a docs question needs no tool, `searchDocs` runs with the model's query and its result goes back, the round-trip limit | Nothing — scripted model |
-| `CpiTenantTest` | Client against the fake tenant over real HTTP: filters, time window, RETRY, quote escaping, error text and 404, iFlow list, the tools' text | Nothing — random port |
+| `CpiAgentTest` | The wiring: question and passages reach the model in one call, with no tools | Nothing — scripted model |
 | `PgVectorStoreTest` | Real pgvector: same score scale as memory, remove-by-URL deletes only that page, rows survive a new store on the same table | **Docker** (Testcontainers) |
 | `ChatProviderTests` | `cpi.chat.provider` builds the right model with the right sampling settings; a missing key fails at startup | Nothing — offline clients |
 | `LangChain4jConfigTest` | The chat timeout really cuts off a slow server | Nothing — local stub |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | Nothing |
 | `RagVsFileSearchMeasurement` | Not a test: RAG against an agent that searches (BM25) and reads the SAP pages, same questions and model — tokens and calls counted at the model, time, right, grounded. Own table `cpi_chunks_measure`, reset to the seed pages every run. Tagged `measure`, run with `./gradlew measure` | LM Studio, pgvector, internet |
 
-Answer *quality* against the real model: `scripts/qa.sh` asks ten questions
-and checks the path of each answer (see the [README](../README.md)). The
+Answer *quality* against the real model: `scripts/qa.sh` asks eight questions
+and checks the path and sources of each answer (see the [README](../README.md)). The
 earlier automated evaluations (Step 10) were built on the hand-written docs
 and are in git history.
 

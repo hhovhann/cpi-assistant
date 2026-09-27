@@ -181,14 +181,14 @@ class RagVsFileSearchMeasurement {
     static final class FileTools {
         private final Map<String, String> pages;
         private final Map<String, String> titles;
-        private final Bm25 bm25;
+        private final KeywordSearch keywords;
 
         FileTools(Map<String, String> pages, Map<String, String> titles) {
             this.pages = pages;
             this.titles = titles;
             Map<String, String> texts = new LinkedHashMap<>();
             pages.forEach((id, text) -> texts.put(id, titles.get(id) + "\n" + text));
-            this.bm25 = new Bm25(texts);
+            this.keywords = new KeywordSearch(texts);
         }
 
         @Tool("""
@@ -200,11 +200,11 @@ class RagVsFileSearchMeasurement {
             if (q.length() > 2 && q.startsWith("/") && q.endsWith("/")) {
                 return regexSearch(q.substring(1, q.length() - 1));
             }
-            List<String> terms = Bm25.terms(q);
+            List<String> terms = KeywordSearch.terms(q);
             if (terms.isEmpty()) {
                 return "Give one or more keywords.";
             }
-            var hits = bm25.rank(q, SEARCH_HITS);
+            var hits = keywords.rank(q, SEARCH_HITS);
             if (hits.isEmpty()) {
                 return "No matches for " + q;
             }
@@ -339,13 +339,12 @@ class RagVsFileSearchMeasurement {
             String note = String.join(" → ", answer.path().stream()
                     .map(step -> step.replaceAll(" \\(.*?\\)", "").replaceAll(", best [0-9.]+", "").replaceAll("\\s+", " "))
                     .toList());
-            Set<String> given = new HashSet<>();
-            answer.sources().forEach(source -> given.add(source.title()));
-            String seen = String.join("\n", answer.sources().stream().map(s -> String.valueOf(s.excerpt())).toList())
-                    + String.join("\n", answer.toolCalls().stream().map(c -> String.valueOf(c.result())).toList());
+            // The app checks citations against the full text the model read.
+            boolean grounded = answer.sources().stream().anyMatch(AssistService.Source::cited)
+                    && answer.unverifiedCitations().isEmpty();
             return new Run("RAG", question, answer.answer(), model.inputTokens.get(), model.outputTokens.get(),
                     model.calls.get(), System.currentTimeMillis() - start, correct(question, answer.answer()),
-                    grounded(answer.answer(), given, seen) && answer.unverifiedCitations().isEmpty(), false, note);
+                    grounded, false, note);
         } catch (RuntimeException e) {
             return failed("RAG", question, start, e);
         }
@@ -385,7 +384,7 @@ class RagVsFileSearchMeasurement {
 
     private static boolean correct(Question question, String answer) {
         String text = answer == null ? "" : answer.toLowerCase(Locale.ROOT).replace('’', '\'');
-        boolean declines = KnowledgeService.isIDontKnow(answer) || text.contains("not covered") || text.contains("not about");
+        boolean declines = text.strip().startsWith("i don't know") || text.contains("not covered") || text.contains("not about");
         if (question.offTopic()) {
             return declines;
         }

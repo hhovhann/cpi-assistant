@@ -8,14 +8,13 @@
 # Before the "download" cases it deletes the AS4 pages from the store, so the
 # first ask must download them and the second must not — every run.
 #
-# The model decides whether to call a tool, so the tool cases can vary between
-# runs. A ❌ there is worth a second run before calling it a bug.
 
 set -uo pipefail
 
 BASE=${BASE:-http://localhost:8080}
 DB_CONTAINER=${DB_CONTAINER:-cpi-assistant-pgvector}
-DOWNLOAD_PAGE_PATTERN='Configure % Channel with ebMS3%'
+# The AS4 pages: the overview and the ebMS3 channel pages (AS4 is ebMS3).
+DOWNLOAD_PAGES_SQL="metadata->>'title' like 'AS4 %' or metadata->>'title' like '%ebMS3%'"
 
 passed=0
 failed=0
@@ -38,7 +37,7 @@ check() {
     return
   fi
   echo "$answer" | jq -r '.path[] | "  → " + .'
-  printf '  %s\n' "$(echo "$answer" | jq -r '"\(.toolCalls | length) tool call(s) · \(.millis / 1000 | floor) s · unverified: \(.unverifiedCitations)"')"
+  printf '  %s\n' "$(echo "$answer" | jq -r '"\(.millis / 1000 | floor) s · unverified: \(.unverifiedCitations)"')"
   if echo "$answer" | jq -e "$filter" > /dev/null; then
     printf '  %s %s\n' "$(green '✅')" "$proves"
     passed=$((passed + 1))
@@ -61,19 +60,19 @@ fi
 echo "App: $BASE — $(curl -s "$BASE/status")"
 
 if docker exec "$DB_CONTAINER" psql -U cpi -d cpi -tAc \
-    "delete from cpi_chunks where metadata->>'title' like '$DOWNLOAD_PAGE_PATTERN'" > /dev/null 2>&1; then
-  echo "Reset: removed the ebMS3 pages from the store, so the AS4 question has to download."
+    "delete from cpi_chunks where $DOWNLOAD_PAGES_SQL" > /dev/null 2>&1; then
+  echo "Reset: removed the AS4 pages from the store, so the AS4 question has to download."
 else
   echo "Reset skipped (no access to $DB_CONTAINER) — the download case may answer from the store."
 fi
 
 echo
-echo "── Documentation: the store, and SAP Help on a miss ──"
+echo "── The store, and SAP Help the first time ──"
 
-check "1. Answered from the store (RAG, no tool)" \
+check "1. Answered from the store" \
   "How do I configure a JDBC adapter?" \
-  "$(has '^Database: [0-9]') and $(has 'no tool') and $(lacks 'downloaded') and $no_unverified" \
-  "store hit, no download, no tool, every citation verified"
+  "$(has '^Database: [0-9]') and $(lacks 'downloaded') and $no_unverified" \
+  "store hit, no download, every citation verified"
 
 check "2. First time: downloaded from SAP Help and saved" \
   "How do I configure the AS4 receiver adapter?" \
@@ -87,8 +86,8 @@ check "3. Second time: the same question comes from the store" \
 
 check "4. Off-topic: nothing is downloaded" \
   "What is the capital of France?" \
-  "$(lacks 'downloaded') and (.toolCalls | length == 0)" \
-  "no download, no tool, a decline"
+  "$(lacks 'downloaded') and (.answer | test(\"not about|not related|I don.t know\"; \"i\"))" \
+  "no download, a decline"
 
 check "5. Technical, but not CPI: nothing is downloaded" \
   "How do I tune JVM garbage collection?" \
@@ -96,38 +95,28 @@ check "5. Technical, but not CPI: nothing is downloaded" \
   "no page matches well enough to download"
 
 echo
-echo "── Live tenant: the model decides to call tools ──"
+echo "── Answer quality ──"
 
-check "6. Tool calls: problem messages, then the error" \
-  "Why did Order_Sync fail today and how do I fix it?" \
-  "$(has 'Tool: getProblemMessages') and $(has 'Tool: getErrorDetails') and (.answer | test(\"JDBC|timeout|Hikari\"; \"i\"))" \
-  "getProblemMessages → getErrorDetails, and the JDBC timeout in the answer"
+check "6. The exact page for a narrow question" \
+  "How do I set up an SFTP receiver with known hosts?" \
+  "$(has 'Known Hosts') and (.answer | test(\"known.hosts\"; \"i\")) and $no_unverified" \
+  "the known hosts page is chosen, and the answer uses it"
 
-check "7. A retrying message counts as a problem" \
-  "Is Payment_Status_Poll failing?" \
-  "$(has 'Tool: getProblemMessages') and (.answer | test(\"retry|SFTP|refused\"; \"i\"))" \
-  "the RETRY message (SFTP connection refused) is found"
+check "7. Every answer cites a page it was given" \
+  "How do I configure the Kafka receiver adapter?" \
+  "any(.sources[]; .cited) and $no_unverified" \
+  "at least one cited source, none unverified"
 
-check "8. Which iFlows are not running" \
-  "Which iFlows are not running?" \
-  "$(has 'Tool: listIflows') and (.answer | test(\"Material_Master_Load\"))" \
-  "listIflows, and Material_Master_Load (status ERROR)"
-
-check "9. A typo in the iFlow name" \
-  "Why did Order_Synk fail today?" \
-  "(.toolCalls | length > 0) and (.answer | test(\"Order_Sync\"))" \
-  "a tenant tool is asked, and Order_Sync is suggested"
-
-check "10. An iFlow that does not exist" \
-  "Why did Unknown_Flow fail?" \
-  "(.toolCalls | length > 0) and (.answer | test(\"Hikari|SQLTransient\") | not)" \
-  "a tenant tool is asked, and no failure is invented"
+check "8. AS4 is not AS2" \
+  "How do I configure the AS4 receiver adapter?" \
+  "(.answer | test(\"AS4|ebMS\")) and (.sources | all(.title | test(\"AS2\") | not))" \
+  "AS4 pages only, no AS2 page given"
 
 echo
 total=$((passed + failed))
 if [ "$failed" -eq 0 ]; then
   echo "$(green "All $total checks passed.")"
 else
-  echo "$(red "$failed of $total checks failed.") Tool cases (6–10) depend on the model's choices: re-run once before calling it a bug."
+  echo "$(red "$failed of $total checks failed.")"
 fi
 [ "$failed" -eq 0 ]

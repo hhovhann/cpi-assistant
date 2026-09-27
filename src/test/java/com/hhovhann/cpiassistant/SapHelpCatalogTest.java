@@ -30,18 +30,8 @@ class SapHelpCatalogTest {
 
         var ranked = SapHelpCatalog.rank("How do I configure the AS4 receiver adapter?", nearest);
 
-        // AS2 and OData are gone; of the AS4 pages the Configure one is within 0.025 of the best.
-        assertThat(titles(ranked)).containsExactly("Configure Receiver Channel with ebMS3 Pull", "AS4 Receiver Adapter");
-    }
-
-    @Test
-    void aConfigurePageThatMatchesClearlyWorseDoesNotWin() {
-        var nearest = List.of(
-                match("JDBC Receiver Adapter", "The JDBC adapter enables you to connect SAP Integration Suite to databases.", 0.909),
-                match("Configure JDBC Drivers", "Upload and deploy JDBC drivers.", 0.876));
-
-        assertThat(titles(SapHelpCatalog.rank("How do I configure a JDBC adapter?", nearest)))
-                .containsExactly("JDBC Receiver Adapter", "Configure JDBC Drivers");
+        // AS2 and OData are gone; the AS4 pages keep their order.
+        assertThat(titles(ranked)).containsExactly("AS4 Receiver Adapter", "Configure Receiver Channel with ebMS3 Pull");
     }
 
     @Test

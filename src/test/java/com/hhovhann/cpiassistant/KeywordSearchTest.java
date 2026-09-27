@@ -12,7 +12,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** The keyword half of hybrid search, and how the two halves are fused. */
-class Bm25Test {
+class KeywordSearchTest {
 
     @Test
     void theRareWordDecides() {
@@ -21,21 +21,21 @@ class Bm25Test {
         pages.put("hosts", "Maintaining SSH Known Hosts for SFTP Connectivity. Upload the known hosts file.");
         pages.put("jdbc", "JDBC Receiver Adapter. Connect to a database.");
 
-        var ranked = new Bm25(pages).rank("How do I set up an SFTP receiver with known hosts?", 3);
+        var ranked = new KeywordSearch(pages).rank("How do I set up an SFTP receiver with known hosts?", 3);
 
         // "receiver" is on the JDBC page too, but "known" and "hosts" are rare and decide.
-        assertThat(ranked).extracting(Bm25.Scored::id).startsWith("hosts").endsWith("jdbc");
+        assertThat(ranked).extracting(KeywordSearch.Scored::id).startsWith("hosts").endsWith("jdbc");
     }
 
     @Test
     void stopWordsAreNotSearchedFor() {
-        assertThat(Bm25.terms("How do I configure a JDBC adapter?")).containsExactly("configure", "jdbc", "adapter");
+        assertThat(KeywordSearch.terms("How do I configure a JDBC adapter?")).containsExactly("configure", "jdbc", "adapter");
     }
 
     @Test
     void fusionRewardsAgreementBetweenTheLists() {
         // "b" is second by meaning and first by keywords: it wins over "a", first by meaning only.
-        assertThat(Bm25.fuse(List.of(List.of("a", "b", "c"), List.of("b", "c")))).containsExactly("b", "c", "a");
+        assertThat(KeywordSearch.fuse(List.of(List.of("a", "b", "c"), List.of("b", "c")))).containsExactly("b", "c", "a");
     }
 
     @Test

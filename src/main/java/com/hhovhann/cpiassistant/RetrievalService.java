@@ -79,8 +79,8 @@ public class RetrievalService {
             String title = match.embedded().metadata().getString(KnowledgeService.TITLE);
             texts.put(match.embeddingId(), (title == null ? "" : title + "\n") + match.embedded().text());
         }
-        List<String> keywordOrder = new Bm25(texts).rank(query, byMeaning.size()).stream().map(Bm25.Scored::id).toList();
-        return Bm25.fuse(List.of(List.copyOf(byId.keySet()), keywordOrder)).stream().map(byId::get).toList();
+        List<String> keywordOrder = new KeywordSearch(texts).rank(query, byMeaning.size()).stream().map(KeywordSearch.Scored::id).toList();
+        return KeywordSearch.fuse(List.of(List.copyOf(byId.keySet()), keywordOrder)).stream().map(byId::get).toList();
     }
 
     /**
