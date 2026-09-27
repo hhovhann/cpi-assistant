@@ -15,6 +15,17 @@ with no auto-configuration hiding the moving parts.
 > follow [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).
 > [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains how the code fits together.
 
+## Demo — 3½ minutes
+
+[![CPI Assistant demo: the agent answers "Why did Order_Sync fail today?" with three tenant tool calls](docs/video/cpi-assistant-demo.png)](docs/video/cpi-assistant-demo.mp4)
+
+[Watch the demo](docs/video/cpi-assistant-demo.mp4) (MP4, 13 MB, captions:
+[.srt](docs/video/cpi-assistant-demo.srt) · [.vtt](docs/video/cpi-assistant-demo.vtt)): how a question is
+answered, a first question that downloads a SAP page and the same question again from the database, the
+sources and the SAP page on GitHub, tenant tools and a skill, an off-topic question, hooks, what is kept
+locally and how it stays current, and the measured results. Recorded live against the real app (`dev`
+profile, Qwen3 14B on LM Studio), the waiting time cut. The narration is a synthetic voice, generated locally.
+
 ## How it works — one path for every question
 
 ```mermaid

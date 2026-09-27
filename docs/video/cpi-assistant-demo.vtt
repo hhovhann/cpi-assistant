@@ -1,0 +1,148 @@
+WEBVTT
+
+00:00:00.350 --> 00:00:02.242
+This is the CPI Assistant:
+
+00:00:02.242 --> 00:00:07.118
+an agent for SAP Cloud Integration, built like a small Claude Code.
+
+00:00:07.118 --> 00:00:11.631
+One question field, answers from SAP's official documentation,
+
+00:00:11.631 --> 00:00:15.023
+and tools when a question needs them.
+
+00:00:15.483 --> 00:00:17.696
+Every question takes one path.
+
+00:00:17.696 --> 00:00:23.891
+First, code finds the two best of 1,660 official SAP pages, by meaning and keywords,
+
+00:00:23.891 --> 00:00:25.513
+and saves them if new.
+
+00:00:25.513 --> 00:00:30.085
+Then the agent answers, calling tools only when it needs more.
+
+00:00:30.085 --> 00:00:33.293
+Finally every citation is checked.
+
+00:00:33.750 --> 00:00:38.540
+com, under a Creative Commons licence.
+
+00:00:38.540 --> 00:00:48.317
+The catalog is pinned to one commit, and nothing else can be downloaded.
+
+00:00:48.783 --> 00:00:52.081
+Live. A question the database cannot answer yet:
+
+00:00:52.081 --> 00:00:57.576
+the AS4 receiver adapter. The two best pages were downloaded from SAP and saved.
+
+00:00:57.576 --> 00:01:02.603
+The passages were enough, so the agent answered without a tool.
+
+00:01:03.083 --> 00:01:07.011
+The same question again. Now both pages say: already saved.
+
+00:01:07.011 --> 00:01:12.637
+Nothing is downloaded; the passages come straight from the local database.
+
+00:01:13.117 --> 00:01:15.120
+Every answer lists its sources:
+
+00:01:15.120 --> 00:01:19.190
+each page, how close its passage was, and whether it was cited.
+
+00:01:19.190 --> 00:01:22.862
+A page cited but never given would be flagged.
+
+00:01:23.317 --> 00:01:25.959
+Each source links to where it came from:
+
+00:01:25.959 --> 00:01:29.263
+here, that page in SAP's documentation repository.
+
+00:01:29.263 --> 00:01:32.870
+The official text the answer was built from.
+
+00:01:33.320 --> 00:01:38.182
+When the passages are not enough, the agent has a kit, like Claude Code:
+
+00:01:38.182 --> 00:01:43.450
+tools to read a whole page or search more, skills with step-by-step playbooks,
+
+00:01:43.450 --> 00:01:46.649
+the live CPI tenant, and MCP servers.
+
+00:01:47.099 --> 00:01:49.788
+A tenant question: why did Order_Sync fail?
+
+00:01:49.788 --> 00:01:53.039
+The agent calls the tenant tools one step at a time:
+
+00:01:53.039 --> 00:01:56.479
+the problem messages, then the error of the newest one,
+
+00:01:56.479 --> 00:01:59.617
+and answers with the cause and the fix.
+
+00:02:00.099 --> 00:02:03.879
+Every tool call is shown with its arguments and its full result,
+
+00:02:03.879 --> 00:02:07.177
+so you can check exactly what the agent saw.
+
+00:02:07.632 --> 00:02:09.443
+Which iFlows are not running?
+
+00:02:09.443 --> 00:02:14.567
+Here the agent first loads a skill, check tenant health, and follows its playbook:
+
+00:02:14.567 --> 00:02:17.953
+list the iFlows, then the problem messages.
+
+00:02:18.432 --> 00:02:21.026
+A question outside Cloud Integration:
+
+00:02:21.026 --> 00:02:25.373
+no SAP page matches, nothing is downloaded, no tool is called,
+
+00:02:25.373 --> 00:02:29.158
+and the agent declines instead of inventing.
+
+00:02:29.632 --> 00:02:34.220
+Every tool call, ours or an MCP server's, passes the same hooks:
+
+00:02:34.220 --> 00:02:39.741
+arguments are checked before, results limited after, and each call is logged.
+
+00:02:39.741 --> 00:02:46.033
+MCP servers expose only allowlisted tools, and the tenant tools are read-only.
+
+00:02:46.498 --> 00:02:50.378
+Locally we keep SAP's text only, never a model's answer:
+
+00:02:50.378 --> 00:02:53.704
+chunks with the page title, link and fetch time.
+
+00:02:53.704 --> 00:02:58.000
+A page older than 30 days is downloaded again on its next use,
+
+00:02:58.000 --> 00:03:03.412
+and the catalog is rebuilt from SAP's latest commit with one script.
+
+00:03:03.865 --> 00:03:07.648
+Measured on fifteen documentation questions, some reworded,
+
+00:03:07.648 --> 00:03:13.163
+against a model that searches the files itself; and fourteen checks on the live agent.
+
+00:03:13.163 --> 00:03:15.530
+The results are on screen.
+
+00:03:15.980 --> 00:03:20.423
+The model runs locally, or on OpenAI or Claude with one setting.
+
+00:03:20.423 --> 00:03:25.704
+This narration is a synthetic voice, generated locally. Thank you.
