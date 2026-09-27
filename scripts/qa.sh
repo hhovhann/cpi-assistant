@@ -2,7 +2,7 @@
 # Runs the QA checklist against a running app and checks the path of every answer.
 #
 #   ./scripts/qa.sh                       # app on http://localhost:8080
-#   BASE=http://localhost:8081 ./scripts/qa.sh
+#   BASE=http://localhost:8081 TABLE=cpi_chunks_demo ./scripts/qa.sh
 #
 # Needs: the app running (with LM Studio and pgvector), curl, jq, docker.
 # Before the "download" cases it deletes the AS4 pages from the store, so the
@@ -13,6 +13,7 @@ set -uo pipefail
 
 BASE=${BASE:-http://localhost:8080}
 DB_CONTAINER=${DB_CONTAINER:-cpi-assistant-pgvector}
+TABLE=${TABLE:-cpi_chunks}   # the app's cpi.store.pgvector.table
 # The AS4 pages: the overview and the ebMS3 channel pages (AS4 is ebMS3).
 DOWNLOAD_PAGES_SQL="metadata->>'title' like 'AS4 %' or metadata->>'title' like '%ebMS3%'"
 
@@ -37,7 +38,7 @@ check() {
     return
   fi
   echo "$answer" | jq -r '.path[] | "  → " + .'
-  printf '  %s\n' "$(echo "$answer" | jq -r '"\(.millis / 1000 | floor) s · unverified: \(.unverifiedCitations)"')"
+  printf '  %s\n' "$(echo "$answer" | jq -r '"\(.toolCalls | length) tool call(s) · \(.millis / 1000 | floor) s · unverified: \(.unverifiedCitations)"')"
   if echo "$answer" | jq -e "$filter" > /dev/null; then
     printf '  %s %s\n' "$(green '✅')" "$proves"
     passed=$((passed + 1))
@@ -60,7 +61,7 @@ fi
 echo "App: $BASE — $(curl -s "$BASE/status")"
 
 if docker exec "$DB_CONTAINER" psql -U cpi -d cpi -tAc \
-    "delete from cpi_chunks where $DOWNLOAD_PAGES_SQL" > /dev/null 2>&1; then
+    "delete from $TABLE where $DOWNLOAD_PAGES_SQL" > /dev/null 2>&1; then
   echo "Reset: removed the AS4 pages from the store, so the AS4 question has to download."
 else
   echo "Reset skipped (no access to $DB_CONTAINER) — the download case may answer from the store."
@@ -69,10 +70,10 @@ fi
 echo
 echo "── The store, and SAP Help the first time ──"
 
-check "1. Answered from the store" \
+check "1. The best page is a saved one" \
   "How do I configure a JDBC adapter?" \
-  "$(has '^Database: [0-9]') and $(lacks 'downloaded') and $no_unverified" \
-  "store hit, no download, every citation verified"
+  "$(has 'JDBC Receiver Adapter.*already saved') and $(has '^Database: [0-9]') and $no_unverified" \
+  "the seeded JDBC page is used from the store, every citation verified"
 
 check "2. First time: downloaded from SAP Help and saved" \
   "How do I configure the AS4 receiver adapter?" \
@@ -112,11 +113,49 @@ check "8. AS4 is not AS2" \
   "(.answer | test(\"AS4|ebMS\")) and (.sources | all(.title | test(\"AS2\") | not))" \
   "AS4 pages only, no AS2 page given"
 
+check "14. Details the first passages miss: the whole page" \
+  "Which parameters must I set in the Kafka receiver adapter, including the topic?" \
+  "(.answer | test(\"topic\"; \"i\")) and any(.sources[]; .cited) and $no_unverified" \
+  "the Kafka topic parameter is named, with a cited page (readPage when the passages miss it)"
+
+echo
+echo "── Live tenant: the model decides to call tools ──"
+
+if ! curl -s "$BASE/status" | jq -e '.tools | index("getProblemMessages")' > /dev/null; then
+  echo "Skipped: no tenant tools (start the app with --spring.profiles.active=dev for the fake tenant)."
+else
+
+check "9. Tool calls: problem messages, then the error" \
+  "Why did Order_Sync fail today and how do I fix it?" \
+  "$(has 'Tool: getProblemMessages') and $(has 'Tool: getErrorDetails') and (.answer | test(\"JDBC|timeout|Hikari\"; \"i\"))" \
+  "getProblemMessages → getErrorDetails, and the JDBC timeout in the answer"
+
+check "10. A retrying message counts as a problem" \
+  "Is Payment_Status_Poll failing?" \
+  "$(has 'Tool: getProblemMessages') and (.answer | test(\"retry|SFTP|refused\"; \"i\"))" \
+  "the RETRY message (SFTP connection refused) is found"
+
+check "11. Which iFlows are not running" \
+  "Which iFlows are not running?" \
+  "$(has 'Tool: listIflows') and (.answer | test(\"Material_Master_Load\"))" \
+  "listIflows, and Material_Master_Load (status ERROR)"
+
+check "12. A typo in the iFlow name" \
+  "Why did Order_Synk fail today?" \
+  "(.toolCalls | length > 0) and (.answer | test(\"Order_Sync\"))" \
+  "a tenant tool is asked, and Order_Sync is suggested"
+
+check "13. An iFlow that does not exist" \
+  "Why did Unknown_Flow fail?" \
+  "(.toolCalls | length > 0) and (.answer | test(\"Hikari|SQLTransient\") | not)" \
+  "a tenant tool is asked, and no failure is invented"
+
+fi
 echo
 total=$((passed + failed))
 if [ "$failed" -eq 0 ]; then
   echo "$(green "All $total checks passed.")"
 else
-  echo "$(red "$failed of $total checks failed.")"
+  echo "$(red "$failed of $total checks failed.") Tool cases depend on the model's choices: re-run once before calling it a bug."
 fi
 [ "$failed" -eq 0 ]

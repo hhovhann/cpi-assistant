@@ -135,6 +135,19 @@ public class SapHelpCatalog {
         return Optional.ofNullable(id == null ? null : pagesById.get(id.trim()));
     }
 
+    /**
+     * A page by its title — how the model names a page it wants to read. The
+     * model copies titles as it cites them, so square brackets around the
+     * title are ignored: it asked readPage for "[JDBC Receiver Adapter]".
+     */
+    public Optional<Page> pageByTitle(String title) {
+        if (title == null) {
+            return Optional.empty();
+        }
+        String wanted = title.strip().replaceAll("^\\[(.*)]$", "$1").strip();
+        return pagesById.values().stream().filter(page -> page.title().equalsIgnoreCase(wanted)).findFirst();
+    }
+
     /** A catalog page and how well its title and summary match, on the (cosine + 1) / 2 scale. */
     public record PageMatch(Page page, double score) {
     }

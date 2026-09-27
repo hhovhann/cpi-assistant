@@ -1,10 +1,13 @@
 # CPI Assistant
 
-An assistant for **SAP Cloud Integration (CPI)**. It answers from the
-**official SAP documentation**, which it downloads and keeps as it goes.
-One question box: it finds the right SAP page, answers from it, and cites it.
+An agent for **SAP Cloud Integration (CPI)**, built like a small Claude Code:
+one question box, and behind it retrieval, **tools**, **skills**, **hooks**
+and **MCP**. It answers from the **official SAP documentation**, which it
+downloads and keeps as it goes, reads a whole SAP page when the passages are
+not enough, looks at a **CPI tenant** when a question is about what is
+happening there, and cites every page it used.
 
-It is also a learning project: retrieval, prompting and the
+It is also a learning project: retrieval, the agent loop, tools and the
 knowledge store are built by hand with [LangChain4j](https://docs.langchain4j.dev),
 with no auto-configuration hiding the moving parts.
 
@@ -16,24 +19,40 @@ with no auto-configuration hiding the moving parts.
 
 ```mermaid
 flowchart TB
-    Q[Question] --> CAT{SAP Help catalog:<br/>best page ≥ 0.82?}
-    CAT -- "yes, first time" --> DL[Download the page from SAP's docs,<br/>save its chunks in the database] --> P[Its best passages]
+    Q[Question] --> CAT{SAP Help catalog:<br/>2 best pages ≥ 0.82?}
+    CAT -- "yes, first time" --> DL[Download the pages from SAP's docs,<br/>save their chunks in the database] --> P[8 best passages of each]
     CAT -- "yes, saved before" --> P
     CAT -- no --> DB
     P --> DB[Database: best passages ≥ 0.80]
-    DB --> A[Answer from the passages:<br/>1 model call]
-    A --> C[Check every cited page]
+    DB --> A[Agent: question + passages + skills list + tools]
+    A -- passages are enough --> ANS[Answer, 1 model call]
+    A -- needs more --> T[Tools, through the hooks:<br/>readPage · searchDocs · loadSkill ·<br/>tenant tools · MCP tools] --> ANS2[Answer]
+    ANS --> C[Check every cited page]
+    ANS2 --> C
 ```
 
 1. **Find documentation — code, no model.** Look the question up in a catalog
-   of ~1,660 official SAP pages. If the best page matches well enough, make
-   sure it is saved — downloaded the first time, from the database after
-   that — and take its best passages. Add the best passages from the whole
-   database. Pages and passages are ranked by meaning *and* by keywords.
-2. **Answer — one model call.** The model gets the question and the passages,
-   and answers only from them, citing each page by its title.
+   of ~1,660 official SAP pages. For the two best pages that match well
+   enough, make sure they are saved — downloaded the first time, from the
+   database after that — and take eight passages of each. Add the three best
+   passages from the whole database. Pages and passages are ranked by meaning *and* by keywords.
+2. **Answer — one agent.** The model gets the question, the passages, a list
+   of skills and the tools. It decides: a documentation question is usually
+   answered from the passages in one call; for more it calls a tool. There is
+   no router.
+   - **Tools:** `readPage` (a whole SAP catalog page, in parts), `searchDocs`,
+     `loadSkill`; with a tenant configured, `listIflows`, `getProblemMessages`,
+     `getErrorDetails` (read-only); and the allowed tools of any MCP server in
+     `cpi.mcp.servers`.
+   - **Skills:** playbooks in [`resources/skills`](src/main/resources/skills)
+     — troubleshoot a failed message, configure an adapter, check tenant
+     health. The prompt lists them in one line each; the model loads one when
+     it needs it.
+   - **Hooks:** every tool call, ours or an MCP server's, passes the same
+     checks — arguments guarded before, results limited after, every call
+     logged.
 3. **Check.** Every page the answer cites is checked against the pages the
-   model was actually given.
+   model was actually given — up front or by a tool.
 
 Every answer comes back with its **path** — what was searched, downloaded and
 called — so you can see which of these happened.
@@ -72,7 +91,8 @@ docker compose up -d      # Postgres + pgvector on localhost:5433; data survives
 ### 4. Run
 
 ```bash
-./gradlew bootRun
+./gradlew bootRun                                             # docs, skills, MCP; tenant tools if a tenant is set
+./gradlew bootRun --args="--spring.profiles.active=dev"       # plus a fake CPI tenant, for development
 ```
 
 At startup the app saves ten popular SAP pages (JDBC, HTTP, SFTP and OData
@@ -86,8 +106,8 @@ saved, and embeds the catalog titles. Wait for:
 ### 5. Ask
 
 **In the browser:** open <http://localhost:8080>. Each answer shows its path
-(→ lines), its sources with links to the SAP page, and a ⚠ on any page it cites
-without having been given it.
+(→ lines), its sources with links to the SAP page, a ⚠ on any page it cites
+without having been given it, and every tool call with its full result.
 
 **From the command line:**
 
@@ -98,20 +118,22 @@ curl -s -G localhost:8080/assist --data-urlencode "question=How do I configure a
 ```json
 {
   "answer": "… [JDBC Receiver Adapter]",
-  "path": ["SAP Help: best page \"JDBC Receiver Adapter\" (match 0.909), already saved",
+  "path": ["SAP Help: page \"JDBC Receiver Adapter\" (match 0.909), already saved",
            "Database: 3 passage(s), best 0.905", "Answered"],
   "sources": [{ "title": "JDBC Receiver Adapter", "url": "https://github.com/SAP-docs/…/jdbc-receiver-adapter-88be644.md",
                 "score": 0.911, "excerpt": "…", "cited": true }],
   "unverifiedCitations": [],
+  "toolCalls": [],
   "inputTokens": 1105, "outputTokens": 353, "millis": 22600
 }
 ```
 
 | Field | Meaning |
 |---|---|
-| `path` | What happened, in order: the SAP page (downloaded or already saved), the database, the answer |
+| `path` | What happened, in order: the SAP pages (downloaded or already saved), the database, tool calls, the answer |
 | `sources` | Every page the model was given; `cited` says whether the answer used it |
 | `unverifiedCitations` | Pages the answer cites that the model was **never given** — should be empty |
+| `toolCalls` | Each tool call: name, arguments, full result |
 
 ## QA checklist — what to ask, and what you should see
 
@@ -137,14 +159,14 @@ with Qwen3 14B on an M4 Max:
 
 | # | Ask | Expected path | Checks |
 |---|---|---|---|
-| 1 | How do I configure a JDBC adapter? | `SAP Help: best page "JDBC Receiver Adapter" … already saved` → `Database: 3 passage(s)` → `Answered` | Drivers → data source → Cloud Connector; cites [JDBC Receiver Adapter] · ~10–30 s |
+| 1 | How do I configure a JDBC adapter? | `SAP Help: page "JDBC Receiver Adapter" … already saved` → `Database: 3 passage(s)` → `Answered` | Drivers → data source → Cloud Connector; cites [JDBC Receiver Adapter] · ~10–30 s |
 | 2 | How do I handle errors in an iFlow? | `SAP Help: downloaded "Handle Errors in Successful Responses"` (first time) → `Database` | Cites the error-handling pages |
 | 3 | How do I configure the AS4 receiver adapter? | `SAP Help: downloaded "AS4 Receiver Adapter"` → `Database: 3 passage(s)` → `Answered` | **Download + save** · ~7–20 s |
-| 4 | *the same AS4 question again* | `SAP Help: best page "AS4 Receiver Adapter" … already saved` | **From the database, no download** |
+| 4 | *the same AS4 question again* | `SAP Help: page "AS4 Receiver Adapter" … already saved` | **From the database, no download** |
 | 5 | How do I set up an SFTP receiver with known hosts? | `SAP Help: … "Maintaining SSH Known Hosts for SFTP Connectivity"` | The exact page, not the general SFTP one |
 | 6 | How do I configure the Kafka receiver adapter? | `SAP Help: … "Configure the Kafka Receiver Adapter"` | Cites the Kafka page |
 | 7 | What is the capital of France? | `SAP Help: no page matches well enough` → `Database: nothing above the 0.80 floor` | **No download**, declines |
-| 8 | How do I configure JDBC and SFTP receiver adapters? | one best page + the store's best | Both topics, from the passages |
+| 8 | How do I configure JDBC and SFTP receiver adapters? | two best pages + the store's best | Both topics, from the passages |
 
 `unverifiedCitations` should be empty. It lists a bracketed name only if it
 appears nowhere in what the model was given (it happened: "[this blog]",
@@ -186,7 +208,7 @@ export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY (and optionally OPENAI_M
 ./gradlew test
 ```
 
-32 tests, fakes for the models and for GitHub: no LM Studio and no internet.
+56 tests, fakes for the models, GitHub, the tenant and MCP servers: no LM Studio and no internet.
 Answer quality against the real model: `./scripts/qa.sh` (above).
 RAG compared with a model that searches the files itself: `./gradlew measure`
 (LM Studio, pgvector, internet; ~15 min; report in `build/measure/`).
@@ -197,8 +219,9 @@ RAG compared with a model that searches the files itself: `./gradlew measure`
 | Method | Path | Parameter | Purpose |
 |---|---|---|---|
 | GET | `/` | — | Web UI |
-| GET | `/assist` | `question` (1–1,000 characters) | The assistant: answer, path, sources, unverified citations |
-| GET | `/status` | — | `{"ready": true, "savedPages": 10, "seedPages": 10}` — ready once the popular pages are saved |
+| GET | `/assist` | `question` (1–1,000 characters) | The agent: answer, path, sources, unverified citations, tool calls |
+| GET | `/status` | — | `{"ready": true, "savedPages": 10, "seedPages": 10, "tools": [...]}` — ready once the popular pages are saved; the agent's tools |
+| GET | `/fake-cpi/api/v1/...` | OData | Only in the `dev` profile: a stand-in CPI tenant with planted failures, same paths and JSON as the real API |
 
 ## Configuration
 
@@ -219,6 +242,8 @@ and can be overridden on the command line (`--name=value`).
 | `cpi.store.type` | `pgvector` | `pgvector` (Docker, persistent) or `memory` (tests) |
 | `cpi.store.pgvector.*` | localhost:5433, db/user/password `cpi`, table `cpi_chunks`, 768 dims | Connection and table |
 | `langchain4j.open-ai.embedding-model.*` | LM Studio / nomic v1.5 | Embedding model, plus nomic's `query-prefix` / `document-prefix` |
+| `cpi.tenant.base-url`, `token-url`, `client-id`, `client-secret` | from `CPI_TENANT_URL`, `CPI_TENANT_TOKEN_URL`, `CPI_TENANT_CLIENT_ID`, `CPI_TENANT_CLIENT_SECRET`; empty | A real tenant's OData API and OAuth client credentials (from its service key). Empty: no tenant tools |
+| `cpi.mcp.servers` | none | MCP servers: `name`, `command` (stdio) or `url` (+ `headers`), and `allowed-tools` — only those reach the model |
 
 > The score thresholds and the prefixes are tuned for nomic-embed-text.
 > Switching the embedding model means re-measuring them and emptying the store.
@@ -248,9 +273,11 @@ page by title and link to it.
 - help.sap.com itself is not fetched: it renders pages with JavaScript and its
   robots.txt disallows automated clients.
 
-**Known limits:** the answer sees three passages of the best page and three
-from the whole database, so a long page's parameter table can stay out of the
-answer. For "why did it fail and how do I fix it" the model does not always
+**Known limits:** the answer starts from eight passages of each of the two
+best pages and three from the whole database; when the part it needs is
+elsewhere on the page, the model has to decide to call `readPage`. A question worded unlike SAP's pages can
+still pick a neighbouring page ("send AS4 messages to a partner" picks the
+AS4 *sender* adapter). For "why did it fail and how do I fix it" the model does not always
 look the fix up in the docs — it then answers the fix without a citation, and
 the citation check flags it.
 
@@ -266,14 +293,15 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 |---|---|---|
 | ✅ | 1–10 | RAG built and measured by hand: chunking, embeddings, retrieval, citations, web UI, evaluations |
 | ✅ | 11 | One switch for the chat model: LM Studio, OpenAI or Anthropic |
-| ✅ | 12–13 | Tool calling: documentation search, CPI tenant tools over the OData API (fake tenant) — removed in 20 |
+| ✅ | 12–13 | Tool calling: documentation search, CPI tenant tools over the OData API (fake tenant) — restructured in 21 |
 | ✅ | 7, 14 | Persistent knowledge: pgvector in Docker, SAP Help pages downloaded on a miss and kept |
 | ✅ | 15 | One assistant: one endpoint, official SAP docs as the only source, citations checked |
 | ✅ | 16 | Finding the right page: catalog summaries, exact identifiers, "Configure …" preference, readable tables |
 | ✅ | 17 | Page graph (graph RAG, one hop) — removed in 20; `scripts/qa.sh` |
 | ✅ | 18 | Measured: RAG vs a model that searches the files itself — RAG a bit cheaper and 2.3× faster, file search more often right (7 of 7 vs 4 of 7), RAG more often grounded (5 of 6 vs 2 of 6) |
 | ✅ | 19 | Hybrid search: BM25 keywords fused with the vectors (RRF) for pages and passages; the retry asks for a new page; a downloaded page adds its best passages — RAG now 7 of 7 right with fewer tokens than file search |
-| ✅ | 20 | Simpler: the best SAP page first, then the store, one model call — graph and retries removed; docs only (tenant tools and the fake tenant removed); RAG 7 of 7 right, 6 of 6 grounded, 38 % fewer tokens; input limits |
+| ✅ | 20 | Simpler: the two best SAP pages first, then the store, one model call — graph and retries removed; a cleaner fix (SAP's `<placeholders>`); measured on 15 questions (8 reworded): RAG 12 of 15 right, 13 of 13 grounded, half the tokens of file search |
+| ✅ | 21 | An agent like a small Claude Code: `readPage`, `searchDocs`, skills (`loadSkill`), tenant tools (OAuth; fake only in `dev`), MCP client with allowlists, hooks around every tool call |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

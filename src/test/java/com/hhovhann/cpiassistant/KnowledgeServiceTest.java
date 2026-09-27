@@ -129,7 +129,7 @@ class KnowledgeServiceTest {
         var again = knowledge.find("SFTP receiver adapter known hosts");
 
         assertThat(again.downloaded()).isEmpty();
-        assertThat(again.steps()).first().asString().startsWith("SAP Help: best page \"Configure the SFTP Receiver Adapter\"");
+        assertThat(again.steps()).first().asString().startsWith("SAP Help: page \"Configure the SFTP Receiver Adapter\"");
         assertThat(again.steps()).last().asString().startsWith("Database: 1 passage(s)");
         assertThat(downloads).hasValue(1);
         assertThat(storedChunks()).isEqualTo(chunks);

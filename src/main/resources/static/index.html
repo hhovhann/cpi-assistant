@@ -104,13 +104,22 @@
   .cite.text { min-width: 0; max-width: 100%; overflow-wrap: anywhere; text-align: left; }
   .cite.unknown { color: var(--warn); background: var(--warn-soft); cursor: help; }
   .source a { color: var(--accent); }
+  .tools { margin-top: 16px; }
+  .tools h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .step { padding: 10px 12px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 8px; }
+  .step .tool { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+  .step .args { margin-top: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  .step details { margin-top: 6px; font-size: 13px; }
+  .step summary { cursor: pointer; color: var(--muted); }
+  .step pre { margin: 6px 0 0; padding: 8px; max-height: 280px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+              font-size: 12px; background: var(--bg); border-radius: 6px; }
 </style>
 </head>
 <body>
 <main>
   <header>
     <h1>CPI Assistant</h1>
-    <p>Answers SAP Cloud Integration questions from the official SAP documentation.</p>
+    <p>An agent for SAP Cloud Integration: answers from the official SAP documentation, and uses its tools — whole pages, skills, the CPI tenant, MCP servers — when a question needs them.</p>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Connecting…</span></div>
   </header>
 
@@ -124,7 +133,7 @@
       <button class="example" type="button">How do I configure a JDBC adapter?</button>
       <button class="example" type="button">How do I handle errors in an iFlow?</button>
       <button class="example" type="button">How do I configure the AS4 receiver adapter?</button>
-      <button class="example" type="button">How do I set up an SFTP receiver with known hosts?</button>
+      <button class="example" type="button">Why did Order_Sync fail today and how do I fix it?</button>
     </div>
   </div>
 
@@ -175,7 +184,7 @@
       answer.innerHTML = renderAnswer(data.answer, sourceIndex, data.unverifiedCitations);
 
       answer.insertAdjacentHTML('beforebegin', '<ul class="path">' + data.path.map(step =>
-        `<li class="${/downloaded/.test(step) ? 'web' : ''}">${escapeHtml(step)}</li>`).join('') + '</ul>');
+        `<li class="${/downloaded|^Tool:/.test(step) ? 'web' : ''}">${escapeHtml(step)}</li>`).join('') + '</ul>');
 
       const sources = document.createElement('div');
       sources.className = 'sources';
@@ -190,10 +199,24 @@
             </div>`).join(''));
       answer.after(sources);
 
+      let last = sources;
+      if (data.toolCalls.length) {
+        const tools = document.createElement('div');
+        tools.className = 'tools';
+        tools.innerHTML = '<h3>Tool calls</h3>' + data.toolCalls.map((call, i) => `
+            <div class="step">
+              <span class="tool">${i + 1}. ${escapeHtml(call.tool)}</span>
+              <div class="args">${escapeHtml(call.arguments || '{}')}</div>
+              <details><summary>Result (${(call.result || '').length} chars)</summary><pre>${escapeHtml(call.result || '')}</pre></details>
+            </div>`).join('');
+        sources.after(tools);
+        last = tools;
+      }
+
       const warning = data.unverifiedCitations.length
         ? ` · <span class="tag">${data.unverifiedCitations.length} citation(s) of pages the model was never given</span>` : '';
-      sources.insertAdjacentHTML('afterend',
-        `<div class="meta">${data.inputTokens} tokens in / ${data.outputTokens} out · `
+      last.insertAdjacentHTML('afterend',
+        `<div class="meta">${data.toolCalls.length} tool call(s) · ${data.inputTokens} tokens in / ${data.outputTokens} out · `
         + `${(data.millis / 1000).toFixed(1)} s${warning}</div>`);
     } catch (e) {
       el.querySelector('.answer').className = 'answer error';
@@ -209,7 +232,7 @@
     results.replaceChildren();
     const el = document.createElement('article');
     el.className = 'card';
-    el.innerHTML = '<h2>Answer</h2><div class="answer loading">Thinking… a first-time download can take a minute.</div>';
+    el.innerHTML = '<h2>Answer</h2><div class="answer loading">Thinking… a download or a tool call can take a minute or two.</div>';
     results.append(el);
     askButton.disabled = true;
     await ask(question, el);

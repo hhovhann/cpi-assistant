@@ -63,4 +63,17 @@ class SapHelpClientTest {
 
                 See Configure JDBC Drivers.""");
     }
+
+    @Test
+    void placeholdersInAngleBracketsStay() {
+        // SAP writes placeholders as *<known\_hosts\>*; they are text, not HTML tags.
+        String page = """
+                Public keys of all connected SFTP servers are stored in a *<known\\_hosts\\>* file on the client side.
+                <table><tr><td>Address</td><td>Enter *<host\\>*:*<port\\>*</td></tr></table>
+                """;
+
+        assertThat(SapHelpClient.clean(page))
+                .contains("stored in a *<known_hosts>* file")
+                .contains("Address | Enter *<host>*:*<port>*");
+    }
 }

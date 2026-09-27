@@ -61,6 +61,30 @@ cpi:
       table: cpi_chunks
       dimension: 768            # nomic-embed-text-v1.5
 
+  # The CPI tenant the tenant tools read (CpiTenantClient). Empty base-url: no
+  # tenant, and the model is not offered the tenant tools. For a real tenant,
+  # from its service key (never commit these values):
+  #   export CPI_TENANT_URL=https://<tenant>.it-cpi<nnn>.cfapps.<region>.hana.ondemand.com/api/v1
+  #   export CPI_TENANT_TOKEN_URL=https://<subaccount>.authentication.<region>.hana.ondemand.com/oauth/token
+  #   export CPI_TENANT_CLIENT_ID=...  CPI_TENANT_CLIENT_SECRET=...
+  # For development without a tenant: --spring.profiles.active=dev (a fake one).
+  tenant:
+    base-url: ${CPI_TENANT_URL:}
+    token-url: ${CPI_TENANT_TOKEN_URL:}
+    client-id: ${CPI_TENANT_CLIENT_ID:}
+    client-secret: ${CPI_TENANT_CLIENT_SECRET:}
+
+  # MCP servers whose tools the agent may use (AgentTools). None by default.
+  # Each server exposes only the tools named in allowed-tools. Example:
+  #   mcp:
+  #     servers:
+  #       - name: sap-docs
+  #         url: https://example.com/mcp          # streamable HTTP
+  #         allowed-tools: [search, fetch]
+  #       - name: local-tools
+  #         command: [npx, -y, some-mcp-server]   # stdio
+  #         allowed-tools: [some_tool]
+
   # The knowledge: official SAP Integration Suite docs only, as Markdown from
   # SAP's GitHub repository (CC BY 4.0) — help.sap.com itself is rendered by
   # JavaScript and disallows automated clients. KnowledgeService searches the

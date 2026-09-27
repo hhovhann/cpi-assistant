@@ -48,6 +48,9 @@ dependencies {
     // Vector store in Postgres (docker-compose.yml). Still a beta module
     // (1.20.0-beta30, set by the BOM), but plain JDBC with no Spring in it.
     implementation("dev.langchain4j:langchain4j-pgvector")
+    // MCP client: tools from external MCP servers listed in cpi.mcp.servers.
+    // Beta like pgvector (1.20.0-beta30, set by the BOM).
+    implementation("dev.langchain4j:langchain4j-mcp")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     // A throwaway pgvector container per test run (needs Docker).

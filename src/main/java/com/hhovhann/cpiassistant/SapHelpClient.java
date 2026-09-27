@@ -45,6 +45,12 @@ public class SapHelpClient {
 
     private static final Pattern ROW = Pattern.compile("(?s)<tr[^>]*>(.*?)</tr>");
     private static final Pattern CELL = Pattern.compile("(?s)<t[dh][^>]*>(.*?)</t[dh]>");
+    /**
+     * A real HTML tag: a name, then {@code >}, a space or {@code /}. SAP writes
+     * placeholders as {@code <known\_hosts\>} — the escaped {@code \>} keeps them
+     * from matching, so they stay in the text.
+     */
+    private static final Pattern HTML_TAG = Pattern.compile("</?[a-zA-Z][a-zA-Z0-9]*(\\s[^<>]*)?/?>");
 
     static String clean(String markdown) {
         String text = markdown
@@ -72,7 +78,7 @@ public class SapHelpClient {
             List<String> cells = new ArrayList<>();
             Matcher cell = CELL.matcher(rows.group(1));
             while (cell.find()) {
-                cells.add(cell.group(1).replaceAll("<br\\s*/?>", " ").replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").strip());
+                cells.add(HTML_TAG.matcher(cell.group(1).replaceAll("<br\\s*/?>", " ")).replaceAll("").replaceAll("\\s+", " ").strip());
             }
             rows.appendReplacement(out, Matcher.quoteReplacement("\n" + String.join(" | ", cells) + "\n"));
         }

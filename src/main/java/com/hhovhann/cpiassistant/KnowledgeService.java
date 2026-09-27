@@ -15,7 +15,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
 
@@ -23,11 +22,13 @@ import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metad
  * Finds documentation for a question. One source of truth: the official SAP
  * Integration Suite docs, kept in the vector store. No model call.
  * <ol>
- *   <li>The best page of {@link SapHelpCatalog} for the question — if it
- *       matches at least {@code cpi.knowledge.min-title-score} — is made sure
- *       to be saved: downloaded ({@link SapHelpClient}) the first time, from the
- *       store after that. Its best passages go to the answer: the page chosen
- *       for the question, whatever else ranks high. "Capital of France"
+ *   <li>The two best pages of {@link SapHelpCatalog} for the question — each
+ *       only if it matches at least {@code cpi.knowledge.min-title-score} — are
+ *       made sure to be saved: downloaded ({@link SapHelpClient}) the first
+ *       time, from the store after that. Their best passages go to the answer:
+ *       the pages chosen for the question, whatever else ranks high. Two, not
+ *       one: the second page caught a wrong first choice ("write to an Oracle
+ *       database" first found a certificates page). "Capital of France"
  *       matches no page that well, and nothing is downloaded.</li>
  *   <li>The best passages from the whole store, at or above the score floor.</li>
  * </ol>
@@ -42,8 +43,9 @@ public class KnowledgeService {
     static final String URL = "url";
     static final String TITLE = "title";
     static final String FETCHED_AT = "fetched_at";
-    /** Passages from the best page, and from the whole store. */
-    static final int PAGE_PASSAGES = 3;
+    /** The best pages for a question, passages from each, and from the whole store. */
+    static final int BEST_PAGES = 2;
+    static final int PAGE_PASSAGES = 8;
     static final int STORE_PASSAGES = 3;
 
     /** What {@link #find} did, step by step, and what it found. */
@@ -86,17 +88,18 @@ public class KnowledgeService {
         List<String> downloaded = new ArrayList<>();
         List<EmbeddingMatch<TextSegment>> passages = new ArrayList<>();
 
-        Optional<SapHelpCatalog.PageMatch> best = catalog.search(query, 1).stream()
+        List<SapHelpCatalog.PageMatch> best = catalog.search(query, BEST_PAGES).stream()
                 .filter(match -> match.score() >= minTitleScore)
-                .findFirst();
+                .toList();
         if (best.isEmpty()) {
             steps.add("SAP Help: no page matches well enough (needs %.2f)".formatted(minTitleScore));
-        } else {
-            SapHelpCatalog.Page page = best.get().page();
+        }
+        for (SapHelpCatalog.PageMatch match : best) {
+            SapHelpCatalog.Page page = match.page();
             Saved saved = ensureSaved(page);
             steps.add(switch (saved) {
-                case DOWNLOADED -> "SAP Help: downloaded \"%s\" (match %.3f) and saved it".formatted(page.title(), best.get().score());
-                case ALREADY_SAVED -> "SAP Help: best page \"%s\" (match %.3f), already saved".formatted(page.title(), best.get().score());
+                case DOWNLOADED -> "SAP Help: downloaded \"%s\" (match %.3f) and saved it".formatted(page.title(), match.score());
+                case ALREADY_SAVED -> "SAP Help: page \"%s\" (match %.3f), already saved".formatted(page.title(), match.score());
                 case MISSING -> "SAP Help: \"%s\" is no longer available".formatted(page.title());
             });
             if (saved == Saved.DOWNLOADED) {

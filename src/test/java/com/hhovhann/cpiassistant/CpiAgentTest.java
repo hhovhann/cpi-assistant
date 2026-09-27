@@ -1,26 +1,57 @@
 package com.hhovhann.cpiassistant;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.service.Result;
+import dev.langchain4j.store.embedding.EmbeddingMatch;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * The assistant's wiring without an LLM: a scripted fake model plays the
- * model's part, so this checks what the model receives.
+ * The assistant's tool loop without an LLM. A scripted fake model plays the
+ * model's part, so these check the wiring: the passages arrive in the message,
+ * the tools are offered, a tool runs with the model's arguments and its result
+ * goes back, and the round-trip limit holds.
  */
 class CpiAgentTest {
 
     static final String JDBC = "[JDBC Receiver Adapter]\nAdd a receiver channel and select JDBC.";
+
+    /** Knowledge that always returns one JDBC passage, or nothing, and records each query. */
+    static final class FakeKnowledge extends KnowledgeService {
+        final List<String> queries = new ArrayList<>();
+        private final boolean empty;
+
+        FakeKnowledge(boolean empty) {
+            super(null, null, null, null, null, 0.82, Duration.ofDays(30), null);
+            this.empty = empty;
+        }
+
+        @Override
+        public Found find(String query) {
+            queries.add(query);
+            return new Found(empty ? List.of() : List.of(jdbcMatch()), List.of("Database: fake"), List.of());
+        }
+
+        static EmbeddingMatch<TextSegment> jdbcMatch() {
+            return new EmbeddingMatch<>(0.87, "jdbc#0", null, TextSegment.from("Add a receiver channel and select JDBC.",
+                    Metadata.from(TITLE, "JDBC Receiver Adapter").put(URL, SapHelpCatalog.REPO_BLOB + "docs/x/jdbc-receiver-adapter-88be644.md")));
+        }
+    }
 
     /** Answers each request with whatever the script says, given the request number. */
     static final class ScriptedChatModel implements ChatModel {
@@ -38,22 +69,71 @@ class CpiAgentTest {
         }
     }
 
-    static CpiAgent agent(ChatModel model) {
-        return new LangChain4jConfig().cpiAgent(model);
+    static AiMessage callTool(String name, String arguments) {
+        return AiMessage.from(ToolExecutionRequest.builder().id("call-1").name(name).arguments(arguments).build());
+    }
+
+    static CpiAgent agent(ChatModel model, KnowledgeService knowledge) {
+        // The tenant tools are offered but never called in these tests.
+        var tenant = new CpiTenantClient("http://localhost:1/unused");
+        var tools = new AgentTools(new CpiDocsTool(knowledge, null, null), new SkillLibrary(), new CpiTenantTools(tenant),
+                tenant, new McpProperties(List.of()), List.of());
+        return new LangChain4jConfig().cpiAgent(model, tools);
+    }
+
+    /** The agent's call with no skills and no note. */
+    static Result<String> ask(CpiAgent agent, String passages, String question) {
+        return agent.answer("", passages, "", question);
     }
 
     @Test
-    void theQuestionAndPassagesGoToTheModelInOneCallWithNoTools() {
+    void aDocsQuestionIsAnsweredFromThePassagesWithoutATool() {
+        var knowledge = new FakeKnowledge(false);
         var model = new ScriptedChatModel(n -> AiMessage.from("Use the JDBC adapter [JDBC Receiver Adapter]."));
 
-        Result<String> result = agent(model).answer(JDBC, "How do I connect to a database?");
+        Result<String> result = ask(agent(model, knowledge), JDBC, "How do I connect to a database?");
 
-        assertThat(result.content()).isEqualTo("Use the JDBC adapter [JDBC Receiver Adapter].");
-        assertThat(model.requests).singleElement().satisfies(request -> {
-            assertThat(request.toolSpecifications()).isNullOrEmpty();
-            assertThat(request.messages()).last()
-                    .isInstanceOfSatisfying(UserMessage.class, message -> assertThat(message.singleText())
-                            .contains("[JDBC Receiver Adapter]", "Question: How do I connect to a database?"));
-        });
+        assertThat(result.toolExecutions()).isEmpty();
+        assertThat(model.requests).hasSize(1);
+        assertThat(model.requests.getFirst().messages()).last()
+                .isInstanceOfSatisfying(UserMessage.class, message -> assertThat(message.singleText())
+                        .contains("[JDBC Receiver Adapter]", "Question: How do I connect to a database?"));
+        assertThat(model.requests.getFirst().toolSpecifications()).extracting(spec -> spec.name())
+                .containsExactlyInAnyOrder("searchDocs", "readPage", "loadSkill", "listIflows", "getProblemMessages", "getErrorDetails");
+    }
+
+    @Test
+    void theModelCanAskForMoreDocsAndGetsThemBack() {
+        var knowledge = new FakeKnowledge(false);
+        var model = new ScriptedChatModel(n -> n == 1
+                ? callTool("searchDocs", "{\"query\": \"JdbcAdapterException connection pool\"}")
+                : AiMessage.from("A pool timeout [JDBC Receiver Adapter]."));
+
+        Result<String> result = ask(agent(model, knowledge), "(no documentation found)", "Why did Order_Sync fail?");
+
+        assertThat(knowledge.queries).containsExactly("JdbcAdapterException connection pool");
+        assertThat(model.requests.get(1).messages()).last()
+                .isInstanceOfSatisfying(ToolExecutionResultMessage.class, message -> assertThat(message.text())
+                        .startsWith("[JDBC Receiver Adapter]\n"));
+        assertThat(result.content()).isEqualTo("A pool timeout [JDBC Receiver Adapter].");
+    }
+
+    @Test
+    void aSearchThatFindsNothingSaysSo() {
+        var model = new ScriptedChatModel(n -> n == 1 ? callTool("searchDocs", "{\"query\": \"JVM tuning\"}") : AiMessage.from("I don't know."));
+
+        Result<String> result = ask(agent(model, new FakeKnowledge(true)), "(no documentation found)", "How do I tune the JVM?");
+
+        assertThat(result.toolExecutions().getFirst().result()).isEqualTo("(no documentation found)");
+    }
+
+    @Test
+    void stopsAModelThatNeverStopsCallingTools() {
+        var knowledge = new FakeKnowledge(false);
+        var model = new ScriptedChatModel(n -> callTool("searchDocs", "{\"query\": \"attempt " + n + "\"}"));
+
+        assertThatThrownBy(() -> ask(agent(model, knowledge), JDBC, "anything")).isInstanceOf(RuntimeException.class);
+        // One search per reply here, so round trips = searches.
+        assertThat(knowledge.queries).hasSizeLessThanOrEqualTo(LangChain4jConfig.MAX_TOOL_ROUND_TRIPS);
     }
 }

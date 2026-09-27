@@ -974,7 +974,7 @@ whole store. Then one model call, with the tools. Then the citation check.
 **Removed:** `PageGraph` and `links.tsv`, both retries, the "Configure …"
 rule, `fetchFromSapHelp`, `cpi.knowledge.max-pages-per-miss` and
 `follow-links`.
-**Docs only:** the tenant tools of Steps 12–13, the fake tenant behind them,
+**Docs only** (reversed in Step 21): the tenant tools of Steps 12–13, the fake tenant behind them,
 and `searchDocs` went too. The tenant never had a real system behind it, and
 keeping its questions working needed an iFlow-name hint and extra prompt rules
 (without them the model answered "Is Payment_Status_Poll failing?" from the
@@ -987,20 +987,40 @@ instead of the full passages (JDBC's). **Safer:** questions of 1–1,000
 characters (HTTP 400 otherwise), the database login from `CPI_DB_USER` /
 `CPI_DB_PASSWORD`, an empty model answer never passed on as `null`.
 
-**Measured** (`./gradlew measure`, before the tools were removed — the
-measured questions never called one; `scripts/qa.sh`, now eight docs cases):
+**Measured, in three rounds** (`./gradlew measure`; `-Dcpi.measure.rag-only=true`
+runs RAG alone in ~7 minutes). The measurement now also asks eight **reworded**
+questions — the same needs with other words, fewer of the original keywords,
+one with typos — to see whether the page choice holds beyond the wording it was
+tuned on.
 
-| RAG | Step 19 | Step 20 |
+1. **Best page first, with the tools still there:** 7 of 7 right, 6 of 6
+   grounded, one call per question.
+2. **Docs only, one page, 3 + 3 passages: 9 of 15.** Without the tool
+   descriptions the prompt shrank to ~400 tokens, and the answers got thin —
+   AS4 and Kafka received the overview and "Related Information" chunks.
+3. **Two best pages, 8 passages each, and a cleaner fix: 12 of 15.** The fix:
+   SAP writes placeholders as `*<known\_hosts\>*`, and inside table cells —
+   some pages put whole paragraphs in layout tables — every `<…>` was stripped as
+   a tag; the saved text said "stored in a \*\* file".
+
+**Final** (15 questions: 7 original, 8 reworded; `scripts/qa.sh` 8 of 8):
+
+| | RAG | File search |
 |---|---|---|
-| Right | 7 of 7 | **7 of 7** |
-| Grounded (docs questions) | 4 of 6 | **6 of 6** |
-| Tokens in / out | 14,808 / 4,161 | **9,243 / 2,854** |
-| Model calls | 12 | **7** — one per question |
-| AS4 / Kafka / SFTP | 4 / 3 / 1 calls | **1 / 1 / 1** |
+| Right — original | 6 of 7 | 7 of 7 |
+| Right — reworded | 6 of 8 | 6 of 8 |
+| Grounded (docs questions) | **13 of 13** | 1 of 13 |
+| Tokens in | **14,515** | 29,218 |
+| Model calls | **15** — one per question | 30 |
 
-File search in the same run: 7 of 7 right, 1 of 6 grounded, 16,962 / 7,316
-tokens, 15 calls. Time is not compared: LM Studio stalls on single calls
-(126–857 s totals for the same work across runs).
+- **RAG misses:** Kafka (a good answer that never says "topic"), "send AS4
+  messages to a partner" (picks the AS4 *sender* adapter — in CPI terms,
+  sending is the receiver adapter), "where do I put the SFTP server's host key"
+  (picks the public-key pages, not the known hosts page).
+- **File search** is right as often, but grounds almost nothing: it cites pages
+  it only saw in a search result, or none.
+- Time is not compared: LM Studio stalls on single calls. File search read
+  pages cached before the cleaner fix.
 
 **Idea:** when every fix is a new pass after the fact, look for the step that
 makes them unnecessary. Here it was the order — the right page first, then
@@ -1009,13 +1029,74 @@ the store — and it removed code, calls and tokens at once.
 configure the Mail receiver adapter?") and read the path: which page was
 chosen, and was it the right one?
 
+### Step 21: An agent — tools, skills, hooks, MCP
+
+**Why:** Step 20 simplified by removing the tools. The goal is the opposite of
+a docs-only box: an agent for CPI built like a small Claude Code — retrieval
+up front, and tools, skills, hooks and MCP servers for what retrieval cannot
+do. The tools come back, in one clean structure.
+**What:**
+- **`AgentTools`** — every tool in one map of specification → executor, which
+  AiServices takes as is: our `@Tool` classes (read through LangChain4j's
+  `ToolSpecifications` and `DefaultToolExecutor`) and the allowed tools of each
+  MCP server. Each executor is wrapped in the hooks.
+- **Tools:** `readPage` (new: a whole SAP catalog page, in parts — for the
+  parameter table the passages miss), `searchDocs`, `loadSkill`; with a tenant,
+  `listIflows`, `getProblemMessages`, `getErrorDetails`, read-only.
+- **Skills** (`resources/skills/*.md`): troubleshoot a failed message,
+  configure an adapter, check tenant health. The prompt lists one line each;
+  `loadSkill` returns the playbook. A new skill is a Markdown file.
+- **Hooks** (`ToolHook`): argument guard before every call (a refusal is the
+  model's tool result — the tool never runs), result limit and audit log after.
+  A tool that throws gives the model text, not a failed request.
+- **MCP client** (`langchain4j-mcp`, `cpi.mcp.servers`): stdio or streamable
+  HTTP; only the tools in a server's `allowed-tools` reach the model, and none
+  may shadow ours. None configured by default.
+- **Tenant:** no `cpi.tenant.base-url` → no tenant tools. A real tenant uses
+  OAuth client credentials from environment variables, the token cached until
+  shortly before it expires. The fake tenant moved to its own package and runs
+  only in the `dev` profile. `/status` lists the agent's tools.
+
+**Kept from before, because they were measured:** the iFlow-name hint, the
+prompt rule "one tool step at a time, never a placeholder", the round-trip
+limit (now 8) with an answer instead of a 500, the citation check over
+passages *and* tool results.
+
+**Measured** (`./gradlew measure`, the agent without a tenant; `scripts/qa.sh`
+on the dev profile: **14 of 14**, the model loading `check-tenant-health` by itself):
+
+| | Agent (Step 21) | Step 20, no tools | File search |
+|---|---|---|---|
+| Right (15 questions) | 11 of 15 | 12 of 15 | 13 of 15 |
+| Grounded | **13 of 13** | 13 of 13 | 1 of 13 |
+| Tokens in | 29,545 | 14,515 | 29,218 |
+| Model calls | 17 | 15 | 30 |
+
+- **Tools cost tokens on every call:** six tool descriptions and the skill list
+  ride along with each request, so input tokens doubled — about even with file
+  search now, and still grounded where file search is not.
+- **Right is about the same** (one question flipped, one run). The model almost
+  never chose `readPage` where it would have helped (Kafka's "topic").
+- **The measurement found a bug:** the model asked `readPage` for
+  "[JDBC Receiver Adapter]", brackets included, and got "no such page". Titles
+  are now matched without brackets.
+- What tools add is not measured by these questions: the tenant (qa.sh 9–13)
+  and skills. A question set for tool use is the next measurement to build.
+
+**Idea:** an agent is a loop plus a place where every tool call passes. Put the
+checks there — not in each tool — and adding a tool, a skill or a whole MCP
+server adds no new safety code.
+**Try:** add a skill (a Markdown file in `resources/skills`), restart, and see
+it in the prompt; or add an MCP server in `cpi.mcp.servers` with one allowed
+tool and watch `/status` list it.
+
 ---
 
 ## Phase 2 — an agent with LangChain4j
 
 Done in Steps 12–13 and folded into the one path in Step 15: the model decided
-which tools to call and in what order. Removed in Step 20 — the assistant is
-docs only. **Idea:** how context and reasoning
+which tools to call and in what order. Removed in Step 20, back in Step 21 as
+a structured agent: tools, skills, hooks and MCP. **Idea:** how context and reasoning
 combine; when an agent is worth its extra calls and cost.
 
 ## Phase 3 — knowledge that grows

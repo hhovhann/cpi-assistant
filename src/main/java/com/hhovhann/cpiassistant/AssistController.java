@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 /**
  * The assistant's whole API: ask a question, and check that it is ready.
  */
@@ -17,10 +19,12 @@ public class AssistController {
 
     private final AssistService assistService;
     private final SeedRunner seedRunner;
+    private final AgentTools agentTools;
 
-    public AssistController(AssistService assistService, SeedRunner seedRunner) {
+    public AssistController(AssistService assistService, SeedRunner seedRunner, AgentTools agentTools) {
         this.assistService = assistService;
         this.seedRunner = seedRunner;
+        this.agentTools = agentTools;
     }
 
     @GetMapping("/assist")
@@ -32,12 +36,12 @@ public class AssistController {
         return assistService.assist(question.strip());
     }
 
-    /** Ready once the popular pages are saved and the catalog titles embedded. */
+    /** Ready once the popular pages are saved and the catalog titles embedded; and which tools the agent has. */
     @GetMapping("/status")
     public Status status() {
-        return new Status(seedRunner.isReady(), seedRunner.savedPages(), seedRunner.seedPages());
+        return new Status(seedRunner.isReady(), seedRunner.savedPages(), seedRunner.seedPages(), agentTools.names());
     }
 
-    public record Status(boolean ready, int savedPages, int seedPages) {
+    public record Status(boolean ready, int savedPages, int seedPages, List<String> tools) {
     }
 }

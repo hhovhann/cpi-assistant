@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,6 +37,18 @@ class AssistServiceTest {
         }
     }
 
+    /** Knows one title, to link sources a tool returned. */
+    private static final class OneTitleCatalog extends SapHelpCatalog {
+        OneTitleCatalog() {
+            super(List.of(), null, "", "");
+        }
+
+        @Override
+        public Optional<Page> pageByTitle(String title) {
+            return Optional.of(new Page("docs/x/" + title.toLowerCase().replace(' ', '-') + "-1234567.md", title));
+        }
+    }
+
     private static EmbeddingMatch<TextSegment> passage(String title) {
         return new EmbeddingMatch<>(0.86, title, null, TextSegment.from(title + " text.",
                 dev.langchain4j.data.document.Metadata.from(KnowledgeService.TITLE, title)
@@ -43,7 +56,7 @@ class AssistServiceTest {
     }
 
     private static AssistService service(CpiAgentTest.ScriptedChatModel model, KnowledgeService knowledge) {
-        return new AssistService(knowledge, CpiAgentTest.agent(model));
+        return new AssistService(knowledge, CpiAgentTest.agent(model, knowledge), new OneTitleCatalog(), new SkillLibrary());
     }
 
     @Test
@@ -56,7 +69,7 @@ class AssistServiceTest {
 
         assertThat(model.requests).hasSize(1);
         assertThat(knowledge.calls).containsExactly("find");
-        assertThat(answer.path()).containsExactly("Database: 1 passage(s), best 0.860", "Answered");
+        assertThat(answer.path()).containsExactly("Database: 1 passage(s), best 0.860", "Answered from the passages, no tool");
         assertThat(answer.sources()).singleElement().satisfies(source -> {
             assertThat(source.title()).isEqualTo("AS4 Receiver Adapter");
             assertThat(source.cited()).isTrue();
@@ -93,12 +106,53 @@ class AssistServiceTest {
     }
 
     @Test
-    void numbersIdsAndUrlsInBracketsAreNotCitations() {
-        assertThat(AssistService.citedTitles("See [1], message [308fd65c82453608a88a13344717584f], "
+    void toolCallsAreReportedAndTheirPagesCountAsGiven() {
+        var knowledge = new CannedKnowledge(new KnowledgeService.Found(List.of(), List.of("Database: nothing above the 0.80 floor"), List.of())) {
+            @Override
+            public Found find(String query) {
+                calls.add("find");
+                return query.contains("Order_Sync")
+                        ? new Found(List.of(), List.of("Database: nothing above the 0.80 floor"), List.of())
+                        : new Found(List.of(passage("JDBC Receiver Adapter")), List.of("Database: 1 passage(s)"), List.of());
+            }
+        };
+        var model = new CpiAgentTest.ScriptedChatModel(n -> n == 1
+                ? CpiAgentTest.callTool("searchDocs", "{\"query\": \"JDBC pool timeout\"}")
+                : AiMessage.from("A pool timeout [JDBC Receiver Adapter]."));
+
+        var answer = service(model, knowledge).assist("Why did Order_Sync fail today?");
+
+        assertThat(answer.toolCalls()).singleElement().satisfies(call -> assertThat(call.tool()).isEqualTo("searchDocs"));
+        assertThat(answer.path()).contains("Tool: searchDocs {\"query\": \"JDBC pool timeout\"}", "Answered");
+        assertThat(answer.unverifiedCitations()).isEmpty();
+        assertThat(answer.sources()).singleElement().satisfies(source -> {
+            assertThat(source.title()).isEqualTo("JDBC Receiver Adapter");
+            assertThat(source.cited()).isTrue();
+            assertThat(source.url()).endsWith("jdbc-receiver-adapter-1234567.md");
+        });
+    }
+
+    @Test
+    void numbersIdsUrlsAndToolNamesInBracketsAreNotCitations() {
+        assertThat(AssistService.citedTitles("See [1], message [308fd65c82453608a88a13344717584f], [listIflows], "
                 + "the blog [https://blogs.sap.com/2021/03/16/kafka-adapter/], "
                 + "the expression payload/LogEntry[severity = 'Error'] and items[0], "
                 + "[JDBC Receiver Adapter] [Handle Errors Gracefully][Define Router]."))
                 .containsExactly("JDBC Receiver Adapter", "Handle Errors Gracefully", "Define Router");
+    }
+
+    @Test
+    void anIflowNameInTheQuestionBecomesANoteForTheModel() {
+        var knowledge = new CannedKnowledge(new KnowledgeService.Found(List.of(passage("Inspect Failed Connection Attempts")),
+                List.of("Database: 1 passage(s)"), List.of()));
+        var model = new CpiAgentTest.ScriptedChatModel(n -> AiMessage.from("Unknown_Flow is not deployed."));
+
+        var answer = service(model, knowledge).assist("Why did Unknown_Flow fail?");
+
+        assertThat(model.requests.getFirst().messages()).last().asString()
+                .contains("Note: Unknown_Flow looks like an iFlow name. Check the tenant");
+        assertThat(answer.path()).contains("Note: the question names an iFlow — the model is told to check the tenant");
+        assertThat(AssistService.iflowNote("How do I configure a JDBC adapter?")).isEmpty();
     }
 
     @Test
@@ -109,5 +163,22 @@ class AssistServiceTest {
         var answer = service(model, knowledge).assist("How do I configure the Mail adapter?");
 
         assertThat(answer.answer()).isEqualTo(AssistService.EMPTY);
+    }
+
+    @Test
+    void aModelThatNeverStopsCallingToolsGetsAnAnswerNotAnError() {
+        var knowledge = new CannedKnowledge(new KnowledgeService.Found(List.of(), List.of("Database: nothing above the 0.80 floor"), List.of())) {
+            @Override
+            public Found find(String query) {
+                calls.add("find");
+                return new Found(List.of(), List.of("Database: nothing above the 0.80 floor"), List.of());
+            }
+        };
+        var model = new CpiAgentTest.ScriptedChatModel(n -> CpiAgentTest.callTool("searchDocs", "{\"query\": \"attempt " + n + "\"}"));
+
+        var answer = service(model, knowledge).assist("Why did Order_Synk fail today?");
+
+        assertThat(answer.answer()).isEqualTo(AssistService.STOPPED);
+        assertThat(answer.path()).last().asString().startsWith("Stopped: more than " + LangChain4jConfig.MAX_TOOL_ROUND_TRIPS + " rounds");
     }
 }

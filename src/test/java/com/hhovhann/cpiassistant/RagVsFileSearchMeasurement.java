@@ -86,8 +86,17 @@ class RagVsFileSearchMeasurement {
     /**
      * @param facts    every group needs one of its words in a right answer
      * @param offTopic the right answer is a decline
+     * @param reworded the same need as an original question, asked differently —
+     *                 does the page choice hold beyond the wording it was tuned on?
      */
-    record Question(String text, List<List<String>> facts, boolean offTopic) {
+    record Question(String text, List<List<String>> facts, boolean offTopic, boolean reworded) {
+        Question(String text, List<List<String>> facts, boolean offTopic) {
+            this(text, facts, offTopic, false);
+        }
+
+        static Question reworded(String text, List<List<String>> facts) {
+            return new Question(text, facts, facts.isEmpty(), true);
+        }
     }
 
     private static final List<Question> QUESTIONS = List.of(
@@ -97,7 +106,23 @@ class RagVsFileSearchMeasurement {
             new Question("How do I configure the Kafka receiver adapter?", List.of(List.of("topic"), List.of("kafka")), false),
             new Question("How do I set up an SFTP receiver with known hosts?", List.of(List.of("known host"), List.of("ssh", "host key", "public key")), false),
             new Question("How do I connect to a database from an iFlow?", List.of(List.of("jdbc")), false),
-            new Question("What is the capital of France?", List.of(), true));
+            new Question("What is the capital of France?", List.of(), true),
+            // The same needs, asked differently: other verbs, fewer of the original keywords, one with typos.
+            Question.reworded("What do I need to set up before my integration flow can write to an Oracle database?",
+                    List.of(List.of("driver"), List.of("data source"))),
+            Question.reworded("My iFlow sometimes fails halfway through. How can I catch the failure and react to it?",
+                    List.of(List.of("exception", "error handling"), List.of("error"))),
+            Question.reworded("How do I send AS4 messages to a trading partner?",
+                    List.of(List.of("ebms3", "ebms 3"), List.of("msh", "message service handler"))),
+            Question.reworded("How can my integration flow publish messages to an Apache Kafka broker?",
+                    List.of(List.of("topic"), List.of("kafka"))),
+            Question.reworded("how to configur the kafka reciever adaptor",
+                    List.of(List.of("topic"), List.of("kafka"))),
+            Question.reworded("Where do I put the SFTP server's host key so that the connection is trusted?",
+                    List.of(List.of("known host"), List.of("ssh", "host key", "public key"))),
+            Question.reworded("Can Cloud Integration read rows from a SQL Server table?",
+                    List.of(List.of("jdbc"))),
+            Question.reworded("Which football club has won the most Champions League titles?", List.of()));
 
     /** Counts every model call and its tokens, whoever makes it. */
     static final class CountingChatModel implements ChatModel {
@@ -304,18 +329,21 @@ class RagVsFileSearchMeasurement {
         model.chat("Say OK.");   // load the model before anything is timed
 
         List<Run> runs = new ArrayList<>();
+        // -Dcpi.measure.rag-only=true: RAG alone, ~7 minutes instead of ~30 — for trying a retrieval change.
+        boolean ragOnly = Boolean.getBoolean("cpi.measure.rag-only");
         for (int i = 0; i < QUESTIONS.size(); i++) {
             Question question = QUESTIONS.get(i);
             // Alternate who goes first, so neither side always gets the warm cache.
-            if (i % 2 == 0) {
+            if (ragOnly) {
+                runs.add(rag(question));
+            } else if (i % 2 == 0) {
                 runs.add(rag(question));
                 runs.add(fileSearch(fileSearch, question));
             } else {
                 runs.add(fileSearch(fileSearch, question));
                 runs.add(rag(question));
             }
-            System.out.println(runs.get(runs.size() - 2));
-            System.out.println(runs.getLast());
+            runs.subList(Math.max(0, runs.size() - (ragOnly ? 1 : 2)), runs.size()).forEach(System.out::println);
         }
         Files.createDirectories(REPORT.getParent());
         Files.writeString(REPORT, report(runs, pages.size(), keptPages));
@@ -454,25 +482,23 @@ class RagVsFileSearchMeasurement {
                 .append("Right: the key facts are there and it is not a decline (off-topic: it declines). "
                         + "Grounded: it cites a page it was given or read, and none it wasn't. "
                         + "Model calls and tokens are counted at the model.\n\n")
+                .append("Reworded: the same need as an original question, asked differently (marked ↻).\n\n")
                 .append("| Question | Approach | Tokens in | Tokens out | Model calls | Time | Right | Grounded | Path / tool calls |\n")
                 .append("|---|---|---|---|---|---|---|---|---|\n");
         for (Run run : runs) {
             md.append(String.format(Locale.ROOT, "| %s | %s | %,d | %,d | %d | %.1f s | %s | %s | %s |%n",
-                    run.question().text(), run.approach(), run.inputTokens(), run.outputTokens(), run.modelCalls(),
+                    (run.question().reworded() ? "↻ " : "") + run.question().text(), run.approach(), run.inputTokens(), run.outputTokens(), run.modelCalls(),
                     run.millis() / 1000.0, run.correct() ? "✅" : "❌",
                     run.question().offTopic() ? "n/a" : run.grounded() ? "✅" : "—", run.note().replace("|", "/")));
         }
-        md.append("\n## Totals\n\n| Approach | Tokens in | Tokens out | Model calls | Time | Right | Grounded (docs questions) | Failed |\n"
-                + "|---|---|---|---|---|---|---|---|\n");
+        md.append("\n## Totals\n\n| Approach | Questions | Tokens in | Tokens out | Model calls | Time | Right | Grounded (docs questions) | Failed |\n"
+                + "|---|---|---|---|---|---|---|---|---|\n");
         for (String approach : List.of("RAG", "File search")) {
-            List<Run> mine = runs.stream().filter(r -> r.approach().equals(approach)).toList();
-            List<Run> docs = mine.stream().filter(r -> !r.question().offTopic()).toList();
-            md.append(String.format(Locale.ROOT, "| %s | %,d | %,d | %d | %.0f s | %d of %d | %d of %d | %d |%n", approach,
-                    mine.stream().mapToInt(Run::inputTokens).sum(), mine.stream().mapToInt(Run::outputTokens).sum(),
-                    mine.stream().mapToInt(Run::modelCalls).sum(), mine.stream().mapToLong(Run::millis).sum() / 1000.0,
-                    mine.stream().filter(Run::correct).count(), mine.size(),
-                    docs.stream().filter(Run::grounded).count(), docs.size(),
-                    mine.stream().filter(Run::failed).count()));
+            for (String set : List.of("original", "reworded", "all")) {
+                List<Run> mine = runs.stream().filter(r -> r.approach().equals(approach))
+                        .filter(r -> set.equals("all") || r.question().reworded() == set.equals("reworded")).toList();
+                md.append(totals(approach, set, mine));
+            }
         }
         md.append("\n## Answers\n");
         for (Run run : runs) {
@@ -480,5 +506,15 @@ class RagVsFileSearchMeasurement {
                     run.answer() == null ? "" : run.answer().strip()));
         }
         return md.toString();
+    }
+
+    private static String totals(String approach, String set, List<Run> mine) {
+        List<Run> docs = mine.stream().filter(r -> !r.question().offTopic()).toList();
+        return String.format(Locale.ROOT, "| %s | %s | %,d | %,d | %d | %.0f s | %d of %d | %d of %d | %d |%n", approach, set,
+                mine.stream().mapToInt(Run::inputTokens).sum(), mine.stream().mapToInt(Run::outputTokens).sum(),
+                mine.stream().mapToInt(Run::modelCalls).sum(), mine.stream().mapToLong(Run::millis).sum() / 1000.0,
+                mine.stream().filter(Run::correct).count(), mine.size(),
+                docs.stream().filter(Run::grounded).count(), docs.size(),
+                mine.stream().filter(Run::failed).count());
     }
 }
