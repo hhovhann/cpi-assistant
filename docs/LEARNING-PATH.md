@@ -829,6 +829,61 @@ About 110 more input tokens and ~3 s; the linked page is downloaded once.
 **Try:** `./scripts/qa.sh`, then again with the app started with
 `--cpi.knowledge.follow-links=false`, and compare case 1.
 
+### Step 18: RAG vs letting the model search the files
+
+**Question:** does RAG save tokens compared with a model that searches a folder
+of Markdown files itself — grep, then read — the way a coding assistant does?
+**What:** a measurement, not a feature. `RagVsFileSearchMeasurement`
+(`./gradlew measure`, report in `build/measure/rag-vs-file-search.md`) asks
+seven questions two ways, same model (Qwen3 14B), same ~1,660 SAP pages:
+- **RAG** — `AssistService`: vector search, a download on a miss, one answer.
+- **File search** — an agent with two tools and no index: `searchFiles`
+  (pages containing all keywords, best first; or a regex) and `readFile` (a
+  whole page), over all pages as local Markdown.
+
+"Right": the key facts are there and it is not a decline. "Grounded": it cites
+a page it was actually given or read. The store was reset to the ten seed
+pages first, so RAG had to download like a first run.
+**The first run was unfair — worth knowing why:** `searchFiles` matched the
+input literally. "JDBC adapter configuration" is on 0 pages; 23 contain all
+three words. The agent read nothing in 5 of 7 questions and answered from
+memory — cheap in tokens, worthless in grounding. The grader also passed an
+answer that began "I don't know". Both fixed before the numbers below.
+**Measured (one run each):**
+
+| Question | RAG tokens in / calls / time | File search tokens in / calls / time | Grounded (RAG / files) |
+|---|---|---|---|
+| Configure a JDBC adapter | **1,310** / 1 / 10 s | 4,121 / 3 / 28 s | ✅ / ✅ |
+| Handle errors in an iFlow | 1,343 / 1 / 12 s | 919 / 2 / 19 s | ✅ / — |
+| Configure the AS4 receiver | 3,988 / 3 / 28 s | 4,038 / 3 / 52 s | ✅ / — (read the wrong page) |
+| Configure the Kafka receiver | 6,401 / 5 / 82 s | 3,424 / 3 / 74 s | ✅ / ✅ |
+| SFTP with known hosts | 2,775 / 2 / 38 s | 3,186 / 3 / 56 s | ✅ / ✅ (the more exact page) |
+| Connect to a database | 2,751 / 2 / 29 s | 1,668 / 2 / 38 s | ✅ / — |
+| Capital of France | 998 / 1 / 8 s | 376 / 1 / 6 s | declines / declines |
+| **Total** | **19,566 / 15 / 205 s** | **17,732 / 17 / 271 s** | **6 of 6 / 3 of 6** |
+
+- **Tokens are about even overall.** The 43× saving of Step 10b was against
+  putting *all* docs in the prompt — not against a model that searches.
+- **A store hit is where RAG saves:** JDBC was 3× cheaper and 3× faster —
+  one call, three passages. RAG's cost is in **misses**: Kafka took five calls
+  (the "I don't know" retry, the described-tool retry, a download). That is
+  where to optimise.
+- **The real difference is grounding:** 6 of 6 RAG answers cite pages it was
+  given; file search 3 of 6 — it answered from snippets, from memory, or from
+  the wrong page, and invented a help.sap.com link.
+- **Keyword search found the more exact page** for "known hosts" — the
+  argument for hybrid search (keywords + vectors) inside RAG.
+
+**Caveats:** one run, seven questions, a keyword grader ("handle errors"
+failed on both sides for a missing word), a small local model — a stronger
+model searches and reads much better — and a simple file-search tool.
+**Idea:** measure the question you are actually asked. "RAG saves tokens" is
+true against stuffing the prompt, roughly even against a searching agent — and
+what RAG really buys here is predictable, grounded answers.
+**Try:** `./gradlew measure -Dcpi.chat.provider=anthropic` (needs
+`ANTHROPIC_API_KEY`, paid) and see how a stronger model changes the
+file-search column.
+
 ---
 
 ## Phase 2 — an agent with LangChain4j

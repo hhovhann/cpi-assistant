@@ -57,5 +57,26 @@ dependencies {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags("measure")
+    }
+}
+
+// Measurements against the live models (LM Studio, pgvector, internet), not tests:
+//   ./gradlew measure
+//   ./gradlew measure -Dcpi.chat.provider=anthropic     (with ANTHROPIC_API_KEY — paid)
+tasks.register<Test>("measure") {
+    description = "Runs the measurements tagged 'measure' against the live models."
+    group = "verification"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    useJUnitPlatform {
+        includeTags("measure")
+    }
+    testLogging.showStandardStreams = true
+    outputs.upToDateWhen { false }
+    // Gradle runs tests in a separate JVM; pass every -Dcpi.* setting through.
+    System.getProperties().stringPropertyNames()
+        .filter { it.startsWith("cpi.") }
+        .forEach { systemProperty(it, System.getProperty(it)) }
 }

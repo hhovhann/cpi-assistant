@@ -200,6 +200,8 @@ export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY (and optionally OPENAI_M
 
 46 tests, fakes for the models and for GitHub: no LM Studio and no internet.
 Answer quality against the real model: `./scripts/qa.sh` (above).
+RAG compared with a model that searches the files itself: `./gradlew measure`
+(LM Studio, pgvector, internet; ~15 min; report in `build/measure/`).
 `PgVectorStoreTest` starts a throwaway pgvector container, so it needs Docker.
 
 ## Endpoints
@@ -289,6 +291,7 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 | ✅ | 15 | One assistant: one endpoint, official SAP docs as the only source, citations checked |
 | ✅ | 16 | Finding the right page: catalog summaries, exact identifiers, "Configure …" preference, readable tables |
 | ✅ | 17 | Page graph (graph RAG, one hop) next to the vectors; `scripts/qa.sh`; tenant questions stay tenant questions |
+| ✅ | 18 | Measured: RAG vs a model that searches the files itself — tokens about even, grounding 6 of 6 vs 3 of 6 |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

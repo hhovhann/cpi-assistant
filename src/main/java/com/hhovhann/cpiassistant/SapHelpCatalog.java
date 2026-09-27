@@ -123,6 +123,11 @@ public class SapHelpCatalog {
         return pagesById.size();
     }
 
+    /** Every page in the catalog. */
+    public List<Page> pages() {
+        return List.copyOf(pagesById.values());
+    }
+
     public Optional<Page> page(String id) {
         return Optional.ofNullable(id == null ? null : pagesById.get(id.trim()));
     }
