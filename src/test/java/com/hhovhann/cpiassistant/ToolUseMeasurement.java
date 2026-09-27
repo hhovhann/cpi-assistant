@@ -29,6 +29,7 @@ import java.util.Locale;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = {
         "server.port=18081",
         "cpi.tenant.fake=true",
+        "cpi.agent.skills-enabled=true",
         "cpi.tenant.base-url=http://localhost:18081/fake-cpi/api/v1",
         "cpi.store.type=pgvector",
         "cpi.store.pgvector.table=cpi_chunks_measure",
@@ -110,9 +111,9 @@ class ToolUseMeasurement {
     void measure() throws Exception {
         // The same agent without skills: the same tools, an empty skill library.
         SkillLibrary none = new SkillLibrary(List.of());
-        AgentTools toolsWithoutSkills = new AgentTools(docs, none, tenantTools, tenant, mcp, hooks);
+        AgentTools toolsWithoutSkills = new AgentTools(docs, none, tenantTools, tenant, mcp, hooks, false);
         AssistService withoutSkills = new AssistService(knowledge,
-                new LangChain4jConfig().cpiAgent(model, toolsWithoutSkills), catalog, none);
+                new LangChain4jConfig().cpiAgent(model, toolsWithoutSkills), catalog);
 
         model.chat("Say OK.");   // load the model before anything is timed
 

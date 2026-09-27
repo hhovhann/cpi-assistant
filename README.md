@@ -55,10 +55,11 @@ flowchart TB
      `loadSkill`; with a tenant configured, `listIflows`, `getProblemMessages`,
      `getErrorDetails` (read-only); and the allowed tools of any MCP server in
      `cpi.mcp.servers`.
-   - **Skills:** playbooks in [`resources/skills`](src/main/resources/skills)
-     — troubleshoot a failed message, configure an adapter, check tenant
-     health. The prompt lists them in one line each; the model loads one when
-     it needs it.
+   - **Skills** (opt-in, `cpi.agent.skills-enabled=true`): playbooks in
+     [`resources/skills`](src/main/resources/skills) — troubleshoot a failed
+     message, configure an adapter, check tenant health — listed in the
+     `loadSkill` tool, loaded when needed. Off by default: with the local 14B
+     model they were never loaded and cost right answers (Steps 22–23).
    - **Hooks:** every tool call, ours or an MCP server's, passes the same
      checks — arguments guarded before, results limited after, every call
      logged.
@@ -259,6 +260,7 @@ and can be overridden on the command line (`--name=value`).
 | `cpi.store.pgvector.*` | localhost:5433, db/user/password `cpi`, table `cpi_chunks`, 768 dims | Connection and table |
 | `langchain4j.open-ai.embedding-model.*` | LM Studio / nomic v1.5 | Embedding model, plus nomic's `query-prefix` / `document-prefix` |
 | `cpi.tenant.base-url`, `token-url`, `client-id`, `client-secret` | from `CPI_TENANT_URL`, `CPI_TENANT_TOKEN_URL`, `CPI_TENANT_CLIENT_ID`, `CPI_TENANT_CLIENT_SECRET`; empty | A real tenant's OData API and OAuth client credentials (from its service key). Empty: no tenant tools |
+| `cpi.agent.skills-enabled` | `false` | Offer `loadSkill` and the skills in `resources/skills`; measured worse with Qwen3 14B, meant for stronger models |
 | `cpi.mcp.servers` | none | MCP servers: `name`, `command` (stdio) or `url` (+ `headers`), and `allowed-tools` — only those reach the model |
 
 > The score thresholds and the prefixes are tuned for nomic-embed-text.
@@ -319,6 +321,7 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 | ✅ | 20 | Simpler: the two best SAP pages first, then the store, one model call — graph and retries removed; a cleaner fix (SAP's `<placeholders>`); measured on 15 questions (8 reworded): RAG 12 of 15 right, 13 of 13 grounded, half the tokens of file search |
 | ✅ | 21 | An agent like a small Claude Code: `readPage`, `searchDocs`, skills (`loadSkill`), tenant tools (OAuth; fake only in `dev`), MCP client with allowlists, hooks around every tool call |
 | ✅ | 22 | Measured tool use: 10 tenant and docs questions against planted failures, with vs without skills — with Qwen3 14B the model never loaded a skill; 9 of 10 right without, 7 of 10 with |
+| ✅ | 23 | Skills listed in the `loadSkill` tool instead of the prompt — still never loaded by Qwen3 14B (7 vs 9 of 10 right, second run); skills are now opt-in (`cpi.agent.skills-enabled`) |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

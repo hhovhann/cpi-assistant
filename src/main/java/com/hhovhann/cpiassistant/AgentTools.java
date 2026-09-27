@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
@@ -25,8 +26,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Every tool the agent can call, in one place: the documentation tools and
- * skills always; the tenant tools when a tenant is configured; and the
+ * Every tool the agent can call, in one place: the documentation tools
+ * always; skills when {@code cpi.agent.skills-enabled}; the tenant tools when
+ * a tenant is configured; and the
  * allowed tools of each MCP server in {@code cpi.mcp.servers}. Each call goes
  * through the {@link ToolHook}s, whatever its source — so a check or a log
  * line is written once and covers everything.
@@ -43,10 +45,13 @@ public class AgentTools implements DisposableBean {
 
     @Autowired
     public AgentTools(CpiDocsTool docs, SkillLibrary skills, CpiTenantTools tenantTools, CpiTenantClient tenant,
-                      McpProperties mcp, List<ToolHook> hooks) {
+                      McpProperties mcp, List<ToolHook> hooks,
+                      @Value("${cpi.agent.skills-enabled:false}") boolean skillsEnabled) {
         this.hooks = hooks;
         addBuiltin(docs);
-        addBuiltin(skills);
+        if (skillsEnabled) {
+            addSkills(skills);
+        }
         if (tenant.isConfigured()) {
             addBuiltin(tenantTools);
         } else {
@@ -83,6 +88,25 @@ public class AgentTools implements DisposableBean {
         for (Method method : toolObject.getClass().getDeclaredMethods()) {
             if (method.isAnnotationPresent(Tool.class)) {
                 add(ToolSpecifications.toolSpecificationFrom(method), new DefaultToolExecutor(toolObject, method), BUILTIN);
+            }
+        }
+    }
+
+    /**
+     * loadSkill, with the skills listed in its own description. Measured
+     * (Step 22): with the list in the system prompt, Qwen3 14B never called
+     * loadSkill and once named a skill as if it were a tool; a tool's
+     * description sits next to the tool. No skills: no loadSkill.
+     */
+    void addSkills(SkillLibrary skills) {
+        if (skills.summary().isEmpty()) {
+            return;
+        }
+        for (Method method : skills.getClass().getDeclaredMethods()) {
+            if (method.isAnnotationPresent(Tool.class)) {
+                ToolSpecification spec = ToolSpecifications.toolSpecificationFrom(method);
+                spec = spec.toBuilder().description(spec.description() + "\nSkills:\n" + skills.summary()).build();
+                add(spec, new DefaultToolExecutor(skills, method), BUILTIN);
             }
         }
     }

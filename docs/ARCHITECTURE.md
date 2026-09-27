@@ -12,7 +12,7 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `AssistService` | The one path: knowledge → agent (tools as the model needs them) → citation check; records the path | Per question |
 | `KnowledgeService` | Finds documentation: the two best SAP Help pages for the question (downloaded and saved the first time) and their best passages, plus the best passages in the store. No model call | Per question |
 | `CpiAgent` | The agent: an interface AiServices implements; gets question + passages + skills list, runs the tool loop | Per question |
-| `AgentTools` | Every tool in one place — docs, skills, tenant (when configured), MCP servers' allowed tools — each call wrapped in the hooks | Built once, per tool call |
+| `AgentTools` | Every tool in one place — docs, skills (when enabled), tenant (when configured), MCP servers' allowed tools — each call wrapped in the hooks | Built once, per tool call |
 | `ToolHook`, `ToolHooks` | Before/after every tool call: argument guard, result limit, audit log | Per tool call |
 | `CpiDocsTool` | `@Tool searchDocs`, `readPage` — a whole SAP catalog page, in parts of 12,000 characters | Per tool call |
 | `SkillLibrary` | Skills from `resources/skills/*.md`; the one-line list for the prompt, `@Tool loadSkill` | Per tool call |
@@ -76,9 +76,13 @@ each MCP server — as one map of specification → executor, and wraps every
 executor in the hooks. AiServices gets that map. Where a tool comes from does
 not matter to the loop, the checks or the log.
 
-**Skills keep the prompt short.** The system prompt lists each skill in one
-line; the full playbook arrives only when the model calls `loadSkill`. A new
-skill is a Markdown file with a name and a description on top — no code.
+**Skills are opt-in, and listed in their own tool.** The `loadSkill` tool's
+description lists each skill in one line (`AgentTools.addSkills`); the full
+playbook arrives only when the model calls it. A new skill is a Markdown file
+with a name and a description on top — no code. Off by default
+(`cpi.agent.skills-enabled`): measured twice with Qwen3 14B, the model never
+loaded a skill, and offering `loadSkill` cost two of ten right answers on
+tenant questions — whether the list sat in the system prompt or in the tool.
 
 **Hooks see every call.** Before: the argument guard refuses arguments over
 2,000 characters or with control characters — the model gets the reason as the

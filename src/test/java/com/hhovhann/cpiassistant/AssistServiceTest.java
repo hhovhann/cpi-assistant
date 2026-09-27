@@ -56,7 +56,7 @@ class AssistServiceTest {
     }
 
     private static AssistService service(CpiAgentTest.ScriptedChatModel model, KnowledgeService knowledge) {
-        return new AssistService(knowledge, CpiAgentTest.agent(model, knowledge), new OneTitleCatalog(), new SkillLibrary());
+        return new AssistService(knowledge, CpiAgentTest.agent(model, knowledge), new OneTitleCatalog());
     }
 
     @Test

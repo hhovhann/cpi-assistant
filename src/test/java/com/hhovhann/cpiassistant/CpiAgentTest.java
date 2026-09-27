@@ -77,13 +77,13 @@ class CpiAgentTest {
         // The tenant tools are offered but never called in these tests.
         var tenant = new CpiTenantClient("http://localhost:1/unused");
         var tools = new AgentTools(new CpiDocsTool(knowledge, null, null), new SkillLibrary(), new CpiTenantTools(tenant),
-                tenant, new McpProperties(List.of()), List.of());
+                tenant, new McpProperties(List.of()), List.of(), true);
         return new LangChain4jConfig().cpiAgent(model, tools);
     }
 
     /** The agent's call with no skills and no note. */
     static Result<String> ask(CpiAgent agent, String passages, String question) {
-        return agent.answer("", passages, "", question);
+        return agent.answer(passages, "", question);
     }
 
     @Test

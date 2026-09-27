@@ -18,10 +18,10 @@ import java.util.regex.Pattern;
 /**
  * Skills: playbooks for recurring kinds of question, as Markdown in
  * {@code resources/skills}. Each file starts with a name and a one-line
- * description. The system prompt lists only those lines; the model loads a
- * full playbook with {@code loadSkill} when a question needs it — so the
- * prompt stays short however many skills there are. The same idea as skills
- * in Claude Code.
+ * description. The {@code loadSkill} tool's description lists only those
+ * lines ({@link AgentTools#addSkills}); the model loads a full playbook when a
+ * question needs it — so the request stays short however many skills there
+ * are. The same idea as skills in Claude Code.
  */
 @Component
 public class SkillLibrary {
@@ -67,12 +67,14 @@ public class SkillLibrary {
         return new Skill(m.group(1), m.group(2), m.group(3).strip());
     }
 
-    /** One line per skill, for the system prompt. */
+    /** One line per skill, for the loadSkill tool's description. */
     public String summary() {
         return String.join("\n", skills.stream().map(s -> "- " + s.name() + ": " + s.description()).toList());
     }
 
-    @Tool("Loads a skill: step-by-step instructions for a kind of question. Load it before you start, then follow it.")
+    @Tool("""
+            Loads a skill: step-by-step instructions for a kind of question. When the question \
+            matches a skill below, call this first, then follow the instructions.""")
     public String loadSkill(@P("The skill name, exactly as listed") String name) {
         return skills.stream().filter(s -> s.name().equals(name.strip())).findFirst()
                 .map(s -> "Skill " + s.name() + ":\n" + s.body())

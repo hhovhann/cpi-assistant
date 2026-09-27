@@ -57,13 +57,11 @@ public class AssistService {
     private final KnowledgeService knowledge;
     private final CpiAgent agent;
     private final SapHelpCatalog catalog;
-    private final SkillLibrary skills;
 
-    public AssistService(KnowledgeService knowledge, CpiAgent agent, SapHelpCatalog catalog, SkillLibrary skills) {
+    public AssistService(KnowledgeService knowledge, CpiAgent agent, SapHelpCatalog catalog) {
         this.knowledge = knowledge;
         this.agent = agent;
         this.catalog = catalog;
-        this.skills = skills;
     }
 
     /**
@@ -99,7 +97,7 @@ public class AssistService {
         Result<String> result;
         boolean stopped = false;
         try {
-            result = agent.answer(skills.summary(), KnowledgeService.format(found.passages()), note, question);
+            result = agent.answer(KnowledgeService.format(found.passages()), note, question);
         } catch (RuntimeException e) {
             if (!String.valueOf(e.getMessage()).contains("maxToolCallingRoundTrips")) {
                 throw e;

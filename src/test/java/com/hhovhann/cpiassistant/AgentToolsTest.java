@@ -103,4 +103,18 @@ class AgentToolsTest {
                     default -> null;
                 });
     }
+
+    @Test
+    void loadSkillListsEverySkillInItsOwnDescriptionAndIsOfferedOnlyWithSkills() {
+        var tools = new AgentTools(Map.of(), List.of());
+        tools.addSkills(new SkillLibrary());
+
+        ToolSpecification loadSkill = tools.tools().keySet().stream().filter(s -> s.name().equals("loadSkill")).findFirst().orElseThrow();
+        assertThat(loadSkill.description()).contains("Skills:\n- check-tenant-health: ", "- configure-adapter: ", "- troubleshoot-failed-message: ");
+        assertThat(run(tools, "loadSkill", "{\"name\":\"check-tenant-health\"}")).startsWith("Skill check-tenant-health:");
+
+        var none = new AgentTools(Map.of(), List.of());
+        none.addSkills(new SkillLibrary(List.of()));
+        assertThat(none.names()).isEmpty();
+    }
 }

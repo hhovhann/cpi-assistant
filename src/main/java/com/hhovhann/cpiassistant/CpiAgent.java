@@ -32,8 +32,8 @@ public interface CpiAgent {
             tenant. A question about a specific iFlow or message, or about what happened or is \
             happening, is about the tenant: check it with these tools — the documentation \
             cannot know what happened.
-            - loadSkill: step-by-step instructions for a kind of question. Skills:
-            {{skills}}
+            - loadSkill (when offered): step-by-step instructions for a kind of question; its \
+            description lists the skills. Call it first when the question matches one.
             Call tools one step at a time: when a call needs a value from another tool's result \
             (a message id, an error text), wait for that result. Never pass a placeholder.
             Answer only from the passages and tool results, never from your own knowledge.
@@ -50,6 +50,5 @@ public interface CpiAgent {
 
             {{note}}
             Question: {{question}}""")
-    Result<String> answer(@V("skills") String skills, @V("passages") String passages,
-                          @V("note") String note, @V("question") String question);
+    Result<String> answer(@V("passages") String passages, @V("note") String note, @V("question") String question);
 }

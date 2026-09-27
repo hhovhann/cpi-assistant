@@ -1134,6 +1134,37 @@ not with a 14B one.
 **Try:** `./gradlew measure --tests '*ToolUse*' -Dcpi.chat.provider=anthropic`
 (needs `ANTHROPIC_API_KEY`, paid) — does a stronger model load the skills?
 
+### Step 23: Skills in their own tool — and off by default
+
+**Why:** Step 22 found that Qwen3 14B never loaded a skill listed in the
+system prompt. A tool's description sits next to the tool; maybe the model
+reads it there.
+**What:** the skill list moved from the system prompt into the `loadSkill`
+description (`AgentTools.addSkills`); with no skills, `loadSkill` is not
+offered at all. Then re-measured.
+
+| | With skills, list in the prompt (Step 22) | With skills, list in the tool | Without skills (two runs) |
+|---|---|---|---|
+| Right | 7 of 10 | 7 of 10 | 9 · 9 of 10 |
+| Expected tools called | 8 of 10 | 8 of 10 | 9 · 8 of 10 |
+| Skills loaded | 0 | 0 | — |
+
+- Still **zero skills loaded**. With `loadSkill` offered, the model more often
+  answers tenant questions from unrelated documentation passages instead of
+  calling the tenant tools — "Order_Synk" got guesses from certificate pages;
+  "is anything failing?" got "you would need getProblemMessages or the
+  check-tenant-health skill" and no call.
+- **Decision:** skills are opt-in, `cpi.agent.skills-enabled=false` by default.
+  The code and the playbooks stay; the measurement turns them on for its "with
+  skills" side. (The demo video was recorded with skills on, and the model did
+  load one there: it happens, just not reliably.)
+
+**Idea:** a feature is a hypothesis until measured. Two runs, the same
+direction, and a mechanism you can read in the answers — that is enough to
+change a default, not enough to delete the code.
+**Try:** `./gradlew measure --tests '*ToolUse*' -Dcpi.chat.provider=anthropic`
+— with a stronger model, do skills start to pay off?
+
 ---
 
 ## Phase 2 — an agent with LangChain4j
