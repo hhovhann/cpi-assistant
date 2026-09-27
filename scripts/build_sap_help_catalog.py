@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Builds src/main/resources/sap-help/catalog.tsv from SAP's documentation repository.
+"""Builds the SAP Help catalog and page-link graph from SAP's documentation repository.
+
+src/main/resources/sap-help/catalog.tsv — the pages;
+src/main/resources/sap-help/links.tsv   — which page links to which (the graph).
 
 One line per page of docs/ISuite_Integrations_APIs in github.com/SAP-docs/btp-integration-suite
 (the Markdown source of help.sap.com, CC BY 4.0, (c) SAP SE):
@@ -9,6 +12,9 @@ One line per page of docs/ISuite_Integrations_APIs in github.com/SAP-docs/btp-in
 - title:   the page's first heading (falls back to the file name)
 - summary: the first sentence under that heading, which SAP writes as a short description.
            It is what lets "AS4" find "Configure Receiver Channel with ebMS3 Push".
+
+links.tsv: one line per link between two catalog pages,  from_id <TAB> to_id,
+where an id is the file name without .md. Links to other sites are left out.
 
 Usage:  python3 scripts/build_sap_help_catalog.py [commit-sha]     (default: current main)
 Downloads every page once (~1,700 requests, a few minutes); needs internet, no token.
@@ -24,6 +30,8 @@ import urllib.request
 REPO = "SAP-docs/btp-integration-suite"
 FOLDER = "docs/ISuite_Integrations_APIs/"
 OUT = "src/main/resources/sap-help/catalog.tsv"
+LINKS_OUT = "src/main/resources/sap-help/links.tsv"
+LINK = re.compile(r"\[[^\]]+]\(([^)\s#]+\.md)(?:#[^)]*)?\)")
 SKIP = ("index", "readme", "what-s-new")
 MAX_SUMMARY = 240
 
@@ -53,12 +61,17 @@ def slug_title(path):
     return " ".join(w.capitalize() for w in slug.split("-"))
 
 
+def page_id(path):
+    return path.rsplit("/", 1)[-1][:-3]
+
+
 def describe(path, sha):
     try:
         markdown = get(f"https://raw.githubusercontent.com/{REPO}/{sha}/{path}")
     except Exception as e:  # a page we cannot read keeps its file-name title
         print(f"  ! {path}: {e}", file=sys.stderr)
-        return path, slug_title(path), ""
+        return path, slug_title(path), "", []
+    targets = sorted({page_id(target) for target in LINK.findall(markdown) if "://" not in target})
     title, summary, after_heading = None, "", False
     for line in markdown.splitlines():
         s = line.strip()
@@ -74,7 +87,7 @@ def describe(path, sha):
             break
     if len(summary) > MAX_SUMMARY:
         summary = summary[:MAX_SUMMARY].rsplit(" ", 1)[0] + " …"
-    return path, title or slug_title(path), summary
+    return path, title or slug_title(path), summary, targets
 
 
 def main():
@@ -90,9 +103,19 @@ def main():
         f.write(f"# (the Markdown source of help.sap.com, CC BY 4.0, (c) SAP SE). Folder {FOLDER.rstrip('/')}\n")
         f.write(f"# at commit {sha}. Built by scripts/build_sap_help_catalog.py.\n")
         f.write("# Columns: path <TAB> title (the page heading) <TAB> summary (its first sentence)\n")
-        for path, title, summary in rows:
+        for path, title, summary, _ in rows:
             f.write(f"{path}\t{title}\t{summary}\n")
     print(f"wrote {len(rows)} rows, {sum(1 for r in rows if r[2])} with a summary", file=sys.stderr)
+
+    known = {page_id(path) for path, *_ in rows}
+    edges = sorted({(page_id(path), target) for path, _, _, targets in rows for target in targets
+                    if target in known and target != page_id(path)})
+    with open(LINKS_OUT, "w", encoding="utf-8") as f:
+        f.write(f"# Links between the pages of catalog.tsv, at commit {sha}.\n")
+        f.write("# Built by scripts/build_sap_help_catalog.py. Columns: from_id <TAB> to_id\n")
+        for source, target in edges:
+            f.write(f"{source}\t{target}\n")
+    print(f"wrote {len(edges)} links between {len({e[0] for e in edges} | {e[1] for e in edges})} pages", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -40,8 +40,18 @@ public class AssistService {
     static final String STOPPED = "I could not finish: this question needed more tool calls than allowed. "
             + "Ask more precisely — for example with the exact iFlow name.";
 
-    /** [Page Title] — a citation. Numbers and message ids in brackets are not. */
-    private static final Pattern CITATION = Pattern.compile("\\[([^\\[\\]\\n]{3,150})]");
+    /**
+     * [Page Title] — a citation. Not one: a bracket right after a word or a
+     * slash, which is code (payload/LogEntry[severity = 'Error']), or one
+     * holding "=" or quotes. Numbers and ids are filtered in citedTitles.
+     */
+    private static final Pattern CITATION = Pattern.compile("(?<![\\w/])\\[([^\\[\\]\\n=\"'`]{3,150})]");
+    private static final Pattern TOOL_NAME = Pattern.compile("\\b(listIflows|getProblemMessages|getErrorDetails|searchDocs)\\b");
+    static final String CALL_DONT_DESCRIBE =
+            "\nNote: call the tools you need. Do not describe a tool call in your answer — make it.\n";
+
+    /** Order_Sync, Payment_Status_Poll: words joined by underscores — how iFlows are named. */
+    private static final Pattern IFLOW_NAME = Pattern.compile("\\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+\\b");
     private static final Pattern RETURNED_TITLE = Pattern.compile("(?m)^\\[([^\\]\\n]+)]$");
     private static final int EXCERPT_LENGTH = 160;
 
@@ -84,7 +94,12 @@ public class AssistService {
 
         KnowledgeService.Found found = knowledge.find(question);
         path.addAll(found.steps());
-        Result<String> result = ask(question, found, path, toolCalls, tokens);
+        Result<String> result = ask(question, found, "", path, toolCalls, tokens);
+
+        if (describesToolInsteadOfCalling(result)) {
+            path.add("The model described a tool call instead of making it: asking again");
+            result = ask(question, found, CALL_DONT_DESCRIBE, path, toolCalls, tokens);
+        }
 
         if (KnowledgeService.isIDontKnow(result.content()) && found.downloaded().isEmpty() && !found.passages().isEmpty()) {
             path.add("The passages did not answer it: asking SAP Help");
@@ -92,7 +107,7 @@ public class AssistService {
             path.addAll(more.steps());
             if (!more.downloaded().isEmpty()) {
                 found = more;
-                result = ask(question, found, path, toolCalls, tokens);
+                result = ask(question, found, "", path, toolCalls, tokens);
             }
         }
 
@@ -110,11 +125,11 @@ public class AssistService {
                 System.currentTimeMillis() - start);
     }
 
-    private Result<String> ask(String question, KnowledgeService.Found found, List<String> path,
+    private Result<String> ask(String question, KnowledgeService.Found found, String extraNote, List<String> path,
                                List<ToolCall> toolCalls, int[] tokens) {
         Result<String> result;
         try {
-            result = agent.answer(KnowledgeService.format(found.passages()), question);
+            result = agent.answer(KnowledgeService.format(found.passages()), notes(question, path) + extraNote, question);
         } catch (RuntimeException e) {
             if (!String.valueOf(e.getMessage()).contains("maxToolCallingRoundTrips")) {
                 throw e;
@@ -135,6 +150,38 @@ public class AssistService {
         }
         path.add(result.toolExecutions().isEmpty() ? "Answered from the passages, no tool" : "Answered");
         return result;
+    }
+
+    /**
+     * A small model sometimes writes "use getProblemMessages with …" as its
+     * answer instead of calling the tool ("Why did Unknown_Flow fail?", every
+     * run). An answer that names a tool while no tool ran gets one more try.
+     */
+    static boolean describesToolInsteadOfCalling(Result<String> result) {
+        return result.toolExecutions().isEmpty() && result.content() != null
+                && TOOL_NAME.matcher(result.content()).find();
+    }
+
+    /**
+     * A hint, not a router: a name shaped like an iFlow's makes the model check
+     * the tenant. Without it, once the store held a page about failed
+     * connections, "Why did Unknown_Flow fail?" was answered from that page and
+     * the tenant was never asked — even with the rule in the system prompt.
+     */
+    static String notes(String question, List<String> path) {
+        Matcher m = IFLOW_NAME.matcher(question);
+        Set<String> names = new LinkedHashSet<>();
+        while (m.find()) {
+            names.add(m.group());
+        }
+        if (names.isEmpty()) {
+            return "";
+        }
+        String list = String.join(", ", names);
+        if (path != null && path.stream().noneMatch(step -> step.startsWith("Note:"))) {
+            path.add("Note: " + list + " looks like an iFlow name — the model is told to check the tenant");
+        }
+        return "\nNote: " + list + " looks like an iFlow name. Check the tenant with the tools before answering.\n";
     }
 
     /** Pages the model saw, by title: the passages it was given, then any searchDocs returned. */

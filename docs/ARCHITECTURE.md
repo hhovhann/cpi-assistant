@@ -10,12 +10,13 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 |---|---|---|
 | `AssistController` | `GET /assist` — the whole API — and `GET /status` | Per question |
 | `AssistService` | The one path: knowledge → assistant → one SAP Help retry on "I don't know" → citation check; records the path | Per question |
-| `KnowledgeService` | Finds documentation: the store, or on a miss the best SAP Help page — downloaded, saved, searched again. No model call | Per question, per `searchDocs` |
+| `KnowledgeService` | Finds documentation: the store, or on a miss the best SAP Help page — downloaded, saved, searched again; then one hop through the page graph. No model call | Per question, per `searchDocs` |
 | `CpiAgent` | The assistant: an interface AiServices implements; gets question + passages + tools, runs the tool loop | Per question |
 | `CpiDocsTool` | `@Tool searchDocs` — more documentation, through `KnowledgeService` | Per tool call |
 | `CpiTenantTools` | `@Tool listIflows`, `getProblemMessages` (FAILED, RETRY, ESCALATED), `getErrorDetails` — read-only | Per tool call |
 | `CpiTenantClient` | HTTP client for the CPI OData API (`cpi.tenant.base-url`) | Per tool call |
 | `SapHelpCatalog` | The ~1,660 SAP pages that may be downloaded (`sap-help/catalog.tsv`: path, heading, first sentence); finds a page by meaning, then ranks: exact identifiers, "Configure …" preference | Entries embedded once per start |
+| `PageGraph` | Which SAP page links to which (`sap-help/links.tsv`, ~3,400 edges) | Loaded once |
 | `SapHelpClient` | Downloads one page as Markdown from SAP's GitHub docs repository; strips comments, anchors, images, links; HTML tables → one line per row | Per download |
 | `IngestionPipeline` | Splits a page into chunks, embeds each together with its page title, stores them | Per download |
 | `RetrievalService` | Embeds a question, returns the closest chunks above the floor; `searchWithin` one page | Per search |
@@ -69,12 +70,37 @@ real CPI questions 0.83–0.95, off-topic ones up to 0.80 ("capital of France"
 0.769, "tune JVM garbage collection" 0.800). One page per miss: the
 second-best title was usually a neighbour (AS2 for AS4).
 
+**One hop through the page graph, next to the vectors.** SAP pages link to
+each other; `links.tsv` keeps those links as edges, built with the catalog.
+After retrieval, `KnowledgeService.followLink` looks at pages a passage's own
+page links to *and* the passage names ("see Configure JDBC Drivers"), scores
+them against the question, and reads the best one if it reaches 0.82 — the
+same bar as a download. Not "the most similar linked page": the JDBC page links
+to a dozen database-specific pages, and "JDBC for MariaDB" (0.881) came out on
+top while the prerequisite the passage names, "Configure JDBC Drivers"
+(0.876), is what the question needs. With the hop, the JDBC answer gives the
+driver steps from that page; without it, it only names the page.
+`cpi.knowledge.follow-links=false` switches it off to compare.
+
+**A name shaped like an iFlow's is passed on as a hint.** Once the store held a
+page about failed connections, "Why did Unknown_Flow fail?" was answered from
+it and the tenant never asked — a system-prompt rule did not change that.
+`AssistService.notes` adds "Unknown_Flow looks like an iFlow name. Check the
+tenant" to the message and to the path. A hint, not a router: the model still
+decides.
+
+**A tool call written as text gets one more try.** Qwen3 14B sometimes answers
+"use getProblemMessages with iflowName=…" instead of calling it. An answer that
+names a tool while no tool ran is asked once more, with "make the call, do not
+describe it"; the path says so.
+
 **"I don't know" gets one more chance.** Passages above the floor can still be
 the wrong ones — AS2 chunks score 0.85 for an AS4 question. If the answer is
 "I don't know" and nothing was downloaded yet, `AssistService` asks SAP Help
 once and answers again if a page came back.
 
-**Citations are checked in code.** Passages are labelled by page title, and
+**Citations are checked in code.** A bracket right after a word or a slash is
+code, not a citation (`payload/LogEntry[severity = 'Error']`). Passages are labelled by page title, and
 the model is told to cite `[Title]` only from what it was given. `AssistService`
 collects every title the model saw — the passages, and any `searchDocs`
 result — and returns cited titles outside that set as `unverifiedCitations`;
@@ -212,8 +238,9 @@ sees `search_document:`.
 
 | Test | What it checks | Needs |
 |---|---|---|
-| `AssistServiceTest` | The one path with a scripted model: a database hit is one call with no tool; a cited page never given is flagged, a page named inside a passage is not; "I don't know" on close-but-wrong passages asks SAP Help once and answers again; tool calls are reported and their pages count as given; numbers and ids are not citations | Nothing — fakes |
+| `AssistServiceTest` | The one path with a scripted model: a database hit is one call with no tool; a cited page never given is flagged, a page named inside a passage is not; an iFlow name becomes a note; a tool call written as text gets one more try; the tool-call limit gives an answer, not an error; "I don't know" on close-but-wrong passages asks SAP Help once and answers again; tool calls are reported and their pages count as given; numbers and ids are not citations | Nothing — fakes |
 | `KnowledgeServiceTest` | A local server plays GitHub: a miss downloads the best page, strips links and images, saves it; the second time the store answers; off-topic downloads nothing; refresh after max-age without duplicates; a moved page; passages labelled by title; the real catalog loads | Nothing — local server, bag-of-words embeddings |
+| `KnowledgeServiceTest` (graph) | A page the passage names and links to is followed and saved; a linked page it does not name is not; the switch turns it off; the real graph loads | Nothing |
 | `SapHelpCatalogTest` | The ranking rules with real titles and measured scores: AS4 is not AS2, a clearly worse "Configure …" page does not win, an identifier no page has changes nothing | Nothing |
 | `SapHelpClientTest` | Cleaning, on real SAP shapes: an HTML table becomes `Field \| Description` rows; comments, anchors and images go, link text stays | Nothing |
 | `CpiAgentTest` | The tool loop: passages arrive in the message, all four tools offered, a docs question needs no tool, `searchDocs` runs with the model's query and its result goes back, the round-trip limit | Nothing — scripted model |

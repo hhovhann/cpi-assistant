@@ -84,6 +84,10 @@ cpi:
     # One page per miss: the second-best title was usually a neighbour (AS2 for
     # an AS4 question) — a download and 50 chunks for nothing.
     max-pages-per-miss: 1
+    # One hop through the page graph (sap-help/links.tsv): when a passage names a
+    # page its own page links to, read the best such page if it matches the
+    # question at least min-title-score. false = vectors only, for comparison.
+    follow-links: true
     # Saved at startup (unless already saved and fresh), so common questions
     # never wait for a download. Page ids from sap-help/catalog.tsv.
     seed-on-startup: true

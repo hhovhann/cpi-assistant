@@ -27,8 +27,11 @@ public interface CpiAgent {
             not call a tool.
             Tools, only when needed:
             - listIflows, getProblemMessages, getErrorDetails: the live CPI tenant — what is \
-            deployed, which messages failed or are being retried, and why. Use them for \
-            questions about what is happening on the tenant.
+            deployed, which messages failed or are being retried, and why. A question about \
+            a specific iFlow or message, or about what happened or is happening ("did X \
+            fail", "is X failing", "today"), is about the tenant: always check it with these \
+            tools, even when the passages seem related — the documentation cannot know \
+            what happened.
             - searchDocs: more documentation, e.g. for an error text a tenant tool returned.
             For "why did X fail" questions: find the problem messages, read the error \
             details, then call searchDocs with the error text to find the cause and fix.
@@ -44,7 +47,7 @@ public interface CpiAgent {
     @UserMessage("""
             Documentation passages:
             {{passages}}
-
+            {{notes}}
             Question: {{question}}""")
-    Result<String> answer(@V("passages") String passages, @V("question") String question);
+    Result<String> answer(@V("passages") String passages, @V("notes") String notes, @V("question") String question);
 }

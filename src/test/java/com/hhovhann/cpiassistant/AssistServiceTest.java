@@ -27,7 +27,7 @@ class AssistServiceTest {
         private final Found fetched;
 
         CannedKnowledge(Found found, Found fetched) {
-            super(null, null, null, null, null, 0.82, 1, Duration.ofDays(30), null);
+            super(null, null, null, null, null, null, 0.82, 1, Duration.ofDays(30), false, null);
             this.found = found;
             this.fetched = fetched;
         }
@@ -176,8 +176,38 @@ class AssistServiceTest {
     @Test
     void numbersIdsAndToolNamesInBracketsAreNotCitations() {
         assertThat(AssistService.citedTitles("See [1], message [308fd65c82453608a88a13344717584f], [listIflows], "
-                + "[JDBC Receiver Adapter] [Handle Errors Gracefully]."))
-                .containsExactly("JDBC Receiver Adapter", "Handle Errors Gracefully");
+                + "the expression payload/LogEntry[severity = 'Error'] and items[0], "
+                + "[JDBC Receiver Adapter] [Handle Errors Gracefully][Define Router]."))
+                .containsExactly("JDBC Receiver Adapter", "Handle Errors Gracefully", "Define Router");
+    }
+
+    @Test
+    void anIflowNameInTheQuestionBecomesANoteForTheModel() {
+        var knowledge = new CannedKnowledge(new KnowledgeService.Found(List.of(passage("Inspect Failed Connection Attempts")),
+                List.of("Database: 1 passage(s)"), List.of()), null);
+        var model = new CpiAgentTest.ScriptedChatModel(n -> AiMessage.from("Unknown_Flow is not deployed."));
+
+        var answer = service(model, knowledge).assist("Why did Unknown_Flow fail?");
+
+        assertThat(model.requests.getFirst().messages()).last().asString()
+                .contains("Note: Unknown_Flow looks like an iFlow name. Check the tenant");
+        assertThat(answer.path()).contains("Note: Unknown_Flow looks like an iFlow name — the model is told to check the tenant");
+        assertThat(AssistService.notes("How do I configure a JDBC adapter?", null)).isEmpty();
+    }
+
+    @Test
+    void aToolCallWrittenAsTextGetsOneMoreTry() {
+        var knowledge = new CannedKnowledge(new KnowledgeService.Found(List.of(passage("Inspect Failed Connection Attempts")),
+                List.of("Database: 1 passage(s)"), List.of()), null);
+        var model = new CpiAgentTest.ScriptedChatModel(n -> n == 1
+                ? AiMessage.from("To find out, use getProblemMessages with iflowName=Unknown_Flow.")
+                : AiMessage.from("Unknown_Flow is not deployed."));
+
+        var answer = service(model, knowledge).assist("Why did Unknown_Flow fail?");
+
+        assertThat(answer.answer()).isEqualTo("Unknown_Flow is not deployed.");
+        assertThat(answer.path()).contains("The model described a tool call instead of making it: asking again");
+        assertThat(model.requests.get(1).messages()).last().asString().contains("Do not describe a tool call");
     }
 
     @Test

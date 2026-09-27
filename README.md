@@ -29,7 +29,9 @@ flowchart TB
 1. **Find documentation — code, no model.** Search the vector store. On a miss,
    look the question up in a catalog of ~1,660 official SAP pages; if a title
    matches well enough, download that page, save it, search again. The next
-   question on the topic stops at the store.
+   question on the topic stops at the store. Then **one hop through the page
+   graph**: if a passage names a page it links to ("see Configure JDBC
+   Drivers"), the best such page is read too.
 2. **Answer — one assistant.** The model gets the question, the passages and
    the tools. It decides: a documentation question is answered from the
    passages with no tool; a question about the live tenant makes it call the
@@ -196,7 +198,7 @@ export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY (and optionally OPENAI_M
 ./gradlew test
 ```
 
-41 tests, fakes for the models and for GitHub: no LM Studio and no internet.
+46 tests, fakes for the models and for GitHub: no LM Studio and no internet.
 Answer quality against the real model: `./scripts/qa.sh` (above).
 `PgVectorStoreTest` starts a throwaway pgvector container, so it needs Docker.
 
@@ -222,6 +224,7 @@ and can be overridden on the command line (`--name=value`).
 | `cpi.retrieval.min-score` | `0.80` | Below this the store counts as a miss. On a `(cosine + 1) / 2` scale |
 | `cpi.knowledge.min-title-score` | `0.82` | A SAP page is downloaded only if its title matches this well (real CPI questions: 0.83–0.95; off-topic: up to 0.80) |
 | `cpi.knowledge.max-pages-per-miss` | `1` | Pages downloaded per miss |
+| `cpi.knowledge.follow-links` | `true` | Follow one link from the passages through the page graph; `false` = vectors only, to compare |
 | `cpi.knowledge.max-age` | `30d` | A saved page older than this is downloaded again |
 | `cpi.knowledge.seed-pages` | 10 popular pages | Saved at startup unless already saved |
 | `cpi.knowledge.sap-help-url` | SAP-docs/btp-integration-suite on raw.githubusercontent.com | Where pages are downloaded from |
@@ -253,6 +256,11 @@ page by title and link to it.
 - Saved pages are cleaned for search: links keep only their text, HTML
   parameter tables become one line per row, and each chunk is embedded
   together with its page title.
+- [`sap-help/links.tsv`](src/main/resources/sap-help/links.tsv) is the **page
+  graph**: ~3,400 links between ~1,400 pages, built with the catalog. Vectors
+  find the passage; the graph finds the page it points to — prerequisites and
+  details that are rarely *similar* to the question. One hop, only to a page
+  the passage names, only if it matches the question at least 0.82.
 - Only SAP's text is saved, never a model's answer.
 - help.sap.com itself is not fetched: it renders pages with JavaScript and its
   robots.txt disallows automated clients.
@@ -280,6 +288,7 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 | ✅ | 7, 14 | Persistent knowledge: pgvector in Docker, SAP Help pages downloaded on a miss and kept |
 | ✅ | 15 | One assistant: one endpoint, official SAP docs as the only source, citations checked |
 | ✅ | 16 | Finding the right page: catalog summaries, exact identifiers, "Configure …" preference, readable tables |
+| ✅ | 17 | Page graph (graph RAG, one hop) next to the vectors; `scripts/qa.sh`; tenant questions stay tenant questions |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

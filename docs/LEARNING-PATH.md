@@ -783,6 +783,52 @@ and what text a chunk is embedded with.
 **Try:** `python3 scripts/build_sap_help_catalog.py` to rebuild the catalog,
 and compare `SapHelpCatalog.rank` on a question of your own.
 
+### Step 17: A page graph next to the vectors — and a QA script
+
+**What:** graph RAG in its smallest useful form. SAP pages link to each other;
+`scripts/build_sap_help_catalog.py` now also writes those links —
+`sap-help/links.tsv`, ~3,400 edges between ~1,400 pages. After retrieval,
+`KnowledgeService` follows **one hop**: to a page that a passage's own page
+links to *and* the passage names, if it matches the question at least 0.82.
+And `scripts/qa.sh` runs ten questions against the app and checks each path.
+**Classes:** `PageGraph`, `KnowledgeService.followLink`,
+`SapHelpCatalog.score`, `AssistService.notes` /
+`describesToolInsteadOfCalling`, `scripts/qa.sh`.
+**Idea:** vectors find what is *similar* to the question; a graph finds what a
+passage *points to* — prerequisites and details, which are rarely similar.
+**Measured — the rule for which link to follow:**
+
+| Question | Best linked page by similarity | Best linked page the passage names |
+|---|---|---|
+| Configure a JDBC adapter | JDBC for MariaDB (0.881) — one of 12 database pages | **Configure JDBC Drivers (0.876)** |
+| Handle errors in an iFlow | Handle Errors in Successful Responses (0.822) | the same |
+| Configure the AS4 receiver | all links < 0.75 | none followed |
+
+**With and without the hop** (`cpi.knowledge.follow-links`):
+
+| Question | Graph on | Graph off |
+|---|---|---|
+| Configure a JDBC adapter | Follows "Configure JDBC Drivers": the driver steps, cited | Only names the page ("refer to [Configure JDBC Drivers]") |
+| SFTP with known hosts | No link named — no hop | same |
+
+About 110 more input tokens and ~3 s; the linked page is downloaded once.
+
+**What the QA script found** — each fixed, each now a test:
+- a typo in an iFlow name ran into the tool-call limit and returned **HTTP 500**
+  → an answer that says so;
+- the model sent `status: "FAILED,RETRY,ESCALATED"` and the tool refused it →
+  lists accepted (65 s → 21 s);
+- `[listIflows]` and `payload/LogEntry[severity = 'Error']` were counted as
+  citations → no longer;
+- **the store's growth changed behaviour:** once a page about failed
+  connections was saved, "Why did Unknown_Flow fail?" was answered from it,
+  without asking the tenant — a prompt rule did not help. An iFlow-shaped name
+  now becomes a note to the model, and an answer that *describes* a tool call
+  ("use getProblemMessages …") without making one gets one more try.
+- Final run: **10 of 10**.
+**Try:** `./scripts/qa.sh`, then again with the app started with
+`--cpi.knowledge.follow-links=false`, and compare case 1.
+
 ---
 
 ## Phase 2 — an agent with LangChain4j
@@ -793,7 +839,8 @@ combine; when an agent is worth its extra calls and cost.
 
 ## Phase 3 — knowledge that grows
 
-Done in Step 7 (pgvector), Step 14 (SAP Help pages, saved) and Step 15 (one
-source of truth, citations checked). Next: pick "Configure the …" pages over
-overview pages (hybrid search, or title rules), and an automated evaluation
-of the one path.
+Done in Step 7 (pgvector), Step 14 (SAP Help pages, saved), Step 15 (one
+source of truth, citations checked), Step 16 (finding the right page) and
+Step 17 (page graph, QA script). Next: a CPI entity graph — iFlows, adapters,
+data sources and systems from the tenant, linked to the documentation — for
+questions like "which iFlows break if ORDER_DB is down?".

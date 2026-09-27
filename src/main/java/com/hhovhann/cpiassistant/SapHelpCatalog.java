@@ -4,7 +4,9 @@ import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.store.embedding.CosineSimilarity;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.RelevanceScore;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,6 +76,12 @@ public class SapHelpCatalog {
         public String url() {
             return REPO_BLOB + path;
         }
+
+        /** The page id in a saved chunk's URL: the file name without .md. */
+        static String idFromUrl(String url) {
+            String file = url.substring(url.lastIndexOf('/') + 1);
+            return file.endsWith(".md") ? file.substring(0, file.length() - ".md".length()) : file;
+        }
     }
 
     private final Map<String, Page> pagesById;
@@ -80,6 +89,7 @@ public class SapHelpCatalog {
     private final String queryPrefix;
     private final String documentPrefix;
     private volatile InMemoryEmbeddingStore<TextSegment> titleIndex;
+    private final Map<String, Embedding> entryEmbeddings = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Autowired
     public SapHelpCatalog(EmbeddingModel embeddingModel,
@@ -124,6 +134,16 @@ public class SapHelpCatalog {
 
     /** A catalog page and how well its title and summary match, on the (cosine + 1) / 2 scale. */
     public record PageMatch(Page page, double score) {
+    }
+
+    /** How well each of these pages matches the query, best first — for pages found another way, e.g. by a link. */
+    public List<PageMatch> score(String query, List<Page> pages) {
+        titleIndex();
+        Embedding q = embeddingModel.embed(queryPrefix + query).content();
+        return pages.stream()
+                .map(page -> new PageMatch(page, RelevanceScore.fromCosineSimilarity(CosineSimilarity.between(q, entryEmbeddings.get(page.id())))))
+                .sorted(Comparator.comparingDouble(PageMatch::score).reversed())
+                .toList();
     }
 
     /** How many nearest pages {@link #rank} chooses from. */
@@ -229,7 +249,11 @@ public class SapHelpCatalog {
             List<TextSegment> prefixed = batch.stream()
                     .map(segment -> TextSegment.from(documentPrefix + segment.text(), segment.metadata()))
                     .toList();
-            index.addAll(embeddingModel.embedAll(prefixed).content(), batch);
+            List<Embedding> embeddings = embeddingModel.embedAll(prefixed).content();
+            index.addAll(embeddings, batch);
+            for (int i = 0; i < batch.size(); i++) {
+                entryEmbeddings.put(batch.get(i).metadata().getString("id"), embeddings.get(i));
+            }
         }
         return index;
     }

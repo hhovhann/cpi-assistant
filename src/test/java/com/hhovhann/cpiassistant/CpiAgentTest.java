@@ -37,7 +37,7 @@ class CpiAgentTest {
         private final boolean empty;
 
         FakeKnowledge(boolean empty) {
-            super(null, null, null, null, null, 0.82, 1, Duration.ofDays(30), null);
+            super(null, null, null, null, null, null, 0.82, 1, Duration.ofDays(30), false, null);
             this.empty = empty;
         }
 
@@ -84,7 +84,7 @@ class CpiAgentTest {
         var knowledge = new FakeKnowledge(false);
         var model = new ScriptedChatModel(n -> AiMessage.from("Use the JDBC adapter [JDBC Receiver Adapter]."));
 
-        Result<String> result = agent(model, knowledge).answer(JDBC, "How do I connect to a database?");
+        Result<String> result = agent(model, knowledge).answer(JDBC, "", "How do I connect to a database?");
 
         assertThat(result.toolExecutions()).isEmpty();
         assertThat(model.requests).hasSize(1);
@@ -102,7 +102,7 @@ class CpiAgentTest {
                 ? callTool("searchDocs", "{\"query\": \"JdbcAdapterException connection pool\"}")
                 : AiMessage.from("A pool timeout [JDBC Receiver Adapter]."));
 
-        Result<String> result = agent(model, knowledge).answer("(no documentation found)", "Why did Order_Sync fail?");
+        Result<String> result = agent(model, knowledge).answer("(no documentation found)", "", "Why did Order_Sync fail?");
 
         assertThat(knowledge.queries).containsExactly("JdbcAdapterException connection pool");
         assertThat(model.requests.get(1).messages()).last()
@@ -115,7 +115,7 @@ class CpiAgentTest {
     void aSearchThatFindsNothingSaysSo() {
         var model = new ScriptedChatModel(n -> n == 1 ? callTool("searchDocs", "{\"query\": \"JVM tuning\"}") : AiMessage.from("I don't know."));
 
-        Result<String> result = agent(model, new FakeKnowledge(true)).answer("(no documentation found)", "How do I tune the JVM?");
+        Result<String> result = agent(model, new FakeKnowledge(true)).answer("(no documentation found)", "", "How do I tune the JVM?");
 
         assertThat(result.toolExecutions().getFirst().result()).isEqualTo("(no documentation found)");
     }
@@ -125,7 +125,7 @@ class CpiAgentTest {
         var knowledge = new FakeKnowledge(false);
         var model = new ScriptedChatModel(n -> callTool("searchDocs", "{\"query\": \"attempt " + n + "\"}"));
 
-        assertThatThrownBy(() -> agent(model, knowledge).answer(JDBC, "anything")).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> agent(model, knowledge).answer(JDBC, "", "anything")).isInstanceOf(RuntimeException.class);
         // One search per reply here, so round trips = searches.
         assertThat(knowledge.queries).hasSizeLessThanOrEqualTo(LangChain4jConfig.MAX_TOOL_ROUND_TRIPS);
     }

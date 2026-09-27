@@ -14,8 +14,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
 
@@ -32,7 +34,13 @@ import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metad
  * </ol>
  * The next question on the same topic stops at step 1. What is saved is SAP's
  * text, never a model's answer; a saved page older than {@code max-age} is
- * downloaded again. No model call anywhere in here.
+ * downloaded again.
+ * <p>
+ * Then one hop through the {@link PageGraph}: if a passage mentions a page its
+ * own page links to ("see Configure JDBC Drivers"), the best such page is read
+ * too — if it matches the question as well as a download would have to. That
+ * is where prerequisites and details live, which similarity alone did not
+ * reach. No model call anywhere in here.
  */
 @Service
 public class KnowledgeService {
@@ -51,6 +59,8 @@ public class KnowledgeService {
     private final RetrievalService retrieval;
     private final SapHelpCatalog catalog;
     private final SapHelpClient client;
+    private final PageGraph graph;
+    private final boolean followLinks;
     private final IngestionPipeline pipeline;
     private final EmbeddingStore<TextSegment> store;
     private final double minTitleScore;
@@ -59,20 +69,23 @@ public class KnowledgeService {
     private final Clock clock;
 
     @Autowired
-    public KnowledgeService(RetrievalService retrieval, SapHelpCatalog catalog, SapHelpClient client,
+    public KnowledgeService(RetrievalService retrieval, SapHelpCatalog catalog, SapHelpClient client, PageGraph graph,
                             IngestionPipeline pipeline, EmbeddingStore<TextSegment> store,
                             @Value("${cpi.knowledge.min-title-score:0.82}") double minTitleScore,
-                            @Value("${cpi.knowledge.max-pages-per-miss:2}") int maxPagesPerMiss,
-                            @Value("${cpi.knowledge.max-age:30d}") Duration maxAge) {
-        this(retrieval, catalog, client, pipeline, store, minTitleScore, maxPagesPerMiss, maxAge, Clock.systemUTC());
+                            @Value("${cpi.knowledge.max-pages-per-miss:1}") int maxPagesPerMiss,
+                            @Value("${cpi.knowledge.max-age:30d}") Duration maxAge,
+                            @Value("${cpi.knowledge.follow-links:true}") boolean followLinks) {
+        this(retrieval, catalog, client, graph, pipeline, store, minTitleScore, maxPagesPerMiss, maxAge, followLinks, Clock.systemUTC());
     }
 
-    KnowledgeService(RetrievalService retrieval, SapHelpCatalog catalog, SapHelpClient client,
+    KnowledgeService(RetrievalService retrieval, SapHelpCatalog catalog, SapHelpClient client, PageGraph graph,
                      IngestionPipeline pipeline, EmbeddingStore<TextSegment> store,
-                     double minTitleScore, int maxPagesPerMiss, Duration maxAge, Clock clock) {
+                     double minTitleScore, int maxPagesPerMiss, Duration maxAge, boolean followLinks, Clock clock) {
         this.retrieval = retrieval;
         this.catalog = catalog;
         this.client = client;
+        this.graph = graph;
+        this.followLinks = followLinks;
         this.pipeline = pipeline;
         this.store = store;
         this.minTitleScore = minTitleScore;
@@ -85,11 +98,12 @@ public class KnowledgeService {
     public Found find(String query) {
         List<EmbeddingMatch<TextSegment>> passages = retrieval.search(query, MAX_PASSAGES);
         if (!passages.isEmpty()) {
-            return new Found(passages, List.of(
-                    "Database: %d passage(s), best %.3f".formatted(passages.size(), passages.getFirst().score())), List.of());
+            List<String> steps = new ArrayList<>(List.of(
+                    "Database: %d passage(s), best %.3f".formatted(passages.size(), passages.getFirst().score())));
+            return followLink(query, new Found(passages, steps, new ArrayList<>()));
         }
         List<String> steps = new ArrayList<>(List.of("Database: nothing above the %.2f floor".formatted(retrieval.minScore())));
-        return fetchAndSearch(query, steps);
+        return followLink(query, fetchAndSearch(query, steps));
     }
 
     /**
@@ -97,7 +111,72 @@ public class KnowledgeService {
      * turned out not to answer the question.
      */
     public Found fetchFromSapHelp(String query) {
-        return fetchAndSearch(query, new ArrayList<>());
+        return followLink(query, fetchAndSearch(query, new ArrayList<>()));
+    }
+
+    /**
+     * One hop through the page graph. Candidates are pages that a passage's own
+     * page links to <i>and</i> that the passage names — "see Configure JDBC
+     * Drivers" — not every link on the page: a page links to a dozen
+     * neighbours, and the closest by meaning was usually a sibling ("JDBC for
+     * MariaDB"), not what the passage points to. The best candidate is read if
+     * it matches the question at least {@code min-title-score}; its best
+     * passage is added.
+     */
+    private Found followLink(String query, Found found) {
+        if (!followLinks || found.passages().isEmpty()) {
+            return found;
+        }
+        Set<String> current = new HashSet<>();
+        List<SapHelpCatalog.Page> candidates = new ArrayList<>();
+        for (EmbeddingMatch<TextSegment> passage : found.passages()) {
+            String url = passage.embedded().metadata().getString(URL);
+            if (url != null) {
+                current.add(SapHelpCatalog.Page.idFromUrl(url));
+            }
+        }
+        for (EmbeddingMatch<TextSegment> passage : found.passages()) {
+            String url = passage.embedded().metadata().getString(URL);
+            if (url == null) {
+                continue;
+            }
+            String text = passage.embedded().text().toLowerCase(Locale.ROOT);
+            for (String target : graph.linksFrom(SapHelpCatalog.Page.idFromUrl(url))) {
+                if (current.contains(target)) {
+                    continue;
+                }
+                catalog.page(target)
+                        .filter(page -> text.contains(page.title().toLowerCase(Locale.ROOT)))
+                        .filter(page -> !candidates.contains(page))
+                        .ifPresent(candidates::add);
+            }
+        }
+        if (candidates.isEmpty()) {
+            return found;
+        }
+        SapHelpCatalog.PageMatch best = catalog.score(query, candidates).getFirst();
+        if (best.score() < minTitleScore) {
+            return found;
+        }
+        SapHelpCatalog.Page page = best.page();
+        Saved saved = ensureSaved(page);
+        if (saved == Saved.MISSING) {
+            return found;
+        }
+        List<EmbeddingMatch<TextSegment>> extra = retrieval.searchWithin(query, 1, metadataKey(URL).isEqualTo(page.url()));
+        if (extra.isEmpty()) {
+            return found;
+        }
+        List<String> steps = new ArrayList<>(found.steps());
+        steps.add("Graph: a passage links to \"%s\" (match %.3f)%s — added its best passage"
+                .formatted(page.title(), best.score(), saved == Saved.DOWNLOADED ? ", downloaded and saved" : ""));
+        List<String> downloaded = new ArrayList<>(found.downloaded());
+        if (saved == Saved.DOWNLOADED) {
+            downloaded.add(page.title());
+        }
+        List<EmbeddingMatch<TextSegment>> passages = new ArrayList<>(found.passages());
+        passages.add(extra.getFirst());
+        return new Found(passages, steps, downloaded);
     }
 
     private Found fetchAndSearch(String query, List<String> steps) {
