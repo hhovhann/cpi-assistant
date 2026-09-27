@@ -254,7 +254,8 @@ public class KnowledgeService {
                 .toList());
     }
 
+    /** A decline — with a straight or a typographic apostrophe (I don’t know). */
     static boolean isIDontKnow(String answer) {
-        return answer != null && answer.strip().toLowerCase(Locale.ROOT).startsWith("i don't know");
+        return answer != null && answer.strip().toLowerCase(Locale.ROOT).replace('\u2019', '\'').startsWith("i don't know");
     }
 }

@@ -832,57 +832,70 @@ About 110 more input tokens and ~3 s; the linked page is downloaded once.
 ### Step 18: RAG vs letting the model search the files
 
 **Question:** does RAG save tokens compared with a model that searches a folder
-of Markdown files itself — grep, then read — the way a coding assistant does?
+of Markdown files itself — search, then read — the way a coding assistant does?
 **What:** a measurement, not a feature. `RagVsFileSearchMeasurement`
 (`./gradlew measure`, report in `build/measure/rag-vs-file-search.md`) asks
 seven questions two ways, same model (Qwen3 14B), same ~1,660 SAP pages:
 - **RAG** — `AssistService`: vector search, a download on a miss, one answer.
-- **File search** — an agent with two tools and no index: `searchFiles`
-  (pages containing all keywords, best first; or a regex) and `readFile` (a
-  whole page), over all pages as local Markdown.
+- **File search** — an agent with two tools and no index: `searchFiles` (BM25
+  keyword ranking, or a regex between slashes) and `readFile` (a page, in parts
+  of 12,000 characters), over all pages as local Markdown.
 
-"Right": the key facts are there and it is not a decline. "Grounded": it cites
-a page it was actually given or read. The store was reset to the ten seed
-pages first, so RAG had to download like a first run.
-**The first run was unfair — worth knowing why:** `searchFiles` matched the
-input literally. "JDBC adapter configuration" is on 0 pages; 23 contain all
-three words. The agent read nothing in 5 of 7 questions and answered from
-memory — cheap in tokens, worthless in grounding. The grader also passed an
-answer that began "I don't know". Both fixed before the numbers below.
+Fair by construction: RAG uses its own table, reset to the ten seed pages every
+run; the model is warmed up and the two approaches alternate going first; a
+wrapper around the chat model counts every call and token for both, even when
+a run fails. "Right": the key facts are there and it is not a decline.
+"Grounded": it cites at least one page it was given or read, and none it
+wasn't — the same rule for both.
+**Getting the measurement fair took three rounds — the lesson of this step:**
+1. The first `searchFiles` matched the input literally: "JDBC adapter
+   configuration" is on 0 pages, 23 contain all three words. File search read
+   nothing in 5 of 7 questions — cheap, and worthless.
+2. The second ranked by raw word counts and switched to regex on any `?`;
+   `/code-review` then found 15 issues: long hub pages outranked the specific
+   page, pages were cut at 12,000 characters, RAG ran on the shared store that
+   earlier runs had filled, model calls were estimated from the path text, the
+   grounding rule differed between the two sides, and an exception lost the
+   whole report. Those numbers favoured RAG.
+3. The numbers below are from the fixed version.
+
 **Measured (one run each):**
 
-| Question | RAG tokens in / calls / time | File search tokens in / calls / time | Grounded (RAG / files) |
-|---|---|---|---|
-| Configure a JDBC adapter | **1,310** / 1 / 10 s | 4,121 / 3 / 28 s | ✅ / ✅ |
-| Handle errors in an iFlow | 1,343 / 1 / 12 s | 919 / 2 / 19 s | ✅ / — |
-| Configure the AS4 receiver | 3,988 / 3 / 28 s | 4,038 / 3 / 52 s | ✅ / — (read the wrong page) |
-| Configure the Kafka receiver | 6,401 / 5 / 82 s | 3,424 / 3 / 74 s | ✅ / ✅ |
-| SFTP with known hosts | 2,775 / 2 / 38 s | 3,186 / 3 / 56 s | ✅ / ✅ (the more exact page) |
-| Connect to a database | 2,751 / 2 / 29 s | 1,668 / 2 / 38 s | ✅ / — |
-| Capital of France | 998 / 1 / 8 s | 376 / 1 / 6 s | declines / declines |
-| **Total** | **19,566 / 15 / 205 s** | **17,732 / 17 / 271 s** | **6 of 6 / 3 of 6** |
+| Question | RAG: tokens in / calls / time / right / grounded | File search: tokens in / calls / time / right / grounded |
+|---|---|---|
+| Configure a JDBC adapter | **1,310** / 1 / 9 s / ✅ / ✅ | 4,252 / 3 / 35 s / ✅ / ✅ |
+| Handle errors in an iFlow | 1,343 / 1 / 11 s / ❌* / ✅ | 1,742 / 2 / 23 s / ✅ / — |
+| Configure the AS4 receiver | 3,988 / 3 / 24 s / ✅ / ✅ | 1,850 / 2 / 26 s / ✅ / — |
+| Configure the Kafka receiver | 3,807 / 3 / 37 s / ❌ / ✅ | 4,675 / 3 / 141 s / ✅ / — |
+| SFTP with known hosts | 2,541 / 2 / 24 s / ❌ / — | 1,935 / 2 / 51 s / ✅ / — |
+| Connect to a database | 2,751 / 2 / 34 s / ✅ / ✅ | 3,890 / 3 / 56 s / ✅ / ✅ |
+| Capital of France | 998 / 1 / 8 s / ✅ | 447 / 1 / 7 s / ✅ |
+| **Total** | **16,738 in, 4,193 out / 13 / 148 s / 4 of 7 / 5 of 6** | **18,791 in, 7,650 out / 16 / 338 s / 7 of 7 / 2 of 6** |
 
-- **Tokens are about even overall.** The 43× saving of Step 10b was against
-  putting *all* docs in the prompt — not against a model that searches.
-- **A store hit is where RAG saves:** JDBC was 3× cheaper and 3× faster —
-  one call, three passages. RAG's cost is in **misses**: Kafka took five calls
-  (the "I don't know" retry, the described-tool retry, a download). That is
-  where to optimise.
-- **The real difference is grounding:** 6 of 6 RAG answers cite pages it was
-  given; file search 3 of 6 — it answered from snippets, from memory, or from
-  the wrong page, and invented a help.sap.com link.
-- **Keyword search found the more exact page** for "known hosts" — the
-  argument for hybrid search (keywords + vectors) inside RAG.
+\* A good answer, failed by the grader: it says "handle errors", not
+"exception" or "error handling".
 
-**Caveats:** one run, seven questions, a keyword grader ("handle errors"
-failed on both sides for a missing word), a small local model — a stronger
-model searches and reads much better — and a simple file-search tool.
-**Idea:** measure the question you are actually asked. "RAG saves tokens" is
-true against stuffing the prompt, roughly even against a searching agent — and
-what RAG really buys here is predictable, grounded answers.
+- **Tokens: RAG slightly cheaper overall** (11 % fewer input, 45 % fewer output
+  tokens) and **2.3× faster**. On a store hit it is 3× cheaper — JDBC, one call.
+  The 43× saving of Step 10b was against putting *all* docs in the prompt, not
+  against a model that searches.
+- **Right: file search 7 of 7, RAG 4 of 7.** Keyword search found the exact
+  page RAG never reached ("Setting Up Outbound SFTP Connections (Details)");
+  reading a whole page gave Kafka the steps RAG's three passages missed.
+- **Grounded: RAG 5 of 6, file search 2 of 6.** File search mostly cites pages
+  it only saw in search results — one line each — and fills in the rest from
+  what the model already knows. Correct here; not checkable.
+- **What RAG should take from this:** keyword search next to the vectors
+  (hybrid — pgvector supports it), and more passages from the page it just
+  downloaded.
+
+**Caveats:** one run, seven questions, a keyword grader, a small local model
+(a stronger model searches and reads better), a simple file-search tool.
+**Idea:** a comparison is only as fair as its weakest side. Two rounds of this
+measurement quietly handicapped file search; a code review of the measurement
+itself, not of the product, is what caught it.
 **Try:** `./gradlew measure -Dcpi.chat.provider=anthropic` (needs
-`ANTHROPIC_API_KEY`, paid) and see how a stronger model changes the
-file-search column.
+`ANTHROPIC_API_KEY`, paid) and see how a stronger model changes both columns.
 
 ---
 

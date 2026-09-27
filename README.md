@@ -291,7 +291,7 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 | ✅ | 15 | One assistant: one endpoint, official SAP docs as the only source, citations checked |
 | ✅ | 16 | Finding the right page: catalog summaries, exact identifiers, "Configure …" preference, readable tables |
 | ✅ | 17 | Page graph (graph RAG, one hop) next to the vectors; `scripts/qa.sh`; tenant questions stay tenant questions |
-| ✅ | 18 | Measured: RAG vs a model that searches the files itself — tokens about even, grounding 6 of 6 vs 3 of 6 |
+| ✅ | 18 | Measured: RAG vs a model that searches the files itself — RAG a bit cheaper and 2.3× faster, file search more often right (7 of 7 vs 4 of 7), RAG more often grounded (5 of 6 vs 2 of 6) |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

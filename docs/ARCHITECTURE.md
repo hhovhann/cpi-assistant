@@ -249,7 +249,7 @@ sees `search_document:`.
 | `ChatProviderTests` | `cpi.chat.provider` builds the right model with the right sampling settings; a missing key fails at startup | Nothing — offline clients |
 | `LangChain4jConfigTest` | The chat timeout really cuts off a slow server | Nothing — local stub |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | Nothing |
-| `RagVsFileSearchMeasurement` | Not a test: RAG against an agent that greps and reads the SAP pages, same questions and model — tokens, calls, time, right, grounded. Tagged `measure`, run with `./gradlew measure` | LM Studio, pgvector, internet |
+| `RagVsFileSearchMeasurement` | Not a test: RAG against an agent that searches (BM25) and reads the SAP pages, same questions and model — tokens and calls counted at the model, time, right, grounded. Own table `cpi_chunks_measure`, reset to the seed pages every run. Tagged `measure`, run with `./gradlew measure` | LM Studio, pgvector, internet |
 
 Answer *quality* against the real model: `scripts/qa.sh` asks ten questions
 and checks the path of each answer (see the [README](../README.md)). The

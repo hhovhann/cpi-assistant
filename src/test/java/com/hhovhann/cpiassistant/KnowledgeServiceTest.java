@@ -175,6 +175,13 @@ class KnowledgeServiceTest {
     }
 
     @Test
+    void aDeclineIsRecognisedWithEitherApostrophe() {
+        assertThat(KnowledgeService.isIDontKnow("I don't know.")).isTrue();
+        assertThat(KnowledgeService.isIDontKnow("  I don\u2019t know the steps.")).isTrue();
+        assertThat(KnowledgeService.isIDontKnow("Use the JDBC adapter.")).isFalse();
+    }
+
+    @Test
     void passagesAreLabelledByPageTitle() {
         var found = knowledge.find("SFTP receiver adapter known hosts");
 

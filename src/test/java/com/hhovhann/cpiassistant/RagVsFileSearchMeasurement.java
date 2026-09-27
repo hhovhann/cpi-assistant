@@ -2,30 +2,53 @@ package com.hhovhann.cpiassistant;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.ModelProvider;
+import dev.langchain4j.model.chat.Capability;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.ChatRequestOptions;
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.request.ChatRequestParameters;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.output.TokenUsage;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.Result;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
+import dev.langchain4j.service.tool.ToolExecution;
+import dev.langchain4j.store.embedding.EmbeddingStore;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
 
 /**
  * RAG against "let the model search the files", on the same questions, the
@@ -34,16 +57,21 @@ import java.util.regex.PatternSyntaxException;
  *   <li><b>RAG</b>: {@link AssistService} — vector search over saved pages, a
  *       download on a miss, one answer.</li>
  *   <li><b>File search</b>: an agent with two tools and no index, the way a
- *       coding assistant works — searchFiles (grep over all pages as local
- *       Markdown) and readFile (a whole page).</li>
+ *       coding assistant works — searchFiles (BM25 keyword search, or a regex,
+ *       over all pages as local Markdown) and readFile (a page, in parts).</li>
  * </ul>
- * Needs LM Studio, pgvector and the internet (the pages are downloaded once to
- * build/measure/sap-docs). Run with {@code ./gradlew measure}; the report goes
- * to build/measure/rag-vs-file-search.md.
+ * Fair by construction: its own table, reset to the seed pages every run; the
+ * chat model is warmed up first and the two approaches alternate going first;
+ * model calls and tokens are counted at the model, for both, even when a run
+ * fails; one grounding rule for both.
+ * <p>
+ * Needs LM Studio, pgvector and the internet. {@code ./gradlew measure};
+ * report in build/measure/rag-vs-file-search.md.
  */
 @Tag("measure")
 @SpringBootTest(properties = {
         "cpi.store.type=pgvector",
+        "cpi.store.pgvector.table=cpi_chunks_measure",
         "cpi.knowledge.seed-on-startup=true",
         "cpi.chat.log-requests=false",
         "cpi.chat.log-responses=false"})
@@ -51,122 +79,240 @@ class RagVsFileSearchMeasurement {
 
     private static final Path PAGES = Path.of("build/measure/sap-docs");
     private static final Path REPORT = Path.of("build/measure/rag-vs-file-search.md");
-    private static final int READ_LIMIT = 12_000;
+    private static final int PART = 12_000;
     private static final int SEARCH_HITS = 20;
     private static final int MAX_ROUND_TRIPS = 10;
 
-    /** A question and the facts a right answer contains: every group needs one of its words. */
-    record Question(String text, List<List<String>> facts) {
+    /**
+     * @param facts    every group needs one of its words in a right answer
+     * @param offTopic the right answer is a decline
+     */
+    record Question(String text, List<List<String>> facts, boolean offTopic) {
     }
 
     private static final List<Question> QUESTIONS = List.of(
-            new Question("How do I configure a JDBC adapter?", List.of(List.of("driver"), List.of("data source"))),
-            new Question("How do I handle errors in an iFlow?", List.of(List.of("exception"), List.of("error"))),
-            new Question("How do I configure the AS4 receiver adapter?", List.of(List.of("ebms3", "ebms 3"), List.of("msh", "message service handler"))),
-            new Question("How do I configure the Kafka receiver adapter?", List.of(List.of("topic"), List.of("kafka"))),
-            new Question("How do I set up an SFTP receiver with known hosts?", List.of(List.of("known host"), List.of("ssh", "host key", "public key"))),
-            new Question("How do I connect to a database from an iFlow?", List.of(List.of("jdbc"))),
-            new Question("What is the capital of France?", List.of(List.of("don't know", "not about", "not related", "outside"))));
+            new Question("How do I configure a JDBC adapter?", List.of(List.of("driver"), List.of("data source")), false),
+            new Question("How do I handle errors in an iFlow?", List.of(List.of("exception", "error handling"), List.of("error")), false),
+            new Question("How do I configure the AS4 receiver adapter?", List.of(List.of("ebms3", "ebms 3"), List.of("msh", "message service handler")), false),
+            new Question("How do I configure the Kafka receiver adapter?", List.of(List.of("topic"), List.of("kafka")), false),
+            new Question("How do I set up an SFTP receiver with known hosts?", List.of(List.of("known host"), List.of("ssh", "host key", "public key")), false),
+            new Question("How do I connect to a database from an iFlow?", List.of(List.of("jdbc")), false),
+            new Question("What is the capital of France?", List.of(), true));
+
+    /** Counts every model call and its tokens, whoever makes it. */
+    static final class CountingChatModel implements ChatModel {
+        private final ChatModel delegate;
+        final AtomicInteger calls = new AtomicInteger();
+        final AtomicInteger inputTokens = new AtomicInteger();
+        final AtomicInteger outputTokens = new AtomicInteger();
+
+        CountingChatModel(ChatModel delegate) {
+            this.delegate = delegate;
+        }
+
+        void reset() {
+            calls.set(0);
+            inputTokens.set(0);
+            outputTokens.set(0);
+        }
+
+        private ChatResponse count(ChatResponse response) {
+            calls.incrementAndGet();
+            TokenUsage usage = response.tokenUsage();
+            if (usage != null) {
+                inputTokens.addAndGet(usage.inputTokenCount() == null ? 0 : usage.inputTokenCount());
+                outputTokens.addAndGet(usage.outputTokenCount() == null ? 0 : usage.outputTokenCount());
+            }
+            return response;
+        }
+
+        @Override
+        public ChatResponse chat(ChatRequest request) {
+            return count(delegate.chat(request));
+        }
+
+        @Override
+        public ChatResponse chat(ChatRequest request, ChatRequestOptions options) {
+            return count(delegate.chat(request, options));
+        }
+
+        @Override
+        public ChatResponse doChat(ChatRequest request) {
+            return count(delegate.chat(request));
+        }
+
+        @Override
+        public ChatRequestParameters defaultRequestParameters() {
+            return delegate.defaultRequestParameters();
+        }
+
+        @Override
+        public Set<Capability> supportedCapabilities() {
+            return delegate.supportedCapabilities();
+        }
+
+        @Override
+        public ModelProvider provider() {
+            return delegate.provider();
+        }
+    }
+
+    /** The assistant gets the counting model too, so RAG's calls are counted the same way. */
+    @TestConfiguration
+    static class CountingConfig {
+        @Bean
+        @Primary
+        CountingChatModel countingChatModel(@Qualifier("chatModel") ChatModel chatModel) {
+            return new CountingChatModel(chatModel);
+        }
+    }
 
     interface FileSearchAgent {
         @SystemMessage("""
                 You answer SAP Cloud Integration (CPI) questions from the SAP documentation files.
-                Use searchFiles to find pages — it takes keywords or a regular expression and returns \\
-                matching lines, each with its page id — then readFile to read a page.
+                Use searchFiles to find pages: give it a few keywords, and it returns the best \
+                matching pages, each with its page id. Then read a page with readFile.
                 Answer only from what you read, and cite page titles in square brackets.
                 If the files do not cover it, or the question is not about CPI, say "I don't know".""")
         Result<String> answer(@UserMessage String question);
     }
 
-    /** grep and cat over the downloaded pages. */
+    /** Search and read over the downloaded pages. */
     static final class FileTools {
+        private static final Pattern TOKEN = Pattern.compile("[a-z0-9]+");
+        private static final Set<String> STOP = Set.of("a", "an", "and", "are", "can", "do", "does", "for", "from",
+                "how", "i", "in", "is", "it", "my", "of", "on", "or", "the", "to", "what", "with", "which");
+        private static final double K1 = 1.2;
+        private static final double B = 0.75;
+
         private final Map<String, String> pages;
         private final Map<String, String> titles;
+        private final Map<String, Map<String, Integer>> termCounts = new HashMap<>();
+        private final Map<String, Integer> lengths = new HashMap<>();
+        private final Map<String, Integer> documentFrequency = new HashMap<>();
+        private final double averageLength;
 
         FileTools(Map<String, String> pages, Map<String, String> titles) {
             this.pages = pages;
             this.titles = titles;
+            long total = 0;
+            for (Map.Entry<String, String> page : pages.entrySet()) {
+                Map<String, Integer> counts = new HashMap<>();
+                int length = 0;
+                Matcher m = TOKEN.matcher((titles.get(page.getKey()) + "\n" + page.getValue()).toLowerCase(Locale.ROOT));
+                while (m.find()) {
+                    counts.merge(m.group(), 1, Integer::sum);
+                    length++;
+                }
+                termCounts.put(page.getKey(), counts);
+                lengths.put(page.getKey(), length);
+                counts.keySet().forEach(term -> documentFrequency.merge(term, 1, Integer::sum));
+                total += length;
+            }
+            averageLength = pages.isEmpty() ? 1 : (double) total / pages.size();
         }
 
-        /**
-         * Keywords: pages containing every word, ranked by how often they occur
-         * — what chaining greps gives a person. A pattern with regex characters
-         * is used as a regular expression instead. (The first version matched
-         * the whole input literally: "JDBC adapter configuration" hit 0 pages
-         * while 23 contain all three words, and the agent gave up.)
-         */
         @Tool("""
-                Searches all SAP documentation files, case-insensitive. Keywords: returns pages \
-                containing all of them, best first. Up to 20 results as 'page id | page title | \
-                a matching line'. A regular expression also works.""")
-        public String searchFiles(@P("Keywords, e.g. 'JDBC receiver', or a regular expression") String pattern) {
-            boolean regexMode = pattern.matches(".*[\\\\^$.|?*+()\\[\\]{}].*");
-            List<String> words = List.of(pattern.toLowerCase(Locale.ROOT).split("\\s+"));
-            Pattern regex = null;
-            if (regexMode) {
-                try {
-                    regex = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
-                } catch (PatternSyntaxException e) {
-                    regexMode = false;
-                }
+                Searches all SAP documentation files. Give keywords, e.g. 'JDBC receiver adapter': \
+                returns up to 20 pages, best first (BM25), as 'page id | page title | a matching \
+                line'. A regular expression between slashes also works, e.g. /ebMS3 (Push|Pull)/.""")
+        public String searchFiles(@P("Keywords, or a regular expression between slashes") String query) {
+            String q = query == null ? "" : query.strip();
+            if (q.length() > 2 && q.startsWith("/") && q.endsWith("/")) {
+                return regexSearch(q.substring(1, q.length() - 1));
             }
-            record Hit(String id, int count, String line) {
+            List<String> terms = new ArrayList<>(new java.util.LinkedHashSet<>(
+                    TOKEN.matcher(q.toLowerCase(Locale.ROOT)).results().map(java.util.regex.MatchResult::group).filter(t -> !STOP.contains(t)).toList()));
+            if (terms.isEmpty()) {
+                return "Give one or more keywords.";
+            }
+            record Hit(String id, double score) {
             }
             List<Hit> hits = new ArrayList<>();
-            for (Map.Entry<String, String> page : pages.entrySet()) {
-                String text = page.getValue().toLowerCase(Locale.ROOT);
-                int count = 0;
-                String best = null;
-                if (regexMode) {
-                    Matcher m = regex.matcher(page.getValue());
-                    while (m.find()) {
-                        count++;
+            int n = pages.size();
+            for (String id : pages.keySet()) {
+                Map<String, Integer> counts = termCounts.get(id);
+                double score = 0;
+                for (String term : terms) {
+                    int tf = counts.getOrDefault(term, 0);
+                    if (tf == 0) {
+                        continue;
                     }
-                } else if (words.stream().allMatch(text::contains)) {
-                    for (String w : words) {
-                        count += text.split(Pattern.quote(w), -1).length - 1;
-                    }
+                    int df = documentFrequency.getOrDefault(term, 0);
+                    double idf = Math.log(1 + (n - df + 0.5) / (df + 0.5));
+                    score += idf * tf * (K1 + 1) / (tf + K1 * (1 - B + B * lengths.get(id) / averageLength));
                 }
-                if (count == 0) {
-                    continue;
+                if (score > 0) {
+                    hits.add(new Hit(id, score));
                 }
-                for (String line : page.getValue().split("\n")) {
-                    String lower = line.toLowerCase(Locale.ROOT);
-                    if (regexMode ? regex.matcher(line).find() : words.stream().anyMatch(lower::contains)) {
-                        best = line.strip();
-                        break;
-                    }
-                }
-                hits.add(new Hit(page.getKey(), count, best == null ? "" : best));
             }
-            hits.sort((a, b) -> Integer.compare(b.count(), a.count()));
+            hits.sort((a, b) -> Double.compare(b.score(), a.score()));
             if (hits.isEmpty()) {
-                return "No matches for " + pattern;
+                return "No matches for " + q;
             }
+            String rarest = terms.stream().min((a, b) -> Integer.compare(documentFrequency.getOrDefault(a, 0),
+                    documentFrequency.getOrDefault(b, 0))).orElseThrow();
             return String.join("\n", hits.stream().limit(SEARCH_HITS)
-                    .map(h -> h.id() + " | " + titles.get(h.id()) + " | "
-                            + (h.line().length() > 160 ? h.line().substring(0, 160) + "…" : h.line()))
+                    .map(h -> h.id() + " | " + titles.get(h.id()) + " | " + line(pages.get(h.id()), rarest))
                     .toList());
         }
 
-        @Tool("Returns the whole text of one SAP documentation page.")
-        public String readFile(@P("The page id, as searchFiles returned it") String pageId) {
-            String text = pages.get(pageId.strip());
+        private String regexSearch(String expression) {
+            Pattern regex;
+            try {
+                regex = Pattern.compile(expression, Pattern.CASE_INSENSITIVE);
+            } catch (PatternSyntaxException e) {
+                return "Not a valid regular expression: " + e.getDescription();
+            }
+            List<String> hits = new ArrayList<>();
+            for (Map.Entry<String, String> page : pages.entrySet()) {
+                Matcher m = regex.matcher(page.getValue());
+                if (m.find()) {
+                    hits.add(page.getKey() + " | " + titles.get(page.getKey()) + " | " + line(page.getValue(), m.group()));
+                    if (hits.size() == SEARCH_HITS) {
+                        break;
+                    }
+                }
+            }
+            return hits.isEmpty() ? "No matches for /" + expression + "/" : String.join("\n", hits);
+        }
+
+        private static String line(String text, String containing) {
+            String needle = containing.toLowerCase(Locale.ROOT);
+            for (String line : text.split("\n")) {
+                if (line.toLowerCase(Locale.ROOT).contains(needle)) {
+                    String s = line.strip();
+                    return s.length() > 160 ? s.substring(0, 160) + "…" : s;
+                }
+            }
+            return "";
+        }
+
+        @Tool("""
+                Returns one SAP documentation page. Long pages come in parts of 12,000 characters: \
+                the answer says 'part 1 of 3'; ask for the next part to read on.""")
+        public String readFile(@P("The page id, as searchFiles returned it") String pageId,
+                               @P(value = "Which part, starting at 1. Default 1.", required = false) Integer part) {
+            String text = pages.get(pageId == null ? "" : pageId.strip());
             if (text == null) {
                 return "No page with id " + pageId;
             }
-            return text.length() > READ_LIMIT ? text.substring(0, READ_LIMIT) + "\n[truncated]" : text;
+            int parts = Math.max(1, (text.length() + PART - 1) / PART);
+            int p = part == null || part < 1 ? 1 : Math.min(part, parts);
+            String slice = text.substring((p - 1) * PART, Math.min(text.length(), p * PART));
+            return parts == 1 ? slice : "(part %d of %d)\n%s".formatted(p, parts, slice);
         }
     }
 
     /**
-     * @param correct  the facts are in the answer, and it is not a decline
-     *                 (except where declining is the right answer)
-     * @param grounded the answer cites a page this approach actually gave the
-     *                 model or had it read — otherwise facts may be from memory
+     * @param correct  the facts are in the answer and it is not a decline — or,
+     *                 off-topic, it is a decline
+     * @param grounded it cites at least one page it was given or read, and no
+     *                 page it was not (the same rule for both approaches)
+     * @param failed   the run threw; tokens and calls up to that point still count
      */
     record Run(String approach, Question question, String answer, int inputTokens, int outputTokens,
-               int modelCalls, long millis, boolean correct, boolean grounded, String note) {
+               int modelCalls, long millis, boolean correct, boolean grounded, boolean failed, String note) {
     }
 
     private final Map<String, String> titles = new LinkedHashMap<>();
@@ -178,90 +324,148 @@ class RagVsFileSearchMeasurement {
     @Autowired
     SapHelpClient sapHelpClient;
     @Autowired
-    ChatModel chatModel;
+    CountingChatModel model;
+    @Autowired
+    EmbeddingStore<TextSegment> store;
+    @Autowired
+    SeedProperties seed;
 
     @Test
     void compare() throws Exception {
         catalog.pages().forEach(page -> titles.put(page.id(), page.title()));
         Map<String, String> pages = downloadAll();
+        int keptPages = resetStoreToSeedPages();
         var fileSearch = AiServices.builder(FileSearchAgent.class)
-                .chatModel(chatModel)
+                .chatModel(model)
                 .tools(new FileTools(pages, titles))
                 .maxToolCallingRoundTrips(MAX_ROUND_TRIPS)
                 .build();
 
+        model.chat("Say OK.");   // load the model before anything is timed
+
         List<Run> runs = new ArrayList<>();
-        for (Question question : QUESTIONS) {
-            runs.add(rag(question));
-            runs.add(fileSearch(fileSearch, question));
+        for (int i = 0; i < QUESTIONS.size(); i++) {
+            Question question = QUESTIONS.get(i);
+            // Alternate who goes first, so neither side always gets the warm cache.
+            if (i % 2 == 0) {
+                runs.add(rag(question));
+                runs.add(fileSearch(fileSearch, question));
+            } else {
+                runs.add(fileSearch(fileSearch, question));
+                runs.add(rag(question));
+            }
             System.out.println(runs.get(runs.size() - 2));
             System.out.println(runs.getLast());
         }
         Files.createDirectories(REPORT.getParent());
-        Files.writeString(REPORT, report(runs, pages.size()));
+        Files.writeString(REPORT, report(runs, pages.size(), keptPages));
         System.out.println("\n" + Files.readString(REPORT));
     }
 
+    /** The measurement's own table, back to the seed pages: every run starts like a first one. */
+    private int resetStoreToSeedPages() {
+        List<String> seedUrls = seed.seedPages().stream()
+                .map(id -> catalog.page(id).orElseThrow(() -> new IllegalStateException("Seed page not in catalog: " + id)).url())
+                .toList();
+        store.removeAll(metadataKey(KnowledgeService.URL).isNotIn(seedUrls));
+        return seedUrls.size();
+    }
+
     private Run rag(Question question) {
+        model.reset();
         long start = System.currentTimeMillis();
-        var answer = assistService.assist(question.text());
-        int calls = 1 + answer.toolCalls().size() + (int) answer.path().stream().filter(s -> s.contains("asking")).count();
-        String note = String.join(" → ", answer.path().stream()
-                .map(step -> step.replaceAll(" \\(.*?\\)", "").replaceAll(", best [0-9.]+", "")).toList());
-        boolean grounded = answer.sources().stream().anyMatch(AssistService.Source::cited) && answer.unverifiedCitations().isEmpty();
-        return new Run("RAG", question, answer.answer(), answer.inputTokens(), answer.outputTokens(), calls,
-                System.currentTimeMillis() - start, correct(question, answer.answer()), grounded, note);
+        try {
+            var answer = assistService.assist(question.text());
+            String note = String.join(" → ", answer.path().stream()
+                    .map(step -> step.replaceAll(" \\(.*?\\)", "").replaceAll(", best [0-9.]+", "").replaceAll("\\s+", " "))
+                    .toList());
+            Set<String> given = new HashSet<>();
+            answer.sources().forEach(source -> given.add(source.title()));
+            String seen = String.join("\n", answer.sources().stream().map(s -> String.valueOf(s.excerpt())).toList())
+                    + String.join("\n", answer.toolCalls().stream().map(c -> String.valueOf(c.result())).toList());
+            return new Run("RAG", question, answer.answer(), model.inputTokens.get(), model.outputTokens.get(),
+                    model.calls.get(), System.currentTimeMillis() - start, correct(question, answer.answer()),
+                    grounded(answer.answer(), given, seen) && answer.unverifiedCitations().isEmpty(), false, note);
+        } catch (RuntimeException e) {
+            return failed("RAG", question, start, e);
+        }
     }
 
     private Run fileSearch(FileSearchAgent agent, Question question) {
+        model.reset();
         long start = System.currentTimeMillis();
         try {
             Result<String> result = agent.answer(question.text());
-            var usage = result.tokenUsage();
+            Set<String> read = new HashSet<>();
+            StringBuilder seen = new StringBuilder();
+            for (ToolExecution execution : result.toolExecutions()) {
+                seen.append(execution.result()).append('\n');
+                if (execution.request().name().equals("readFile") && !String.valueOf(execution.result()).startsWith("No page")) {
+                    Matcher id = Pattern.compile("\"pageId\"\\s*:\\s*\"([^\"]+)\"").matcher(execution.request().arguments());
+                    if (id.find() && titles.containsKey(id.group(1).strip())) {
+                        read.add(titles.get(id.group(1).strip()));
+                    }
+                }
+            }
             String note = String.join(" → ", result.toolExecutions().stream()
                     .map(e -> e.request().name() + " " + e.request().arguments().replaceAll("\\s+", " ")).toList());
-            // Grounded: it cites the title of a page it actually read.
-            java.util.Set<String> read = new java.util.HashSet<>();
-            result.toolExecutions().stream().filter(x -> x.request().name().equals("readFile"))
-                    .forEach(x -> {
-                        Matcher id = Pattern.compile("\"pageId\"\\s*:\\s*\"([^\"]+)\"").matcher(x.request().arguments());
-                        if (id.find() && titles.containsKey(id.group(1))) {
-                            read.add(titles.get(id.group(1)));
-                        }
-                    });
-            boolean grounded = AssistService.citedTitles(result.content()).stream().anyMatch(read::contains);
-            return new Run("File search", question, result.content(),
-                    usage == null ? 0 : usage.inputTokenCount(), usage == null ? 0 : usage.outputTokenCount(),
-                    result.toolExecutions().size() + 1, System.currentTimeMillis() - start,
-                    correct(question, result.content()), grounded, note);
+            return new Run("File search", question, result.content(), model.inputTokens.get(), model.outputTokens.get(),
+                    model.calls.get(), System.currentTimeMillis() - start, correct(question, result.content()),
+                    grounded(result.content(), read, seen.toString()), false, note);
         } catch (RuntimeException e) {
-            return new Run("File search", question, "(failed: " + e.getMessage() + ")", 0, 0, MAX_ROUND_TRIPS,
-                    System.currentTimeMillis() - start, false, false, "stopped");
+            return failed("File search", question, start, e);
         }
+    }
+
+    private Run failed(String approach, Question question, long start, RuntimeException e) {
+        return new Run(approach, question, "(failed: " + e.getMessage() + ")", model.inputTokens.get(),
+                model.outputTokens.get(), model.calls.get(), System.currentTimeMillis() - start, false, false, true,
+                "failed: " + String.valueOf(e.getMessage()).replaceAll("\\s+", " "));
     }
 
     private static boolean correct(Question question, String answer) {
         String text = answer == null ? "" : answer.toLowerCase(Locale.ROOT).replace('’', '\'');
-        boolean declines = text.strip().startsWith("i don't know") || text.contains("not covered");
-        boolean declineIsRight = question.facts().stream().anyMatch(group -> group.contains("don't know"));
-        return question.facts().stream().allMatch(group -> group.stream().anyMatch(text::contains))
-                && (declineIsRight || !declines);
+        boolean declines = KnowledgeService.isIDontKnow(answer) || text.contains("not covered") || text.contains("not about");
+        if (question.offTopic()) {
+            return declines;
+        }
+        return !declines && question.facts().stream().allMatch(group -> group.stream().anyMatch(text::contains));
     }
 
-    /** Every catalog page as cleaned Markdown, downloaded once into build/measure/sap-docs. */
+    /** At least one cited page it had; no cited page it neither had nor saw mentioned. */
+    private static boolean grounded(String answer, Set<String> given, String seen) {
+        Set<String> cited = AssistService.citedTitles(answer);
+        String seenLower = seen.toLowerCase(Locale.ROOT);
+        boolean citesGiven = cited.stream().anyMatch(given::contains);
+        boolean invents = cited.stream().anyMatch(t -> !given.contains(t) && !seenLower.contains(t.toLowerCase(Locale.ROOT)));
+        return citesGiven && !invents;
+    }
+
+    /** Every catalog page as cleaned Markdown, downloaded once; fails loudly if any is missing. */
     private Map<String, String> downloadAll() throws Exception {
         Files.createDirectories(PAGES);
-        ExecutorService pool = Executors.newFixedThreadPool(12);
-        try {
-            for (SapHelpCatalog.Page page : catalog.pages()) {
-                Path file = PAGES.resolve(page.id() + ".md");
-                if (!Files.exists(file)) {
-                    pool.submit(() -> sapHelpClient.fetch(page.path()).ifPresent(text -> write(file, text)));
-                }
+        ExecutorService pool = Executors.newFixedThreadPool(8);
+        List<Future<?>> downloads = new ArrayList<>();
+        for (SapHelpCatalog.Page page : catalog.pages()) {
+            Path file = PAGES.resolve(page.id() + ".md");
+            if (!Files.exists(file)) {
+                downloads.add(pool.submit(() -> sapHelpClient.fetch(page.path()).ifPresent(text -> write(file, text))));
             }
-        } finally {
-            pool.shutdown();
-            pool.awaitTermination(10, java.util.concurrent.TimeUnit.MINUTES);
+        }
+        pool.shutdown();
+        if (!pool.awaitTermination(15, TimeUnit.MINUTES)) {
+            throw new IllegalStateException("Downloading the SAP pages took longer than 15 minutes");
+        }
+        List<String> errors = new ArrayList<>();
+        for (Future<?> download : downloads) {
+            try {
+                download.get();
+            } catch (java.util.concurrent.ExecutionException e) {
+                errors.add(String.valueOf(e.getCause().getMessage()));
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new IllegalStateException(errors.size() + " page downloads failed, e.g. " + errors.getFirst());
         }
         Map<String, String> pages = new LinkedHashMap<>();
         for (SapHelpCatalog.Page page : catalog.pages()) {
@@ -273,33 +477,43 @@ class RagVsFileSearchMeasurement {
         return pages;
     }
 
+    /** Write to a temporary file, then move: an interrupted run never leaves half a page. */
     private static void write(Path file, String text) {
         try {
-            Files.writeString(file, text, StandardCharsets.UTF_8);
+            Path tmp = Files.createTempFile(file.getParent(), file.getFileName().toString(), ".tmp");
+            Files.writeString(tmp, text, StandardCharsets.UTF_8);
+            Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new java.io.UncheckedIOException(e);
         }
     }
 
-    private static String report(List<Run> runs, int pageCount) {
+    private static String report(List<Run> runs, int pageCount, int seedPages) {
         StringBuilder md = new StringBuilder("# RAG vs file search\n\n")
-                .append("Same model (the configured chat model), same %d SAP pages. One run per question.\n\n".formatted(pageCount))
-                .append("Right: the key facts are there and it is not a decline. Grounded: it cites a page it was given or read.\n\n")
+                .append(String.format(Locale.ROOT, "Same model, same %d SAP pages. The RAG store starts from the %d seed pages "
+                        + "(its own table, reset every run). One run per question; the two approaches alternate going first.%n%n", pageCount, seedPages))
+                .append("Right: the key facts are there and it is not a decline (off-topic: it declines). "
+                        + "Grounded: it cites a page it was given or read, and none it wasn't. "
+                        + "Model calls and tokens are counted at the model.\n\n")
                 .append("| Question | Approach | Tokens in | Tokens out | Model calls | Time | Right | Grounded | Path / tool calls |\n")
                 .append("|---|---|---|---|---|---|---|---|---|\n");
         for (Run run : runs) {
-            md.append("| %s | %s | %,d | %,d | %d | %.1f s | %s | %s | %s |\n".formatted(
+            md.append(String.format(Locale.ROOT, "| %s | %s | %,d | %,d | %d | %.1f s | %s | %s | %s |%n",
                     run.question().text(), run.approach(), run.inputTokens(), run.outputTokens(), run.modelCalls(),
-                    run.millis() / 1000.0, run.correct() ? "✅" : "❌", run.grounded() ? "✅" : "—", run.note().replace("|", "/")));
+                    run.millis() / 1000.0, run.correct() ? "✅" : "❌",
+                    run.question().offTopic() ? "n/a" : run.grounded() ? "✅" : "—", run.note().replace("|", "/")));
         }
-        md.append("\n## Totals\n\n| Approach | Tokens in | Tokens out | Model calls | Time | Right | Grounded |\n|---|---|---|---|---|---|---|\n");
+        md.append("\n## Totals\n\n| Approach | Tokens in | Tokens out | Model calls | Time | Right | Grounded (docs questions) | Failed |\n"
+                + "|---|---|---|---|---|---|---|---|\n");
         for (String approach : List.of("RAG", "File search")) {
             List<Run> mine = runs.stream().filter(r -> r.approach().equals(approach)).toList();
-            md.append("| %s | %,d | %,d | %d | %.0f s | %d of %d | %d of %d |\n".formatted(approach,
+            List<Run> docs = mine.stream().filter(r -> !r.question().offTopic()).toList();
+            md.append(String.format(Locale.ROOT, "| %s | %,d | %,d | %d | %.0f s | %d of %d | %d of %d | %d |%n", approach,
                     mine.stream().mapToInt(Run::inputTokens).sum(), mine.stream().mapToInt(Run::outputTokens).sum(),
                     mine.stream().mapToInt(Run::modelCalls).sum(), mine.stream().mapToLong(Run::millis).sum() / 1000.0,
                     mine.stream().filter(Run::correct).count(), mine.size(),
-                    mine.stream().filter(Run::grounded).count(), mine.size()));
+                    docs.stream().filter(Run::grounded).count(), docs.size(),
+                    mine.stream().filter(Run::failed).count()));
         }
         md.append("\n## Answers\n");
         for (Run run : runs) {
