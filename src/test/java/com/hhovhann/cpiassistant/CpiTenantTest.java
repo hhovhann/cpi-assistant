@@ -3,6 +3,8 @@ package com.hhovhann.cpiassistant;
 import com.hhovhann.cpiassistant.CpiODataModel.MessageProcessingLog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
@@ -27,7 +29,7 @@ class CpiTenantTest {
     @BeforeEach
     void pointAtTheFakeTenant() {
         client = new CpiTenantClient("http://localhost:" + port + "/fake-cpi/api/v1");
-        tools = new CpiTenantTools(client);
+        tools = new CpiTenantTools(client, null);
     }
 
     private static Instant hoursAgo(int hours) {
@@ -82,7 +84,7 @@ class CpiTenantTest {
         // The blind spot this tool used to have: RETRY was invisible.
         String payment = tools.getProblemMessages("Payment_Status_Poll", null, null);
         assertThat(payment).startsWith("1 message(s) with problems for Payment_Status_Poll in the last 24 hours (1 RETRY):")
-                .contains("| RETRY | Payment_Status_Poll |");
+                .contains("| RETRY (still retrying, not failed) | Payment_Status_Poll |");
 
         String id = payment.substring(payment.indexOf("message id ") + 11).split(" ")[0];
         assertThat(tools.getErrorDetails(id)).contains("SftpException", "Connection refused");
@@ -106,6 +108,52 @@ class CpiTenantTest {
         assertThat(tools.getProblemMessages("Payment_Status_Poll", "FAILED,RETRY, ESCALATED", null))
                 .startsWith("1 message(s) with problems for Payment_Status_Poll in the last 24 hours (1 RETRY):");
         assertThat(tools.getErrorDetails("nope")).isEqualTo("No error information for message nope. Check the id.");
+    }
+
+    @Test
+    void aRetryMessageIsSpelledOutAsNotFailed() {
+        String payment = tools.getProblemMessages("Payment_Status_Poll", null, null);
+
+        assertThat(payment).contains("| RETRY (still retrying, not failed) | Payment_Status_Poll |")
+                .endsWith("A RETRY message has not failed: CPI is still retrying it. Report it as retrying.");
+        assertThat(tools.getProblemMessages("Order_Sync", null, null)).doesNotContain("RETRY");
+    }
+
+    @Test
+    void anEmptyResultSaysWhatTheModelShouldCheckNext() {
+        assertThat(tools.listIflows()).endsWith("This is deployment status only. Whether messages are failing or retrying: call getProblemMessages.");
+        // A typo: not deployed, and the closest name.
+        assertThat(tools.getProblemMessages("Order_Synk", null, null))
+                .startsWith("No messages in status FAILED, RETRY, ESCALATED for Order_Synk")
+                .contains("No iFlow named Order_Synk is deployed. Did you mean Order_Sync?");
+        // A name nothing is close to: no guess.
+        assertThat(tools.getProblemMessages("Unknown_Flow", null, null))
+                .contains("No iFlow named Unknown_Flow is deployed.").doesNotContain("Did you mean");
+        // The whole tenant: an iFlow in ERROR is a problem too.
+        assertThat(tools.getProblemMessages(null, null, null)).endsWith("Not running (deployment): Material_Master_Load (ERROR).");
+        assertThat(CpiTenantTools.distance("order_synk", "order_sync")).isEqualTo(1);
+    }
+
+    @Test
+    void anErrorComesWithTheDocumentationForIt() {
+        List<String> queries = new java.util.ArrayList<>();
+        var knowledge = new KnowledgeService(null, null, null, null, null, 0.82, java.time.Duration.ofDays(30), null) {
+            @Override
+            public Found find(String query) {
+                queries.add(query);
+                return new Found(List.of(CpiAgentTest.FakeKnowledge.jdbcMatch()), List.of(), List.of());
+            }
+        };
+        var withDocs = new CpiTenantTools(client, knowledge);
+        String id = tools.getProblemMessages("Order_Sync", "FAILED", null).lines().skip(1).findFirst().orElseThrow()
+                .replaceAll(".*message id (\\w+).*", "$1");
+
+        String details = withDocs.getErrorDetails(id);
+
+        assertThat(details).contains("HikariPool-1", "SAP documentation about this error", "[JDBC Receiver Adapter]\n");
+        // Package names are dropped: the search gets the exception and the message.
+        assertThat(queries).singleElement().asString()
+                .startsWith("JdbcAdapterException: Failed to execute SQL statement, caused by: SQLTransientConnectionException:");
     }
 
     @Test

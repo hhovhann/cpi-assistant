@@ -38,7 +38,7 @@ public class IngestionPipeline {
      * recursive() splits on paragraphs first, then sentences, then words —
      * falling back to a smaller unit only when a piece doesn't fit. Sizes come
      * from cpi.ingestion.*; 500 / 50 was the best trade-off measured on the
-     * earlier hand-written docs (Step 10).
+     * earlier hand-written docs.
      */
     public List<TextSegment> split(List<Document> documents) {
         DocumentSplitter documentSplitter = DocumentSplitters.recursive(properties.maxSegmentSize(), properties.maxOverlapSize());

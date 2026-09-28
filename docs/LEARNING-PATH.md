@@ -1165,6 +1165,65 @@ change a default, not enough to delete the code.
 **Try:** `./gradlew measure --tests '*ToolUse*' -Dcpi.chat.provider=anthropic`
 — with a stronger model, do skills start to pay off?
 
+### Step 24: Weak spots fixed where the model reads — and official SAP only
+
+**Why:** Step 22's measurement showed where the agent fails: it stops early.
+It read STARTED in `listIflows` and answered "not failing"; after an empty
+result it never looked for the right iFlow name; it reported a RETRY message
+as "failed"; asked for the fix, it never searched the documentation.
+**What — fixes in the tool results, from data the tools already have:**
+- `getErrorDetails` returns the error **and the SAP documentation passages for
+  it**, found by code (the exception without its Java package names). No extra
+  round trip; the pages count as given for the citation check.
+- A RETRY message reads "RETRY (still retrying, not failed)", with a closing
+  sentence saying so.
+- `listIflows` ends with "deployment status only — call getProblemMessages".
+- `getProblemMessages` for a name that is not deployed says so and names the
+  closest deployed iFlow (edit distance ≤ 3: "Did you mean Order_Sync?"); for the
+  whole tenant it also lists iFlows not running.
+- Passages within a chosen page are ranked hybrid too: "including the topic"
+  lifts the Kafka "Topic" row.
+- A bracketed placeholder — SAP's `[<virtual host name>]`, kept since the
+  cleaner fix — is not taken for a citation.
+
+**MCP — official SAP only.** A community SAP-docs MCP server was evaluated (it
+works; `sap_community_search` is useful) and left out: the agent's sources stay
+official. The MCP client is ready for an official one — an MCP Server created
+in SAP Integration Suite — with OAuth client credentials from its service key
+(`OAuthClientCredentials`, now shared with the tenant client).
+
+**Cleanup:** the unused `idFromUrl`, "Step N" comments in code, a stale "on a
+miss" comment, two unused imports.
+
+**Measured** (Qwen3 14B; `scripts/qa.sh` on the dev profile: **14 of 14**):
+
+| Tool use (10 questions) | Step 23 | Step 24 |
+|---|---|---|
+| Right — without skills (the default) | 7–9 of 10 | **9 of 10** |
+| Right — with skills | 7 of 10 | **9 of 10** |
+| Expected tools called (both) | 8–9 of 10 | 9 of 10 |
+
+| Documentation (15 questions, RAG) | Step 21 | Step 24 |
+|---|---|---|
+| Right — original / reworded | 6 of 7 / 5 of 8 | **7 of 7** / 5 of 8 |
+| Grounded | 13 of 13 | 12 of 13 |
+| Tokens in | 29,545 | **24,482** |
+
+- Both "how do I fix it" questions are now right **with a cited SAP page**;
+  Payment_Status_Poll is reported as retrying; the typo gets "did you mean".
+- The one tool-use miss without skills is defensible: "is anything failing
+  right now?" was read as the last hour — no failed messages, and
+  Material_Master_Load in ERROR reported. The grader wanted the day's failures.
+- With skills, the model loaded a skill twice — and once then described the
+  tools instead of calling them. Skills stay off by default.
+- The one ungrounded documentation answer is a real catch: it cited
+  "[Kafka Adapter Documentation]", a page title it made up.
+- One run each; LM Studio stalled once overnight and was restarted.
+
+**Idea:** when a small model stops early, do not ask it to try harder — let the
+tool result carry the next step. The data is already there; the model only has
+to read it.
+
 ---
 
 ## Phase 2 — an agent with LangChain4j

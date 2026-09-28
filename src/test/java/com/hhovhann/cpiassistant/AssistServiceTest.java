@@ -135,7 +135,7 @@ class AssistServiceTest {
     @Test
     void numbersIdsUrlsAndToolNamesInBracketsAreNotCitations() {
         assertThat(AssistService.citedTitles("See [1], message [308fd65c82453608a88a13344717584f], [listIflows], "
-                + "the blog [https://blogs.sap.com/2021/03/16/kafka-adapter/], "
+                + "the blog [https://blogs.sap.com/2021/03/16/kafka-adapter/], the entry [<virtual host name>]:22, "
                 + "the expression payload/LogEntry[severity = 'Error'] and items[0], "
                 + "[JDBC Receiver Adapter] [Handle Errors Gracefully][Define Router]."))
                 .containsExactly("JDBC Receiver Adapter", "Handle Errors Gracefully", "Define Router");

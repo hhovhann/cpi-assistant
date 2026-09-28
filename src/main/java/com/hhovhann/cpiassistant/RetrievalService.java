@@ -86,14 +86,18 @@ public class RetrievalService {
     /**
      * The best chunks among those matching a metadata filter — e.g. one saved
      * SAP Help page — with no score floor: the caller already chose the page.
+     * Hybrid like {@link #search}: a word the question names ("topic") lifts
+     * the table row that holds it, which meaning alone ranked below the
+     * page's general text.
      */
     public List<EmbeddingMatch<TextSegment>> searchWithin(String query, int maxResults, Filter filter) {
-        return embeddingStore.search(EmbeddingSearchRequest.builder()
+        List<EmbeddingMatch<TextSegment>> candidates = embeddingStore.search(EmbeddingSearchRequest.builder()
                 .queryEmbedding(embedQuery(query))
-                .maxResults(maxResults)
+                .maxResults(maxResults * CANDIDATES_PER_RESULT)
                 .minScore(0.0)
                 .filter(filter)
                 .build()).matches();
+        return hybridOrder(query, candidates).subList(0, Math.min(maxResults, candidates.size()));
     }
 
     /** Embeds a question the way search does, with the query prefix. */

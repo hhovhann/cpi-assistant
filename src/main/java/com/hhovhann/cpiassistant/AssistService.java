@@ -185,9 +185,10 @@ public class AssistService {
         while (m.find()) {
             for (String part : m.group(1).split("\\]\\s*\\[")) {
                 String title = part.strip();
-                // A number, an id, a date, a URL or a tool name (listIflows) is not a page title.
+                // A number, an id, a date, a URL, a tool name (listIflows) or a placeholder
+                // from SAP's text ([<virtual host name>]) is not a page title.
                 if (title.chars().anyMatch(Character::isLetter) && !title.matches("[0-9a-f]{16,}")
-                        && !title.matches("[a-z]+[A-Z][A-Za-z]*") && !title.contains("://")) {
+                        && !title.matches("[a-z]+[A-Z][A-Za-z]*") && !title.contains("://") && !title.contains("<")) {
                     titles.add(title);
                 }
             }

@@ -76,7 +76,7 @@ class CpiAgentTest {
     static CpiAgent agent(ChatModel model, KnowledgeService knowledge) {
         // The tenant tools are offered but never called in these tests.
         var tenant = new CpiTenantClient("http://localhost:1/unused");
-        var tools = new AgentTools(new CpiDocsTool(knowledge, null, null), new SkillLibrary(), new CpiTenantTools(tenant),
+        var tools = new AgentTools(new CpiDocsTool(knowledge, null, null), new SkillLibrary(), new CpiTenantTools(tenant, null),
                 tenant, new McpProperties(List.of()), List.of(), true);
         return new LangChain4jConfig().cpiAgent(model, tools);
     }

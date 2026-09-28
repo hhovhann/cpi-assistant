@@ -75,22 +75,26 @@ cpi:
     client-secret: ${CPI_TENANT_CLIENT_SECRET:}
 
   # Skills (resources/skills, the loadSkill tool): off by default. Measured
-  # (Steps 22-23): with Qwen3 14B the model never loaded a skill, and offering
+  # with Qwen3 14B: the model never loaded a skill, and offering
   # loadSkill cost 2 of 10 right answers on tenant questions. Try it with a
   # stronger model: --cpi.agent.skills-enabled=true
   agent:
     skills-enabled: false
 
   # MCP servers whose tools the agent may use (AgentTools). None by default.
-  # Each server exposes only the tools named in allowed-tools. Example:
+  # Official SAP servers only — no third-party ones. The one that fits: an MCP
+  # Server you create in SAP Integration Suite (MCP gateway; premium/enhanced or
+  # trial plan, Integration Cell), exposing your APIs as tools. It is reached over
+  # streamable HTTP with OAuth client credentials from its service key; only the
+  # tools named in allowed-tools reach the model. Example (values from env vars):
   #   mcp:
   #     servers:
-  #       - name: sap-docs
-  #         url: https://example.com/mcp          # streamable HTTP
-  #         allowed-tools: [search, fetch]
-  #       - name: local-tools
-  #         command: [npx, -y, some-mcp-server]   # stdio
-  #         allowed-tools: [some_tool]
+  #       - name: sap-integration-suite
+  #         url: ${SAP_MCP_URL}
+  #         token-url: ${SAP_MCP_TOKEN_URL}
+  #         client-id: ${SAP_MCP_CLIENT_ID}
+  #         client-secret: ${SAP_MCP_CLIENT_SECRET}
+  #         allowed-tools: [<tool names the server lists>]
 
   # The knowledge: official SAP Integration Suite docs only, as Markdown from
   # SAP's GitHub repository (CC BY 4.0) — help.sap.com itself is rendered by

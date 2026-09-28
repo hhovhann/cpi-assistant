@@ -83,7 +83,8 @@ class AgentToolsTest {
     @Test
     void anMcpServerExposesOnlyItsAllowedToolsAndNeverShadowsOurs() {
         var tools = new AgentTools(one("searchDocs", (r, m) -> "ours"), List.of());
-        var server = new McpProperties.Server("sap-docs", List.of(), "http://unused", Map.of(), List.of("sap_search", "searchDocs"));
+        var server = new McpProperties.Server("sap-is", List.of(), "http://unused", Map.of(), null, null, null,
+                List.of("sap_search", "searchDocs"));
         McpClient client = fakeMcp(List.of("sap_search", "delete_everything", "searchDocs"), "from mcp");
 
         tools.addMcp(server, client);
@@ -116,5 +117,30 @@ class AgentToolsTest {
         var none = new AgentTools(Map.of(), List.of());
         none.addSkills(new SkillLibrary(List.of()));
         assertThat(none.names()).isEmpty();
+    }
+
+    @Test
+    void anOfficialSapMcpServerGetsABearerTokenFromItsServiceKey() throws Exception {
+        var server = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("localhost", 0), 0);
+        server.createContext("/oauth/token", exchange -> {
+            byte[] body = "{\"access_token\":\"mcp-1\",\"expires_in\":3600}".getBytes();
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+        server.start();
+        try {
+            String tokenUrl = "http://localhost:" + server.getAddress().getPort() + "/oauth/token";
+            var withKey = new McpProperties.Server("sap-is", List.of(), "http://unused", Map.of("X-Tenant", "t1"),
+                    tokenUrl, "client", "secret", List.of());
+            var withoutKey = new McpProperties.Server("plain", List.of(), "http://unused", Map.of("X-Tenant", "t1"),
+                    null, null, null, List.of());
+
+            assertThat(AgentTools.headers(withKey).get()).containsEntry("Authorization", "Bearer mcp-1").containsEntry("X-Tenant", "t1");
+            assertThat(AgentTools.headers(withoutKey).get()).containsOnlyKeys("X-Tenant");
+        } finally {
+            server.stop(0);
+        }
     }
 }

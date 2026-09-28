@@ -18,7 +18,8 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `SkillLibrary` | Skills from `resources/skills/*.md`; the one-line list for the prompt, `@Tool loadSkill` | Per tool call |
 | `CpiTenantTools` | `@Tool listIflows`, `getProblemMessages` (FAILED, RETRY, ESCALATED), `getErrorDetails` — read-only | Per tool call |
 | `CpiTenantClient` | HTTP client for the CPI OData API; OAuth client credentials for a real tenant | Per tool call |
-| `McpProperties` | `cpi.mcp.servers`: stdio command or HTTP URL, and each server's allowed tools | — |
+| `OAuthClientCredentials` | A BTP client-credentials token, cached until a minute before it expires — for the tenant and for SAP MCP servers | Per token |
+| `McpProperties` | `cpi.mcp.servers`: official SAP MCP servers — URL, OAuth from a service key, and each server's allowed tools | — |
 | `CpiODataModel` | The OData records and `/Date(ms)/` conversion, shared by client and fake | — |
 | `fake.FakeCpiController`, `fake.FakeCpiData` | A stand-in tenant for the `dev` profile: same paths and JSON as the real API, planted failures | Per request |
 | `SapHelpCatalog` | The ~1,660 SAP pages that may be downloaded (`sap-help/catalog.tsv`: path, heading, first sentence); finds a page by meaning and keywords; identifiers must match exactly | Entries embedded once per start |
@@ -91,10 +92,26 @@ are cut (they would push the passages out of the context), and the audit log
 writes tool, source, time and result size. A tool that throws gives the model
 "The tool failed: …" instead of failing the request.
 
-**MCP tools are allowlisted per server.** An MCP server can offer tools that
-write, delete or reach anywhere; none reaches the model unless its name is in
-that server's `allowed-tools`, and none may shadow one of ours. A server that
-is down at startup is skipped with a warning, not fatal.
+**MCP: official SAP servers only, allowlisted per server.** The fitting one is
+an MCP Server created in SAP Integration Suite, reached over streamable HTTP
+with OAuth client credentials from its service key (`OAuthClientCredentials`
+adds a fresh bearer token to every request). Third-party servers were
+evaluated — a community SAP-docs server works — and left out on purpose: the
+agent's sources stay official. An MCP server can offer tools that write, delete
+or reach anywhere; none reaches the model unless its name is in that server's
+`allowed-tools`, and none may shadow one of ours. A server that is down at
+startup is skipped with a warning, not fatal.
+
+**Tool results say what to do next.** A small model stops early: it read
+STARTED in `listIflows` and answered "not failing"; after an empty
+`getProblemMessages` it never looked for the right name; asked for the fix, it
+never searched the docs. So the tools add it themselves, from data they already
+have: `listIflows` ends with "deployment status only — call
+getProblemMessages"; a RETRY message is spelled "still retrying, not failed";
+a name that is not deployed gets "Did you mean Order_Sync?" (edit distance ≤ 3);
+the whole-tenant view lists iFlows not running; and `getErrorDetails` appends
+the SAP documentation passages for the error, found by `KnowledgeService` with
+the Java package names stripped from the exception.
 
 **The tenant is optional and real-ready.** No `cpi.tenant.base-url`: the tenant
 tools are not offered, and the model cannot claim to have checked. A real
@@ -262,10 +279,10 @@ sees `search_document:`.
 | `KeywordSearchTest` | The rare word decides; stop words are not searched; fusion rewards agreement between lists; keywords lift a passage both lists like but add none, and scores stay similarities | Nothing |
 | `SapHelpClientTest` | Cleaning, on real SAP shapes: an HTML table becomes `Field \| Description` rows; comments, anchors and images go, link text stays; placeholders like `<known_hosts>` stay | Nothing |
 | `CpiAgentTest` | The tool loop: passages arrive in the message, every tool is offered, a docs question needs no tool, `searchDocs` runs with the model's query and its result goes back, the round-trip limit | Nothing — scripted model |
-| `AgentToolsTest` | Hooks: a refused call never runs, a huge result is cut, hooks run in order, a failing tool gives text; MCP: only allowed tools, never shadowing ours | Nothing — a stand-in MCP client |
+| `AgentToolsTest` | Hooks: a refused call never runs, a huge result is cut, hooks run in order, a failing tool gives text; MCP: only allowed tools, never shadowing ours, a bearer token from the service key; `loadSkill` lists the skills, and is absent without them | Nothing — a stand-in MCP client, a local token server |
 | `SkillLibraryTest` | The real skills load and list in one line each; an unknown skill names the existing ones; a skill without front matter is rejected | Nothing |
 | `CpiDocsToolTest` | `readPage` reads a catalog page in parts under its title; anything not in the catalog is refused | Nothing |
-| `CpiTenantTest` | Client against the fake tenant over real HTTP: filters, time window, RETRY, quote escaping, error text and 404, iFlow list, the tools' text; OAuth: a token from the token URL, reused | Nothing — random port, local token server |
+| `CpiTenantTest` | Client against the fake tenant over real HTTP: filters, time window, RETRY spelled out, quote escaping, error text and 404, iFlow list, what an empty result says next (did you mean, not running), an error with its documentation; OAuth: a token from the token URL, reused | Nothing — random port, local token server |
 | `PgVectorStoreTest` | Real pgvector: same score scale as memory, remove-by-URL deletes only that page, rows survive a new store on the same table | **Docker** (Testcontainers) |
 | `ChatProviderTests` | `cpi.chat.provider` builds the right model with the right sampling settings; a missing key fails at startup | Nothing — offline clients |
 | `LangChain4jConfigTest` | The chat timeout really cuts off a slow server | Nothing — local stub |

@@ -51,10 +51,11 @@ flowchart TB
    of skills and the tools. It decides: a documentation question is usually
    answered from the passages in one call; for more it calls a tool. There is
    no router.
-   - **Tools:** `readPage` (a whole SAP catalog page, in parts), `searchDocs`,
-     `loadSkill`; with a tenant configured, `listIflows`, `getProblemMessages`,
-     `getErrorDetails` (read-only); and the allowed tools of any MCP server in
-     `cpi.mcp.servers`.
+   - **Tools:** `readPage` (a whole SAP catalog page, in parts) and
+     `searchDocs`; with a tenant configured, `listIflows`, `getProblemMessages`
+     and `getErrorDetails` (read-only — an error comes with the SAP
+     documentation about it); and the allowed tools of an official SAP MCP
+     server in `cpi.mcp.servers`.
    - **Skills** (opt-in, `cpi.agent.skills-enabled=true`): playbooks in
      [`resources/skills`](src/main/resources/skills) — troubleshoot a failed
      message, configure an adapter, check tenant health — listed in the
@@ -261,7 +262,7 @@ and can be overridden on the command line (`--name=value`).
 | `langchain4j.open-ai.embedding-model.*` | LM Studio / nomic v1.5 | Embedding model, plus nomic's `query-prefix` / `document-prefix` |
 | `cpi.tenant.base-url`, `token-url`, `client-id`, `client-secret` | from `CPI_TENANT_URL`, `CPI_TENANT_TOKEN_URL`, `CPI_TENANT_CLIENT_ID`, `CPI_TENANT_CLIENT_SECRET`; empty | A real tenant's OData API and OAuth client credentials (from its service key). Empty: no tenant tools |
 | `cpi.agent.skills-enabled` | `false` | Offer `loadSkill` and the skills in `resources/skills`; measured worse with Qwen3 14B, meant for stronger models |
-| `cpi.mcp.servers` | none | MCP servers: `name`, `command` (stdio) or `url` (+ `headers`), and `allowed-tools` — only those reach the model |
+| `cpi.mcp.servers` | none | Official SAP MCP servers only (e.g. one created in SAP Integration Suite): `name`, `url`, OAuth `token-url` / `client-id` / `client-secret` from environment variables, and `allowed-tools` — only those reach the model |
 
 > The score thresholds and the prefixes are tuned for nomic-embed-text.
 > Switching the embedding model means re-measuring them and emptying the store.
@@ -322,6 +323,7 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 | ✅ | 21 | An agent like a small Claude Code: `readPage`, `searchDocs`, skills (`loadSkill`), tenant tools (OAuth; fake only in `dev`), MCP client with allowlists, hooks around every tool call |
 | ✅ | 22 | Measured tool use: 10 tenant and docs questions against planted failures, with vs without skills — with Qwen3 14B the model never loaded a skill; 9 of 10 right without, 7 of 10 with |
 | ✅ | 23 | Skills listed in the `loadSkill` tool instead of the prompt — still never loaded by Qwen3 14B (7 vs 9 of 10 right, second run); skills are now opt-in (`cpi.agent.skills-enabled`) |
+| ✅ | 24 | Weak spots fixed in the tool results: RETRY spelled out, an error comes with its SAP documentation, a missing iFlow gets "did you mean", the whole tenant includes iFlows not running; hybrid ranking within a page; official-SAP-only MCP with OAuth; cleanup |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

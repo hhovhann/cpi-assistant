@@ -75,12 +75,6 @@ public class SapHelpCatalog {
         public String url() {
             return REPO_BLOB + path;
         }
-
-        /** The page id in a saved chunk's URL: the file name without .md. */
-        static String idFromUrl(String url) {
-            String file = url.substring(url.lastIndexOf('/') + 1);
-            return file.endsWith(".md") ? file.substring(0, file.length() - ".md".length()) : file;
-        }
     }
 
     private final Map<String, Page> pagesById;

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Every tool the agent can call, in one place: the documentation tools
@@ -94,7 +95,7 @@ public class AgentTools implements DisposableBean {
 
     /**
      * loadSkill, with the skills listed in its own description. Measured
-     * (Step 22): with the list in the system prompt, Qwen3 14B never called
+     * with Qwen3 14B: with the list in the system prompt, the model never called
      * loadSkill and once named a skill as if it were a tool; a tool's
      * description sits next to the tool. No skills: no loadSkill.
      */
@@ -155,11 +156,24 @@ public class AgentTools implements DisposableBean {
 
     private static McpClient connect(McpProperties.Server server) {
         McpTransport transport = server.command().isEmpty()
-                ? new StreamableHttpMcpTransport.Builder().url(server.url()).customHeaders(server.headers())
+                ? new StreamableHttpMcpTransport.Builder().url(server.url()).customHeaders(headers(server))
                         .timeout(Duration.ofSeconds(60)).build()
                 : new StdioMcpTransport.Builder().command(server.command()).build();
         return new DefaultMcpClient.Builder().key(server.name()).transport(transport)
                 .toolExecutionTimeout(Duration.ofSeconds(60)).build();
+    }
+
+    /** The server's headers, plus a fresh bearer token on every request when it has a token URL. */
+    static Supplier<Map<String, String>> headers(McpProperties.Server server) {
+        if (server.tokenUrl() == null || server.tokenUrl().isBlank()) {
+            return server::headers;
+        }
+        OAuthClientCredentials oauth = new OAuthClientCredentials(server.tokenUrl(), server.clientId(), server.clientSecret());
+        return () -> {
+            Map<String, String> headers = new LinkedHashMap<>(server.headers());
+            headers.put("Authorization", "Bearer " + oauth.token());
+            return headers;
+        };
     }
 
     @Override

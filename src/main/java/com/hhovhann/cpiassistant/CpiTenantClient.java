@@ -52,9 +52,9 @@ public class CpiTenantClient {
         this.configured = !baseUrl.isBlank();
         RestClient.Builder builder = RestClient.builder().baseUrl(configured ? baseUrl : "http://localhost");
         if (!tokenUrl.isBlank()) {
-            OAuthToken token = new OAuthToken(tokenUrl, clientId, clientSecret);
+            OAuthClientCredentials oauth = new OAuthClientCredentials(tokenUrl, clientId, clientSecret);
             builder.requestInterceptor((request, body, execution) -> {
-                request.getHeaders().setBearerAuth(token.value());
+                request.getHeaders().setBearerAuth(oauth.token());
                 return execution.execute(request, body);
             });
         }
@@ -69,41 +69,6 @@ public class CpiTenantClient {
     /** A tenant URL is set: the tenant tools are offered. */
     public boolean isConfigured() {
         return configured;
-    }
-
-    /** Client-credentials token, fetched on first use and again shortly before it expires. */
-    static final class OAuthToken {
-        private final RestClient tokenClient;
-        private final String clientId;
-        private final String clientSecret;
-        private String value;
-        private Instant expiresAt = Instant.EPOCH;
-
-        OAuthToken(String tokenUrl, String clientId, String clientSecret) {
-            this.tokenClient = RestClient.builder().baseUrl(tokenUrl).build();
-            this.clientId = clientId;
-            this.clientSecret = clientSecret;
-        }
-
-        synchronized String value() {
-            if (value == null || Instant.now().isAfter(expiresAt.minusSeconds(60))) {
-                TokenResponse response = tokenClient.post()
-                        .headers(h -> h.setBasicAuth(clientId, clientSecret))
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .body("grant_type=client_credentials")
-                        .retrieve()
-                        .body(TokenResponse.class);
-                if (response == null || response.access_token() == null) {
-                    throw new IllegalStateException("The token URL returned no access token");
-                }
-                value = response.access_token();
-                expiresAt = Instant.now().plusSeconds(response.expires_in());
-            }
-            return value;
-        }
-
-        record TokenResponse(String access_token, long expires_in) {
-        }
     }
 
     /**

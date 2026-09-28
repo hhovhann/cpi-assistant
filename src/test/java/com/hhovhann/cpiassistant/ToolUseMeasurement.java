@@ -47,42 +47,44 @@ class ToolUseMeasurement {
      * @param noTools   the right behaviour is to call no tool at all
      * @param facts     every group needs one of its words in a right answer
      * @param forbidden words that mean an invented failure
+     * @param cites     a right answer cites a documentation page (the fix of a tenant error)
      */
-    record Question(String text, List<List<String>> tools, boolean noTools, List<List<String>> facts, List<String> forbidden) {
+    record Question(String text, List<List<String>> tools, boolean noTools, List<List<String>> facts, List<String> forbidden,
+                    boolean cites) {
     }
 
     private static final List<Question> QUESTIONS = List.of(
             new Question("Why did Order_Sync fail today and how do I fix it?",
                     List.of(List.of("getProblemMessages"), List.of("getErrorDetails")), false,
-                    List.of(List.of("hikari", "connection pool", "timed out", "timeout")), List.of()),
+                    List.of(List.of("hikari", "connection pool", "timed out", "timeout")), List.of(), true),
             new Question("Is Payment_Status_Poll failing?",
                     List.of(List.of("getProblemMessages")), false,
-                    List.of(List.of("retry"), List.of("sftp", "refused")), List.of()),
+                    List.of(List.of("retry"), List.of("sftp", "refused")), List.of(), false),
             new Question("Which iFlows are not running?",
                     List.of(List.of("listIflows")), false,
-                    List.of(List.of("material_master_load")), List.of()),
+                    List.of(List.of("material_master_load")), List.of(), false),
             new Question("Why did Order_Synk fail today?",
                     List.of(TENANT_TOOLS), false,
-                    List.of(List.of("order_sync")), List.of()),
+                    List.of(List.of("order_sync")), List.of(), false),
             new Question("Why did Unknown_Flow fail?",
                     List.of(TENANT_TOOLS), false,
-                    List.of(), List.of("hikari", "sqltransient", "401", "mapping")),
+                    List.of(), List.of("hikari", "sqltransient", "401", "mapping"), false),
             new Question("Why does Customer_Replicate fail, and what does SAP's documentation say about fixing it?",
-                    List.of(List.of("getErrorDetails"), List.of("searchDocs", "readPage")), false,
-                    List.of(List.of("401", "unauthorized"), List.of("credential")), List.of()),
+                    List.of(List.of("getErrorDetails")), false,
+                    List.of(List.of("401", "unauthorized"), List.of("credential")), List.of(), true),
             new Question("What went wrong with Invoice_To_Partner_EDI in the last 24 hours?",
                     List.of(List.of("getProblemMessages"), List.of("getErrorDetails")), false,
-                    List.of(List.of("mapping"), List.of("partnerid", "partner id")), List.of()),
+                    List.of(List.of("mapping"), List.of("partnerid", "partner id")), List.of(), false),
             new Question("Is anything failing on the tenant right now?",
                     List.of(List.of("listIflows", "getProblemMessages")), false,
                     List.of(List.of("material_master_load"), List.of("order_sync", "customer_replicate", "invoice_to_partner_edi")),
-                    List.of()),
+                    List.of(), false),
             new Question("Which parameters must I set in the Kafka receiver adapter, including the topic?",
                     List.of(), false,
-                    List.of(List.of("topic")), List.of()),
+                    List.of(List.of("topic")), List.of(), false),
             new Question("What is the capital of France?",
                     List.of(), true,
-                    List.of(), List.of()));
+                    List.of(), List.of(), false));
 
     record Run(String config, Question question, String answer, List<String> tools, boolean toolsRight, boolean right,
                int unverified, String skill, int inputTokens, int outputTokens, int modelCalls, long millis, String note) {
@@ -148,7 +150,8 @@ class ToolUseMeasurement {
             boolean right = question.noTools()
                     ? declines
                     : question.facts().stream().allMatch(group -> group.stream().anyMatch(text::contains))
-                            && question.forbidden().stream().noneMatch(text::contains);
+                            && question.forbidden().stream().noneMatch(text::contains)
+                            && (!question.cites() || answer.sources().stream().anyMatch(AssistService.Source::cited));
             String note = String.join(" → ", tools.isEmpty() ? List.of("no tool") : answer.toolCalls().stream()
                     .map(c -> c.tool() + " " + c.arguments().replaceAll("\\s+", " ")).toList());
             return new Run(config, question, answer.answer(), tools, toolsRight, right, answer.unverifiedCitations().size(),
@@ -165,8 +168,8 @@ class ToolUseMeasurement {
         StringBuilder md = new StringBuilder("# Tool use\n\n")
                 .append("The agent against the fake tenant's planted failures, two configurations with the same tools: "
                         + "with skills and without. One run per question; the two alternate going first.\n\n")
-                .append("Tools: every expected tool was called (off-topic: none). Right: the key facts are there and no "
-                        + "invented failure. Unverified: cited pages the model was never given. "
+                .append("Tools: every expected tool was called (off-topic: none). Right: the key facts are there, no "
+                        + "invented failure, and for a fix a cited documentation page. Unverified: cited pages the model was never given. "
                         + "Model calls and tokens are counted at the model.\n\n")
                 .append("| Question | Config | Tools | Right | Unverified | Skill | Model calls | Tokens in | Tokens out | Time | Tool calls |\n")
                 .append("|---|---|---|---|---|---|---|---|---|---|---|\n");

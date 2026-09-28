@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * At startup, makes sure a few popular SAP Help pages are in the store
  * ({@link SeedProperties}), so common questions do not start with
- * a download — and embeds the catalog titles, so the first miss does not wait
- * for that either. Pages already saved and fresh are not downloaded again.
+ * a download — and embeds the catalog titles, so the first question does not
+ * wait for that either. Pages already saved and fresh are not downloaded again.
  * A failure (no network) is logged, not fatal: the pages are then fetched on
  * the first question that needs them.
  */
