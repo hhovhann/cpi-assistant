@@ -160,6 +160,20 @@ class KnowledgeServiceTest {
     }
 
     @Test
+    void aPageSavedByAnOlderCleanerIsDownloadedAgain() {
+        var page = new SapHelpCatalog.Page(SFTP_PATH, "Configure the SFTP Receiver Adapter");
+        knowledge.ensureSaved(page);
+        // Saved the old way: no content version in the metadata.
+        var segment = TextSegment.from("old text", dev.langchain4j.data.document.Metadata.from(KnowledgeService.URL, page.url())
+                .put(KnowledgeService.TITLE, page.title()).put(KnowledgeService.FETCHED_AT, clock.now.toEpochMilli()));
+        store.removeAll(dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey(KnowledgeService.URL).isEqualTo(page.url()));
+        store.add(new TestSupport.BagOfWords().embed(segment).content(), segment);
+
+        assertThat(knowledge.ensureSaved(page)).isEqualTo(KnowledgeService.Saved.DOWNLOADED);
+        assertThat(knowledge.ensureSaved(page)).isEqualTo(KnowledgeService.Saved.ALREADY_SAVED);
+    }
+
+    @Test
     void aPageThatMovedIsReportedNotSaved() {
         var moved = new SapHelpCatalog.Page("docs/ISuite_Integrations_APIs/moved-sftp-page-1234567.md", "SFTP Page That Moved");
 

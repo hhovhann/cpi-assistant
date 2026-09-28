@@ -15,6 +15,28 @@ with no auto-configuration hiding the moving parts.
 > follow [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).
 > [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains how the code fits together.
 
+## MVP 0.1.0 — what you get
+
+- **Ask about SAP Cloud Integration** in one box (web UI or `GET /assist`):
+  answers only from the official SAP Integration Suite documentation, every
+  page cited and checked, the path of each answer shown.
+- **Knowledge that grows and stays current:** 1,660 official SAP pages in a
+  catalog; a page is downloaded the first time a question needs it, kept in
+  pgvector, and downloaded again after 30 days or when the cleaning changes.
+- **An agent for your tenant:** with a CPI tenant configured (OAuth from its
+  service key), it reads deployed iFlows, failed and retrying messages and
+  their errors — read-only — and looks the fix up in SAP's documentation.
+- **Runs locally:** LM Studio (Qwen3 14B, nomic embeddings) and Postgres in
+  Docker; or OpenAI / Claude with one setting. Only this machine can reach it
+  by default.
+- **Measured:** 62 unit tests, `scripts/qa.sh` (14 live checks), and two
+  measurements — documentation (15 questions) and tool use (10 questions).
+
+**Not in 0.1.0:** a login (keep it on localhost, or put it behind one), chat
+history, questions spanning many pages at once, SAP content outside
+Integration Suite. Skills and MCP are built but off by default: skills made
+the local model worse; MCP is for official SAP servers, none configured.
+
 ## Demo — 3½ minutes
 
 [![CPI Assistant demo: the agent answers "Why did Order_Sync fail today?" with three tenant tool calls](docs/video/cpi-assistant-demo.png)](docs/video/cpi-assistant-demo.mp4)
@@ -104,9 +126,16 @@ docker compose up -d      # Postgres + pgvector on localhost:5433; data survives
 ### 4. Run
 
 ```bash
-./gradlew bootRun                                             # docs, skills, MCP; tenant tools if a tenant is set
+./gradlew bootRun                                             # docs; tenant tools if a tenant is set
 ./gradlew bootRun --args="--spring.profiles.active=dev"       # plus a fake CPI tenant, for development
+
+# or as a jar
+./gradlew bootJar
+java -jar build/libs/cpi-assistant-0.1.0.jar --spring.profiles.active=dev
 ```
+
+The app listens on `127.0.0.1:8080` only: `/assist` has no login. To serve
+others, put it behind a login first, then add `--server.address=0.0.0.0`.
 
 At startup the app saves ten popular SAP pages (JDBC, HTTP, SFTP and OData
 receivers, error handling, scripting, monitoring …) unless they are already
@@ -221,7 +250,7 @@ export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY (and optionally OPENAI_M
 ./gradlew test
 ```
 
-56 tests, fakes for the models, GitHub, the tenant and MCP servers: no LM Studio and no internet.
+62 tests, fakes for the models, GitHub, the tenant and MCP servers: no LM Studio and no internet.
 Answer quality against the real model: `./scripts/qa.sh` (above).
 Two measurements against the real model (LM Studio, pgvector, internet; reports in `build/measure/`):
 
@@ -324,6 +353,7 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 | ✅ | 22 | Measured tool use: 10 tenant and docs questions against planted failures, with vs without skills — with Qwen3 14B the model never loaded a skill; 9 of 10 right without, 7 of 10 with |
 | ✅ | 23 | Skills listed in the `loadSkill` tool instead of the prompt — still never loaded by Qwen3 14B (7 vs 9 of 10 right, second run); skills are now opt-in (`cpi.agent.skills-enabled`) |
 | ✅ | 24 | Weak spots fixed in the tool results: RETRY spelled out, an error comes with its SAP documentation, a missing iFlow gets "did you mean", the whole tenant includes iFlows not running; hybrid ranking within a page; official-SAP-only MCP with OAuth; cleanup |
+| ✅ | 25 | MVP 0.1.0: pages saved by an older cleaner refresh themselves (content version), localhost by default, a runnable jar, CHANGELOG |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

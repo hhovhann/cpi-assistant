@@ -43,6 +43,14 @@ public class KnowledgeService {
     static final String URL = "url";
     static final String TITLE = "title";
     static final String FETCHED_AT = "fetched_at";
+    static final String CONTENT_VERSION = "content_version";
+    /**
+     * How pages are cleaned and split. Raise it when that changes: every page
+     * saved with an older version counts as stale and is downloaded again on
+     * its next use — no one has to empty the store by hand. 2: SAP's
+     * {@code <placeholder>} text kept inside tables.
+     */
+    static final int CURRENT_CONTENT_VERSION = 2;
     /** The best pages for a question, passages from each, and from the whole store. */
     static final int BEST_PAGES = 2;
     static final int PAGE_PASSAGES = 8;
@@ -141,7 +149,9 @@ public class KnowledgeService {
 
     private boolean isStale(TextSegment segment) {
         Long fetchedAt = segment.metadata().getLong(FETCHED_AT);
-        return fetchedAt == null || Instant.ofEpochMilli(fetchedAt).plus(maxAge).isBefore(clock.instant());
+        Integer version = segment.metadata().getInteger(CONTENT_VERSION);
+        return fetchedAt == null || Instant.ofEpochMilli(fetchedAt).plus(maxAge).isBefore(clock.instant())
+                || version == null || version < CURRENT_CONTENT_VERSION;
     }
 
     /** Replaces any earlier copy of the page, then stores its chunks. */
@@ -150,7 +160,8 @@ public class KnowledgeService {
                 .put(SOURCE, SAP_HELP)
                 .put(URL, page.url())
                 .put(TITLE, page.title())
-                .put(FETCHED_AT, clock.instant().toEpochMilli());
+                .put(FETCHED_AT, clock.instant().toEpochMilli())
+                .put(CONTENT_VERSION, CURRENT_CONTENT_VERSION);
         List<TextSegment> segments = pipeline.split(List.of(Document.from(text, metadata)));
         store.removeAll(thisPage);
         pipeline.embedInto(segments, store);

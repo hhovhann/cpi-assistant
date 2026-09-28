@@ -200,6 +200,16 @@ title: a table row like "Connection Timeout | Provide a connection timeout …"
 never says JDBC, and "configure a JDBC adapter" did not find it. The store
 keeps the chunk without the title.
 
+**Saved pages carry a content version.** How a page is cleaned and split is
+part of what is saved. Each chunk records `content_version`; when the cleaning
+changes, the version goes up, and every page saved with an older one counts as
+stale — downloaded again on its next use, like a page older than 30 days. No
+one has to empty the store by hand after an upgrade.
+
+**Localhost by default.** `/assist` has no login, and with a tenant configured
+it reads that tenant; `server.address` is `127.0.0.1`. Serving others means a
+login in front first.
+
 **What is saved is SAP's text, never the model's answer.** A page is split
 like any document and stored with `source=sap-help`, its URL, title and fetch
 time. A page older than `cpi.knowledge.max-age` (30 days) is downloaded again

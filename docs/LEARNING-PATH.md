@@ -1224,6 +1224,31 @@ miss" comment, two unused imports.
 tool result carry the next step. The data is already there; the model only has
 to read it.
 
+### Step 25: MVP 0.1.0
+
+**Why:** a first version someone else can clone, run and trust — not only a
+learning project on one laptop.
+**What:**
+- **Pages refresh themselves after an upgrade.** Saved chunks carry a
+  `content_version`; a page saved with an older one is stale and downloaded
+  again on its next use. The placeholder fix of Step 21 had left damaged text
+  in stores until someone emptied them by hand.
+- **Localhost by default** (`server.address: 127.0.0.1`): `/assist` has no
+  login, and with a tenant configured it reads that tenant.
+- **A runnable jar:** `./gradlew bootJar`, then `java -jar
+  build/libs/cpi-assistant-0.1.0.jar`. Version 0.1.0, a `CHANGELOG.md`, and an
+  "MVP 0.1.0" section at the top of the README: what it does, and what it does
+  not do yet.
+- **CI** (GitHub Actions running the unit tests) is written but not in the
+  repository: `.github/` is outside what the assistant may write. Adding it is
+  one copy, described in the commit notes.
+
+**Verified from the jar** (dev profile): the seed pages saved without a content
+version were downloaded again at startup, and `scripts/qa.sh` passed.
+
+**Idea:** an MVP is the smallest version a stranger can run safely — the defaults
+matter as much as the features.
+
 ---
 
 ## Phase 2 — an agent with LangChain4j

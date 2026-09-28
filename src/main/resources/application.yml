@@ -2,6 +2,12 @@ spring:
   application:
     name: cpi-assistant
 
+# Only this machine can reach the app: /assist has no login, and with a tenant
+# configured it reads that tenant. To serve others, put it behind a login
+# (reverse proxy, SSO) first, then: --server.address=0.0.0.0
+server:
+  address: 127.0.0.1
+
 # Chunking knobs. Override per run without editing source:
 #   ./gradlew bootRun --args="--cpi.ingestion.max-segment-size=500 --cpi.ingestion.max-overlap-size=50"
 cpi:
