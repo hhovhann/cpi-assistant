@@ -15,7 +15,7 @@ with no auto-configuration hiding the moving parts.
 > follow [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).
 > [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains how the code fits together.
 
-## MVP 0.1.0 — what you get
+## 0.2.0 — what you get
 
 - **Ask about SAP Cloud Integration** in one box (web UI or `GET /assist`):
   answers only from the official SAP Integration Suite documentation, every
@@ -26,13 +26,18 @@ with no auto-configuration hiding the moving parts.
 - **An agent for your tenant:** with a CPI tenant configured (OAuth from its
   service key), it reads deployed iFlows, failed and retrying messages and
   their errors — read-only — and looks the fix up in SAP's documentation.
+- **Guarded against prompt injection:** text from SAP pages, the tenant and
+  MCP servers reaches the model marked as data; an attack in a tool result is
+  flagged with ⚠, and its links are removed from the answer in code. Measured:
+  5 attacks, 2 worked before, none in the last two runs.
 - **Runs locally:** LM Studio (Qwen3 14B, nomic embeddings) and Postgres in
   Docker; or OpenAI / Claude with one setting. Only this machine can reach it
   by default.
-- **Measured:** 62 unit tests, `scripts/qa.sh` (14 live checks), and two
-  measurements — documentation (15 questions) and tool use (10 questions).
+- **Measured:** 83 unit tests, `scripts/qa.sh` (14 live checks), and three
+  measurements — documentation (15 questions), tool use (10 questions) and
+  prompt injection (5 attacks).
 
-**Not in 0.1.0:** a login (keep it on localhost, or put it behind one), chat
+**Not in 0.2.0:** a login (keep it on localhost, or put it behind one), chat
 history, questions spanning many pages at once, SAP content outside
 Integration Suite. Skills and MCP are built but off by default: skills made
 the local model worse; MCP is for official SAP servers, none configured.
@@ -131,7 +136,7 @@ docker compose up -d      # Postgres + pgvector on localhost:5433; data survives
 
 # or as a jar
 ./gradlew bootJar
-java -jar build/libs/cpi-assistant-0.1.0.jar --spring.profiles.active=dev
+java -jar build/libs/cpi-assistant-0.2.0.jar --spring.profiles.active=dev
 ```
 
 The app listens on `127.0.0.1:8080` only: `/assist` has no login. To serve

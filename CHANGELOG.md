@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — 0.2.0: prompt-injection protection
+## 0.2.0 — prompt-injection protection (2026-09-29)
 
 - **Untrusted text is marked:** passages, the question and every tool result (MCP included) go to the model in
   `<passages>`, `<question>` and `<tool-result>` tags the system prompt calls data; a tag inside the text is defused.
