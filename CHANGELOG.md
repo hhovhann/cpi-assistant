@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased — 0.2.0: prompt-injection protection
+
+- **Untrusted text is marked:** passages, the question and every tool result (MCP included) go to the model in
+  `<passages>`, `<question>` and `<tool-result>` tags the system prompt calls data; a tag inside the text is defused.
+- **Injections are reported:** a question or tool result that addresses the model gets a ⚠ line in the answer's path
+  (red in the page) and a log warning; the model gets a warning inside the result.
+- **After a flagged tool result, links from it are removed from the answer**, which starts with a warning — in code,
+  because the model alone passed the phishing link on in one of two runs.
+- **An answer that repeats the system prompt is withheld.** The prompt forbids asking for passwords or credentials.
+- **MCP:** a tool whose description addresses the model is not offered.
+- **Measured:** `InjectionMeasurement` — a planted attack in the fake tenant (`Partner_Webhook`), three direct
+  attacks, one control.
+
 ## 0.1.0 — first MVP (2026-09-28)
 
 An agent for SAP Cloud Integration, answering from the official SAP documentation.

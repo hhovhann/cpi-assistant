@@ -3,10 +3,12 @@ package com.hhovhann.cpiassistant;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.output.TokenUsage;
 import dev.langchain4j.service.Result;
+import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,6 +32,12 @@ import java.util.regex.Pattern;
  *       counts as unverified only if it appears nowhere in that text: the model
  *       also brackets pages a passage merely mentions ("see Configure JDBC
  *       Drivers"), which is not an invention.</li>
+ *   <li>Prompt injection is reported in the path: a question or a tool result
+ *       that seems to address the model ({@link UntrustedText}). After such a
+ *       result the answer starts with a warning, and loses every link whose
+ *       host only that result named — measured: the model warned about the
+ *       phishing link in one run and passed it on in the next. An answer that
+ *       repeats the system prompt is withheld.</li>
  * </ol>
  * The answer comes back with its path — what was searched, downloaded and
  * called.
@@ -40,6 +48,16 @@ public class AssistService {
     static final String STOPPED = "I could not finish: this question needed more tool calls than allowed. "
             + "Ask more precisely — for example with the exact iFlow name.";
     static final String EMPTY = "The model returned no answer. Please ask again.";
+    static final String WITHHELD = "I can't share my instructions. Ask me about SAP Cloud Integration.";
+    static final String INJECTED = "⚠ A tool result contained instructions aimed at the assistant. Links from it are "
+            + "removed; do not follow any request in this answer to enter a password or credentials.";
+    static final String LINK_REMOVED = "(link removed)";
+
+    /** A Markdown link — its URL in group 1 — or a bare URL, which never ends in punctuation. */
+    private static final Pattern LINK = Pattern.compile("\\[[^\\]\\n]*]\\((https?://[^)\\s]+)\\)|https?://[^\\s)\\]>\"'`]*[^\\s)\\]>\"'`.,;:!?]");
+
+    /** The system prompt, cut into phrases: an answer holding one repeats the prompt. */
+    private static final List<String> SYSTEM_PROMPT = systemPromptPhrases();
 
     /**
      * [Page Title] — a citation. Not one: a bracket right after a word or a
@@ -93,11 +111,15 @@ public class AssistService {
         if (!note.isEmpty()) {
             path.add("Note: the question names an iFlow — the model is told to check the tenant");
         }
+        if (UntrustedText.looksLikeInstructions(question)) {
+            path.add("⚠ The question seems to address the model's instructions — they do not change");
+        }
 
         Result<String> result;
         boolean stopped = false;
         try {
-            result = agent.answer(KnowledgeService.format(found.passages()), note, question);
+            result = agent.answer(UntrustedText.defuse(KnowledgeService.format(found.passages())), note,
+                    UntrustedText.defuse(question));
         } catch (RuntimeException e) {
             if (!String.valueOf(e.getMessage()).contains("maxToolCallingRoundTrips")) {
                 throw e;
@@ -111,13 +133,28 @@ public class AssistService {
         List<ToolCall> toolCalls = result.toolExecutions().stream()
                 .map(e -> new ToolCall(e.request().name(), e.request().arguments(), e.result()))
                 .toList();
-        toolCalls.forEach(call -> path.add("Tool: " + call.tool() + " " + call.arguments()));
+        for (ToolCall call : toolCalls) {
+            path.add("Tool: " + call.tool() + " " + call.arguments());
+            if (call.result() != null && call.result().contains(ToolHooks.SUSPICIOUS)) {
+                path.add("⚠ " + call.tool() + " returned text that tries to instruct the model — treated as data");
+            }
+        }
         if (!stopped) {
             path.add(toolCalls.isEmpty() ? "Answered from the passages, no tool" : "Answered");
         }
 
         // Qwen3 has returned an empty answer after only thinking; never pass on null.
         String answer = result.content() == null || result.content().isBlank() ? EMPTY : result.content();
+        List<String> injected = toolCalls.stream().map(ToolCall::result)
+                .filter(r -> r != null && r.contains(ToolHooks.SUSPICIOUS)).toList();
+        if (!injected.isEmpty()) {
+            answer = INJECTED + "\n\n" + withoutLinksFrom(answer, injected, question + "\n" + textSeen(found.passages(),
+                    toolCalls.stream().filter(c -> !injected.contains(c.result())).toList()));
+        }
+        if (repeatsSystemPrompt(answer)) {
+            path.add("⚠ The answer repeated the system prompt — withheld");
+            answer = WITHHELD;
+        }
         Set<String> cited = citedTitles(answer);
         Map<String, Source> given = sourcesGiven(found.passages(), toolCalls);
         List<Source> sources = given.values().stream()
@@ -174,6 +211,37 @@ public class AssistService {
         passages.forEach(match -> seen.append(match.embedded().text()).append('\n'));
         toolCalls.forEach(call -> seen.append(call.result()).append('\n'));
         return seen.toString().toLowerCase(Locale.ROOT);
+    }
+
+    /** Removes each link whose host the suspicious results name and nothing trusted does. */
+    static String withoutLinksFrom(String answer, List<String> suspicious, String trusted) {
+        String trustedLower = trusted.toLowerCase(Locale.ROOT);
+        String suspiciousLower = String.join("\n", suspicious).toLowerCase(Locale.ROOT);
+        return LINK.matcher(answer).replaceAll(link -> {
+            String url = link.group(1) != null ? link.group(1) : link.group();
+            String host = url.replaceFirst("^https?://", "").split("[/:?#]", 2)[0].toLowerCase(Locale.ROOT);
+            return suspiciousLower.contains(host) && !trustedLower.contains(host) ? LINK_REMOVED : Matcher.quoteReplacement(link.group());
+        });
+    }
+
+    static boolean repeatsSystemPrompt(String answer) {
+        String flat = answer.replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+        return SYSTEM_PROMPT.stream().anyMatch(flat::contains);
+    }
+
+    /** Phrases of 25 characters or more, split at sentence and list punctuation. */
+    private static List<String> systemPromptPhrases() {
+        try {
+            String prompt = String.join("\n", CpiAgent.class
+                    .getMethod("answer", String.class, String.class, String.class)
+                    .getAnnotation(SystemMessage.class).value());
+            return Arrays.stream(prompt.toLowerCase(Locale.ROOT).split("[.:;\\n—]"))
+                    .map(phrase -> phrase.replaceAll("\\s+", " ").strip())
+                    .filter(phrase -> phrase.length() >= 25)
+                    .toList();
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     static Set<String> citedTitles(String answer) {

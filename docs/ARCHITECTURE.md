@@ -13,7 +13,8 @@ All code is in `src/main/java/com/hhovhann/cpiassistant/`.
 | `KnowledgeService` | Finds documentation: the two best SAP Help pages for the question (downloaded and saved the first time) and their best passages, plus the best passages in the store. No model call | Per question |
 | `CpiAgent` | The agent: an interface AiServices implements; gets question + passages + skills list, runs the tool loop | Per question |
 | `AgentTools` | Every tool in one place — docs, skills (when enabled), tenant (when configured), MCP servers' allowed tools — each call wrapped in the hooks | Built once, per tool call |
-| `ToolHook`, `ToolHooks` | Before/after every tool call: argument guard, result limit, audit log | Per tool call |
+| `ToolHook`, `ToolHooks` | Before/after every tool call: argument guard, result limit, untrusted-result mark, audit log | Per tool call |
+| `UntrustedText` | Prompt injection: puts outside text in a tag the prompt calls data, defuses our tags inside it, spots text that addresses the model | Per question, per tool call |
 | `CpiDocsTool` | `@Tool searchDocs`, `readPage` — a whole SAP catalog page, in parts of 12,000 characters | Per tool call |
 | `SkillLibrary` | Skills from `resources/skills/*.md`; the one-line list for the prompt, `@Tool loadSkill` | Per tool call |
 | `CpiTenantTools` | `@Tool listIflows`, `getProblemMessages` (FAILED, RETRY, ESCALATED), `getErrorDetails` — read-only | Per tool call |
@@ -91,6 +92,34 @@ tool's result, and the tool never runs. After: results over 16,000 characters
 are cut (they would push the passages out of the context), and the audit log
 writes tool, source, time and result size. A tool that throws gives the model
 "The tool failed: …" instead of failing the request.
+
+**Prompt injection: marked, checked, measured (Steps 26–27).** The tools are
+read-only, but what they return is not ours: a tenant's error holds whatever
+the receiver sent back, and an MCP server returns what it likes. Measured
+before any defence, the planted attack in the fake tenant made the agent tell
+the user to enter their BTP password on a phishing page, and a direct question
+printed the whole system prompt. Now:
+- Passages, the question and every tool result sit in `<passages>`,
+  `<question>` and `<tool-result>` tags, and the system prompt says what is in
+  them is data. A closing tag inside the text is defused (`‹/tool-result>`),
+  so the text cannot end its own tag.
+- `UntrustedText.looksLikeInstructions` spots text that talks to the model
+  ("ignore all previous instructions", "notice to the AI assistant", chat
+  role tokens). A result that does gets a warning line for the model; the
+  question or result is reported with ⚠ in the answer's path. Nothing is
+  blocked on a pattern: patterns are easy to get around, the tags and the
+  prompt are the defence, the check makes attacks visible.
+- After a flagged result, the answer starts with a warning, and every link
+  whose host only that result named is removed — code, not the model, decides:
+  with the same tags and warning, Qwen3 14B flagged the phishing link in one
+  run and passed it on in the next. The price: a legitimate endpoint named only
+  in that error goes too (it is still in the tool call's result).
+- An answer holding a phrase of the system prompt is withheld.
+- An MCP tool whose description addresses the model is not offered.
+What still protects most is what the agent cannot do: every tool is
+read-only, `readPage` fetches only catalog pages, and the page links only
+SAP's documentation — an injected answer has no tool to act with and no link
+to leak data through.
 
 **MCP: official SAP servers only, allowlisted per server.** The fitting one is
 an MCP Server created in SAP Integration Suite, reached over streamable HTTP
@@ -283,13 +312,14 @@ sees `search_document:`.
 
 | Test | What it checks | Needs |
 |---|---|---|
-| `AssistServiceTest` | The one path with a scripted model: a database hit is one call with no tool; a cited page never given is flagged, a page named inside a passage is not; an iFlow name becomes a note; tool calls are reported and their pages count as given; the tool-call limit gives an answer, not an error; an empty answer is never passed on; numbers, ids, URLs and tool names are not citations | Nothing — fakes |
+| `AssistServiceTest` | The one path with a scripted model: a database hit is one call with no tool; an injection in a tool result or the question is reported in the path, and links from a flagged result are removed from the answer; an answer repeating the system prompt is withheld; a cited page never given is flagged, a page named inside a passage is not; an iFlow name becomes a note; tool calls are reported and their pages count as given; the tool-call limit gives an answer, not an error; an empty answer is never passed on; numbers, ids, URLs and tool names are not citations | Nothing — fakes |
 | `KnowledgeServiceTest` | A local server plays GitHub: the best page is downloaded, stripped of links and images, saved and answered from; the second time it comes from the store; off-topic downloads nothing; the page's passages and the store's best are combined without duplicates; refresh after max-age without duplicates; a moved page; passages labelled by title; the real catalog loads | Nothing — local server, bag-of-words embeddings |
 | `SapHelpCatalogTest` | The ranking rule with real titles and measured scores: AS4 is not AS2, an identifier no page has changes nothing | Nothing |
 | `KeywordSearchTest` | The rare word decides; stop words are not searched; fusion rewards agreement between lists; keywords lift a passage both lists like but add none, and scores stay similarities | Nothing |
 | `SapHelpClientTest` | Cleaning, on real SAP shapes: an HTML table becomes `Field \| Description` rows; comments, anchors and images go, link text stays; placeholders like `<known_hosts>` stay | Nothing |
 | `CpiAgentTest` | The tool loop: passages arrive in the message, every tool is offered, a docs question needs no tool, `searchDocs` runs with the model's query and its result goes back, the round-trip limit | Nothing — scripted model |
-| `AgentToolsTest` | Hooks: a refused call never runs, a huge result is cut, hooks run in order, a failing tool gives text; MCP: only allowed tools, never shadowing ours, a bearer token from the service key; `loadSkill` lists the skills, and is absent without them | Nothing — a stand-in MCP client, a local token server |
+| `UntrustedTextTest` | Attacks are flagged; the fake tenant's real CPI errors and ordinary questions are not; a closing tag inside the text cannot end the tag | Nothing |
+| `AgentToolsTest` | Hooks: a refused call never runs, a huge result is cut, hooks run in order, a failing tool gives text, a result is marked and one that instructs the model is flagged; MCP: only allowed tools, never shadowing ours, never one whose description instructs the model, a bearer token from the service key; `loadSkill` lists the skills, and is absent without them | Nothing — a stand-in MCP client, a local token server |
 | `SkillLibraryTest` | The real skills load and list in one line each; an unknown skill names the existing ones; a skill without front matter is rejected | Nothing |
 | `CpiDocsToolTest` | `readPage` reads a catalog page in parts under its title; anything not in the catalog is refused | Nothing |
 | `CpiTenantTest` | Client against the fake tenant over real HTTP: filters, time window, RETRY spelled out, quote escaping, error text and 404, iFlow list, what an empty result says next (did you mean, not running), an error with its documentation; OAuth: a token from the token URL, reused | Nothing — random port, local token server |
@@ -298,6 +328,7 @@ sees `search_document:`.
 | `LangChain4jConfigTest` | The chat timeout really cuts off a slow server | Nothing — local stub |
 | `CpiAssistantApplicationTests` | The Spring context starts and all beans wire | Nothing |
 | `RagVsFileSearchMeasurement` | Not a test: RAG against an agent that searches (BM25) and reads the SAP pages, same questions and model — tokens and calls counted at the model, time, right, grounded. Own table `cpi_chunks_measure`, reset to the seed pages every run. Tagged `measure`, run with `./gradlew measure` | LM Studio, pgvector, internet |
+| `InjectionMeasurement` | Not a test: prompt injection — two attacks through the fake tenant's planted error, three in the question, one control. Per case: did the attack work, is the answer still useful. Tagged `measure` | LM Studio, pgvector, internet |
 | `ToolUseMeasurement` | Not a test: the agent against the fake tenant's planted failures — tenant questions, a tenant error plus its fix in the docs, a parameter deep in a page, off-topic — with skills and without. Expected tools called, right, unverified citations, calls and tokens. Tagged `measure`: `./gradlew measure --tests '*ToolUse*'` | LM Studio, pgvector, internet, port 18081 |
 
 Answer *quality* against the real model: `scripts/qa.sh` asks up to fourteen questions (the five tenant ones only when the agent has tenant tools)

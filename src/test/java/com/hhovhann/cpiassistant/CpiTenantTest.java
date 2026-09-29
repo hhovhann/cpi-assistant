@@ -49,10 +49,10 @@ class CpiTenantTest {
 
     @Test
     void theTimeWindowAndRetriesAreRespected() {
-        // Last 24 h: 3 Order_Sync, 1 Customer_Replicate, 1 Invoice (the other is 26 h old).
+        // Last 24 h: 3 Order_Sync, 1 Customer_Replicate, 1 Invoice (the other is 26 h old), 1 Partner_Webhook.
         // Payment_Status_Poll is RETRY, not FAILED, so it is not in these.
-        assertThat(client.messages("FAILED", null, hoursAgo(24), 20)).hasSize(5);
-        assertThat(client.messages("FAILED", null, hoursAgo(48), 20)).hasSize(6);
+        assertThat(client.messages("FAILED", null, hoursAgo(24), 20)).hasSize(6);
+        assertThat(client.messages("FAILED", null, hoursAgo(48), 20)).hasSize(7);
         assertThat(client.messages("FAILED", null, hoursAgo(48), 2)).hasSize(2);
     }
 
@@ -72,7 +72,7 @@ class CpiTenantTest {
 
     @Test
     void runtimeArtifactsIncludeOneInError() {
-        assertThat(client.runtimeArtifacts()).hasSize(5)
+        assertThat(client.runtimeArtifacts()).hasSize(6)
                 .anySatisfy(a -> {
                     assertThat(a.name()).isEqualTo("Material_Master_Load");
                     assertThat(a.status()).isEqualTo("ERROR");
@@ -89,8 +89,8 @@ class CpiTenantTest {
         String id = payment.substring(payment.indexOf("message id ") + 11).split(" ")[0];
         assertThat(tools.getErrorDetails(id)).contains("SftpException", "Connection refused");
 
-        // All problems in the last 24 h: 5 FAILED plus the RETRY.
-        assertThat(tools.getProblemMessages(null, null, null)).startsWith("6 message(s) with problems for any iFlow in the last 24 hours (5 FAILED, 1 RETRY):");
+        // All problems in the last 24 h: 6 FAILED plus the RETRY.
+        assertThat(tools.getProblemMessages(null, null, null)).startsWith("7 message(s) with problems for any iFlow in the last 24 hours (6 FAILED, 1 RETRY):");
     }
 
     @Test

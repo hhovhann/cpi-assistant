@@ -101,6 +101,7 @@
   .path li { padding: 2px 0; overflow-wrap: anywhere; }
   .path li::before { content: "→ "; }
   .path li.web { color: var(--warn); }
+  .path li.alert { color: var(--danger); font-weight: 600; }
   .cite.text { min-width: 0; max-width: 100%; overflow-wrap: anywhere; text-align: left; }
   .cite.unknown { color: var(--warn); background: var(--warn-soft); cursor: help; }
   .source a { color: var(--accent); }
@@ -184,7 +185,7 @@
       answer.innerHTML = renderAnswer(data.answer, sourceIndex, data.unverifiedCitations);
 
       answer.insertAdjacentHTML('beforebegin', '<ul class="path">' + data.path.map(step =>
-        `<li class="${/downloaded|^Tool:/.test(step) ? 'web' : ''}">${escapeHtml(step)}</li>`).join('') + '</ul>');
+        `<li class="${/^⚠/.test(step) ? 'alert' : /downloaded|^Tool:/.test(step) ? 'web' : ''}">${escapeHtml(step)}</li>`).join('') + '</ul>');
 
       const sources = document.createElement('div');
       sources.className = 'sources';

@@ -112,7 +112,10 @@ public class AgentTools implements DisposableBean {
         }
     }
 
-    /** Only the tools on the server's allowlist, and never one that would shadow a tool of ours. */
+    /**
+     * Only the tools on the server's allowlist, never one that would shadow a
+     * tool of ours, and never one whose description addresses the model.
+     */
     void addMcp(McpProperties.Server server, McpClient client) {
         for (ToolSpecification spec : client.listTools()) {
             if (!server.allowedTools().contains(spec.name())) {
@@ -120,6 +123,12 @@ public class AgentTools implements DisposableBean {
             }
             if (names().contains(spec.name())) {
                 log.warn("MCP server {} offers {}, which already exists: skipped", server.name(), spec.name());
+                continue;
+            }
+            // A tool's description goes into the prompt as it is: one that talks
+            // to the model is an injection by the server.
+            if (UntrustedText.looksLikeInstructions(spec.description())) {
+                log.warn("MCP server {} describes {} with instructions to the model: skipped", server.name(), spec.name());
                 continue;
             }
             add(spec, (request, memoryId) -> client.executeTool(request).resultText(), server.name());

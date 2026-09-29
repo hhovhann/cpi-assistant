@@ -250,13 +250,14 @@ export ANTHROPIC_API_KEY=...        # or OPENAI_API_KEY (and optionally OPENAI_M
 ./gradlew test
 ```
 
-62 tests, fakes for the models, GitHub, the tenant and MCP servers: no LM Studio and no internet.
+83 tests, fakes for the models, GitHub, the tenant and MCP servers: no LM Studio and no internet.
 Answer quality against the real model: `./scripts/qa.sh` (above).
-Two measurements against the real model (LM Studio, pgvector, internet; reports in `build/measure/`):
+Three measurements against the real model (LM Studio, pgvector, internet; reports in `build/measure/`):
 
 ```bash
 ./gradlew measure --tests '*RagVsFileSearch*'   # RAG vs a model that searches the files, 15 questions (~35 min)
 ./gradlew measure --tests '*ToolUse*'           # tool use: 10 questions, with vs without skills (~20 min)
+./gradlew measure --tests '*Injection*'         # prompt injection: 5 attacks and a control (~4 min)
 ./gradlew measure -Dcpi.measure.rag-only=true --tests '*RagVsFileSearch*'   # RAG alone, ~7 min
 ```
 `PgVectorStoreTest` starts a throwaway pgvector container, so it needs Docker.
@@ -354,6 +355,8 @@ PostgreSQL 18 + pgvector (Docker) · JUnit 5 / AssertJ · Testcontainers
 | ✅ | 23 | Skills listed in the `loadSkill` tool instead of the prompt — still never loaded by Qwen3 14B (7 vs 9 of 10 right, second run); skills are now opt-in (`cpi.agent.skills-enabled`) |
 | ✅ | 24 | Weak spots fixed in the tool results: RETRY spelled out, an error comes with its SAP documentation, a missing iFlow gets "did you mean", the whole tenant includes iFlows not running; hybrid ranking within a page; official-SAP-only MCP with OAuth; cleanup |
 | ✅ | 25 | MVP 0.1.0: pages saved by an older cleaner refresh themselves (content version), localhost by default, a runnable jar, CHANGELOG |
+| ✅ | 26 | Prompt injection measured: a planted attack in the fake tenant plus direct attacks — 2 of 5 worked, the phishing link among them |
+| ✅ | 27 | Untrusted text in tags the prompt calls data, injections flagged with ⚠, links from a flagged result removed in code, system-prompt leaks withheld — 0 of 5 in the last two runs |
 
 Every step — what was built, why, what was measured — is in
 [docs/LEARNING-PATH.md](docs/LEARNING-PATH.md).

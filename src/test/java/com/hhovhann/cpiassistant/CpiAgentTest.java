@@ -97,7 +97,7 @@ class CpiAgentTest {
         assertThat(model.requests).hasSize(1);
         assertThat(model.requests.getFirst().messages()).last()
                 .isInstanceOfSatisfying(UserMessage.class, message -> assertThat(message.singleText())
-                        .contains("[JDBC Receiver Adapter]", "Question: How do I connect to a database?"));
+                        .contains("[JDBC Receiver Adapter]", "<question>\nHow do I connect to a database?\n</question>"));
         assertThat(model.requests.getFirst().toolSpecifications()).extracting(spec -> spec.name())
                 .containsExactlyInAnyOrder("searchDocs", "readPage", "loadSkill", "listIflows", "getProblemMessages", "getErrorDetails");
     }
